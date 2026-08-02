@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../core/icon_registry.dart';
 import '../../core/premium_limits.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
@@ -130,16 +131,7 @@ class _PaymentMethodEditorDialogState extends State<PaymentMethodEditorDialog> {
       TextEditingController(text: widget.existing?.name ?? '');
   late int _icon = widget.existing?.icon ?? _icons.first.codePoint;
 
-  static const _icons = [
-    Icons.credit_card_rounded,
-    Icons.account_balance_wallet_rounded,
-    Icons.account_balance_rounded,
-    Icons.phone_iphone_rounded,
-    Icons.paid_rounded,
-    Icons.qr_code_rounded,
-    Icons.savings_rounded,
-    Icons.currency_yen_rounded,
-  ];
+  static const _icons = IconRegistry.paymentIcons;
 
   @override
   void dispose() {

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/icon_registry.dart';
+
 @immutable
 class Category {
   const Category({
@@ -18,7 +20,7 @@ class Category {
 
   Color get color => Color(colorValue);
   IconData get iconData =>
-      IconData(icon, fontFamily: 'MaterialIcons');
+      IconRegistry.resolve(icon, fallback: IconRegistry.fallbackCategory);
 
   Category copyWith({
     String? name,

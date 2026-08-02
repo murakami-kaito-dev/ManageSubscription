@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../core/icon_registry.dart';
 import '../../core/premium_limits.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
@@ -130,18 +131,7 @@ class _CategoryEditorDialogState extends State<CategoryEditorDialog> {
       widget.existing?.colorValue ?? AppColors.chartPalette.first.value;
   late int _icon = widget.existing?.icon ?? _icons.first.codePoint;
 
-  static const _icons = [
-    Icons.movie_rounded,
-    Icons.work_rounded,
-    Icons.spa_rounded,
-    Icons.music_note_rounded,
-    Icons.sports_esports_rounded,
-    Icons.fitness_center_rounded,
-    Icons.book_rounded,
-    Icons.cloud_rounded,
-    Icons.shopping_bag_rounded,
-    Icons.pets_rounded,
-  ];
+  static const _icons = IconRegistry.categoryIcons;
 
   @override
   void dispose() {

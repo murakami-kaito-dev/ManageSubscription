@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/icon_registry.dart';
+
 @immutable
 class PaymentMethod {
   const PaymentMethod({
@@ -14,7 +16,8 @@ class PaymentMethod {
   final int icon;
   final int sortOrder;
 
-  IconData get iconData => IconData(icon, fontFamily: 'MaterialIcons');
+  IconData get iconData =>
+      IconRegistry.resolve(icon, fallback: IconRegistry.fallbackPayment);
 
   PaymentMethod copyWith({String? name, int? icon, int? sortOrder}) =>
       PaymentMethod(

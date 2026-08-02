@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -75,31 +76,33 @@ class AppDatabase {
     final batch = db.batch();
 
     // 0xFF6E9080 etc — reuse the chart palette values as ints.
-    const cats = [
-      ['エンタメ', 0xFFE5977E, 0xe405], // movie
-      ['仕事・効率化', 0xFF7FA38C, 0xe1af], // work
-      ['ライフスタイル', 0xFF86A9C4, 0xe332], // spa/lifestyle
+    // Icons reference the const IconRegistry so they resolve correctly and stay
+    // tree-shakeable.
+    final cats = [
+      ('エンタメ', 0xFFE5977E, Icons.movie_rounded.codePoint),
+      ('仕事・効率化', 0xFF7FA38C, Icons.work_rounded.codePoint),
+      ('ライフスタイル', 0xFF86A9C4, Icons.spa_rounded.codePoint),
     ];
     for (var i = 0; i < cats.length; i++) {
       batch.insert('categories', {
         'id': 'cat_$i',
-        'name': cats[i][0],
-        'color': cats[i][1],
-        'icon': cats[i][2],
+        'name': cats[i].$1,
+        'color': cats[i].$2,
+        'icon': cats[i].$3,
         'sort_order': i,
       });
     }
 
-    const methods = [
-      ['クレジットカード', 0xe19f], // credit_card
-      ['App Store', 0xe0d1], // apple/phone
-      ['PayPay', 0xe263], // account_balance_wallet
+    final methods = [
+      ('クレジットカード', Icons.credit_card_rounded.codePoint),
+      ('App Store', Icons.apple_rounded.codePoint),
+      ('PayPay', Icons.account_balance_wallet_rounded.codePoint),
     ];
     for (var i = 0; i < methods.length; i++) {
       batch.insert('payment_methods', {
         'id': 'pm_$i',
-        'name': methods[i][0],
-        'icon': methods[i][1],
+        'name': methods[i].$1,
+        'icon': methods[i].$2,
         'sort_order': i,
       });
     }
