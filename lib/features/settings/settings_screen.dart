@@ -143,11 +143,8 @@ class SettingsScreen extends ConsumerWidget {
                         _Row(
                           icon: Icons.share_rounded,
                           label: 'シェア',
-                          onTap: () => SharePlus.instance.share(
-                            ShareParams(
-                                text:
-                                    'サブスク管理アプリで毎月の支払いを見える化しよう！'),
-                          ),
+                          onTap: () => Share.share(
+                              'サブスク管理アプリで毎月の支払いを見える化しよう！'),
                         ),
                         const _Div(),
                         _Row(

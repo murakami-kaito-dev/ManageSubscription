@@ -66,11 +66,9 @@ class CsvExportService {
     final file = File('${dir.path}/subscriptions_$stamp.csv');
     await file.writeAsString(content);
 
-    await SharePlus.instance.share(
-      ShareParams(
-        files: [XFile(file.path, mimeType: 'text/csv')],
-        subject: 'サブスクリプション一覧 ($stamp)',
-      ),
+    await Share.shareXFiles(
+      [XFile(file.path, mimeType: 'text/csv')],
+      subject: 'サブスクリプション一覧 ($stamp)',
     );
   }
 }
