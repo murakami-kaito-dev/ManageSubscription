@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,7 +13,6 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/billing.dart';
 import '../../core/utils/currency.dart';
-import '../../core/widgets/premium_crown.dart';
 import '../../core/widgets/pressable.dart';
 import '../../core/widgets/section_header.dart';
 import '../../core/widgets/soft_button.dart';
@@ -21,6 +22,7 @@ import '../../data/models/category.dart';
 import '../../data/models/notify_rule.dart';
 import '../../data/models/payment_method.dart';
 import '../../data/models/subscription.dart';
+import '../../providers/core_providers.dart';
 import '../../providers/premium_provider.dart';
 import '../../providers/subscription_providers.dart';
 import '../premium/premium_screen.dart';
@@ -53,6 +55,8 @@ class _SubscriptionFormScreenState
   late int _colorValue;
   String? _categoryId;
   String? _paymentMethodId;
+  String? _imagePath;
+  bool _pickingImage = false;
   late List<NotifyRule> _notifyRules;
   late bool _isPaused;
 
@@ -76,6 +80,7 @@ class _SubscriptionFormScreenState
     _colorValue = e?.colorValue ?? AppColors.chartPalette.first.value;
     _categoryId = e?.categoryId;
     _paymentMethodId = e?.paymentMethodId;
+    _imagePath = e?.imagePath;
     _notifyRules = [...?e?.notifyRules];
     _isPaused = e?.isPaused ?? false;
   }
@@ -152,6 +157,72 @@ class _SubscriptionFormScreenState
     if (rule != null) setState(() => _notifyRules[index] = rule);
   }
 
+  Future<void> _pickImage({required bool fromCamera}) async {
+    if (!ref.read(premiumProvider)) {
+      PremiumScreen.show(context, reason: '画像の登録はプレミアム機能です。');
+      return;
+    }
+    setState(() => _pickingImage = true);
+    try {
+      final path = await ref
+          .read(imagePickerServiceProvider)
+          .pickAndCropSquare(fromCamera: fromCamera);
+      if (path != null && mounted) setState(() => _imagePath = path);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('画像を読み込めませんでした')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _pickingImage = false);
+    }
+  }
+
+  void _chooseImageSource() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.canvas,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Gap(AppSpacing.md),
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded,
+                  color: AppColors.primaryDeep),
+              title: const Text('写真から選ぶ'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(fromCamera: false);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_camera_rounded,
+                  color: AppColors.primaryDeep),
+              title: const Text('カメラで撮影'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(fromCamera: true);
+              },
+            ),
+            if (_imagePath != null)
+              ListTile(
+                leading: const Icon(Icons.delete_outline_rounded,
+                    color: AppColors.danger),
+                title: const Text('画像を削除'),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => _imagePath = null);
+                },
+              ),
+            const Gap(AppSpacing.md),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     final id = widget.existing?.id ?? const Uuid().v4();
@@ -172,7 +243,7 @@ class _SubscriptionFormScreenState
       usageUnit:
           _usageUnit.text.trim().isEmpty ? '回' : _usageUnit.text.trim(),
       isPaused: _isPaused,
-      imagePath: widget.existing?.imagePath,
+      imagePath: _imagePath,
       notifyRules: _notifyRules,
       sortOrder: widget.existing?.sortOrder ?? count,
       createdAt: widget.existing?.createdAt ?? DateTime.now(),
@@ -325,12 +396,67 @@ class _SubscriptionFormScreenState
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Row(
+                            children: [
+                              _IconPreview(
+                                imagePath: _imagePath,
+                                emoji: _emoji.text.trim(),
+                                colorValue: _colorValue,
+                                name: _name.text.trim(),
+                                busy: _pickingImage,
+                                onTap: _chooseImageSource,
+                              ),
+                              const Gap(AppSpacing.lg),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _imagePath != null
+                                          ? '画像を設定中'
+                                          : (_emoji.text.trim().isNotEmpty
+                                              ? '絵文字を設定中'
+                                              : '未設定（名前の頭文字を表示）'),
+                                      style: AppType.body(13,
+                                          weight: FontWeight.w700,
+                                          color: _imagePath != null ||
+                                                  _emoji.text.trim().isNotEmpty
+                                              ? AppColors.primaryDeep
+                                              : AppColors.textMuted),
+                                    ),
+                                    const Gap(AppSpacing.sm),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: [
+                                        _MiniBtn(
+                                          icon: Icons.image_rounded,
+                                          label: '画像',
+                                          onTap: _chooseImageSource,
+                                        ),
+                                        if (_imagePath != null)
+                                          _MiniBtn(
+                                            icon: Icons.close_rounded,
+                                            label: '画像を消す',
+                                            onTap: () => setState(
+                                                () => _imagePath = null),
+                                          ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Gap(AppSpacing.md),
+                          // Emoji is used when no image is set.
                           SizedBox(
-                            width: 120,
+                            width: 140,
                             child: TextFormField(
                               controller: _emoji,
-                              decoration:
-                                  _dec('絵文字', hint: '🎬'),
+                              enabled: _imagePath == null,
+                              onChanged: (_) => setState(() {}),
+                              decoration: _dec('絵文字', hint: '🎬'),
                               maxLength: 2,
                               buildCounter: (_,
                                       {required currentLength,
@@ -339,6 +465,10 @@ class _SubscriptionFormScreenState
                                   null,
                             ),
                           ),
+                          const Gap(AppSpacing.sm),
+                          Text('背景の色',
+                              style: AppType.body(12,
+                                  color: AppColors.textSecondary)),
                           const Gap(AppSpacing.sm),
                           _ColorPicker(
                             selected: _colorValue,
@@ -424,12 +554,6 @@ class _SubscriptionFormScreenState
                       onNeedPremium: () => PremiumScreen.show(context,
                           reason:
                               '無料版で設定できる通知は${PremiumLimits.maxNotifyRules}件までです。'),
-                    ),
-                    const SectionHeader('画像', premium: true),
-                    _ImageRow(
-                      isPremium: isPremium,
-                      onNeedPremium: () => PremiumScreen.show(context,
-                          reason: '画像の登録はプレミアム機能です。'),
                     ),
                     const SectionHeader('メモ'),
                     _fieldCard(
@@ -854,36 +978,115 @@ class _NotifyRuleDialogState extends State<_NotifyRuleDialog> {
   }
 }
 
-class _ImageRow extends StatelessWidget {
-  const _ImageRow({required this.isPremium, required this.onNeedPremium});
-  final bool isPremium;
-  final VoidCallback onNeedPremium;
+/// A large, unambiguous preview of the subscription icon. Clearly shows which
+/// of the three states is active: image, emoji, or unset (name initial).
+class _IconPreview extends StatelessWidget {
+  const _IconPreview({
+    required this.imagePath,
+    required this.emoji,
+    required this.colorValue,
+    required this.name,
+    required this.busy,
+    required this.onTap,
+  });
+  final String? imagePath;
+  final String emoji;
+  final int colorValue;
+  final String name;
+  final bool busy;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard(
-      onTap: isPremium ? () {} : onNeedPremium,
-      child: Row(
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: AppColors.primarySoft,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.image_rounded,
-                color: AppColors.primaryDeep),
+    final color = Color(colorValue);
+    final bool isSet = imagePath != null || emoji.isNotEmpty;
+
+    Widget content;
+    if (busy) {
+      content = const Center(child: CircularProgressIndicator(strokeWidth: 2));
+    } else if (imagePath != null) {
+      content = ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Image.file(File(imagePath!), fit: BoxFit.cover),
+      );
+    } else if (emoji.isNotEmpty) {
+      content = Center(child: Text(emoji, style: const TextStyle(fontSize: 34)));
+    } else {
+      content = Center(
+        child: Text(
+          name.isNotEmpty ? name.characters.first.toUpperCase() : '?',
+          style: AppType.display(30, color: color),
+        ),
+      );
+    }
+
+    return Pressable(
+      onTap: onTap,
+      scale: 0.92,
+      child: Container(
+        width: 72,
+        height: 72,
+        decoration: BoxDecoration(
+          color: imagePath != null ? null : color.withOpacity(0.16),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSet ? color.withOpacity(0.5) : AppColors.textMuted,
+            width: isSet ? 2 : 1.5,
+            style: isSet ? BorderStyle.solid : BorderStyle.solid,
           ),
-          const Gap(AppSpacing.md),
-          Expanded(
-            child: Text(
-              isPremium ? '画像を選択して登録' : '画像の登録（プレミアム）',
-              style: AppType.body(15),
+          boxShadow: AppShadows.soft(),
+        ),
+        child: Stack(
+          children: [
+            Positioned.fill(child: content),
+            Positioned(
+              right: 3,
+              bottom: 3,
+              child: Container(
+                padding: const EdgeInsets.all(3),
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.edit_rounded,
+                    size: 11, color: AppColors.onPrimary),
+              ),
             ),
-          ),
-          if (!isPremium) const PremiumCrown(),
-        ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniBtn extends StatelessWidget {
+  const _MiniBtn(
+      {required this.icon, required this.label, required this.onTap});
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Pressable(
+      onTap: onTap,
+      scale: 0.95,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: AppShadows.soft(),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: AppColors.primaryDeep),
+            const Gap(5),
+            Text(label,
+                style: AppType.body(12.5, weight: FontWeight.w600)),
+          ],
+        ),
       ),
     );
   }

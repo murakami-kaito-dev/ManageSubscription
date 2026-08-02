@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -120,21 +122,26 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasImage = sub.imagePath != null && File(sub.imagePath!).existsSync();
     return Container(
       width: 46,
       height: 46,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.16),
+        color: hasImage ? null : accent.withOpacity(0.16),
         borderRadius: BorderRadius.circular(15),
         border: Border.all(color: accent.withOpacity(0.28), width: 1.5),
       ),
-      child: sub.emoji != null && sub.emoji!.isNotEmpty
-          ? Text(sub.emoji!, style: const TextStyle(fontSize: 22))
-          : Text(
-              sub.name.characters.take(1).toString().toUpperCase(),
-              style: AppType.display(20, weight: FontWeight.w800, color: accent),
-            ),
+      clipBehavior: Clip.antiAlias,
+      child: hasImage
+          ? Image.file(File(sub.imagePath!), fit: BoxFit.cover)
+          : (sub.emoji != null && sub.emoji!.isNotEmpty
+              ? Text(sub.emoji!, style: const TextStyle(fontSize: 22))
+              : Text(
+                  sub.name.characters.take(1).toString().toUpperCase(),
+                  style: AppType.display(20,
+                      weight: FontWeight.w800, color: accent),
+                )),
     );
   }
 }
