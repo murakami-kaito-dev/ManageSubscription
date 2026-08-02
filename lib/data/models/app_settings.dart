@@ -47,6 +47,7 @@ class AppSettings {
     this.accentColorValue = 0xFF6E9080,
     this.showPaused = true,
     this.notifyEnabled = true,
+    this.alwaysShowDetails = false,
   });
 
   final AppCurrency mainCurrency;
@@ -54,6 +55,9 @@ class AppSettings {
   final int accentColorValue;
   final bool showPaused;
   final bool notifyEnabled;
+
+  /// When true, the subscription form's "詳細設定" section starts expanded.
+  final bool alwaysShowDetails;
 
   Color get accent => Color(accentColorValue);
 
@@ -63,6 +67,7 @@ class AppSettings {
     int? accentColorValue,
     bool? showPaused,
     bool? notifyEnabled,
+    bool? alwaysShowDetails,
   }) =>
       AppSettings(
         mainCurrency: mainCurrency ?? this.mainCurrency,
@@ -70,5 +75,6 @@ class AppSettings {
         accentColorValue: accentColorValue ?? this.accentColorValue,
         showPaused: showPaused ?? this.showPaused,
         notifyEnabled: notifyEnabled ?? this.notifyEnabled,
+        alwaysShowDetails: alwaysShowDetails ?? this.alwaysShowDetails,
       );
 }

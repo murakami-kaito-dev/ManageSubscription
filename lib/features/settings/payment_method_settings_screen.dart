@@ -12,6 +12,7 @@ import '../../core/widgets/section_header.dart';
 import '../../core/widgets/soft_button.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/soft_header.dart';
+import '../../core/widgets/swipe_to_delete.dart';
 import '../../data/models/payment_method.dart';
 import '../../providers/premium_provider.dart';
 import '../../providers/subscription_providers.dart';
@@ -48,7 +49,7 @@ class PaymentMethodSettingsScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _confirmDelete(
+  Future<bool> _confirmDelete(
       BuildContext context, WidgetRef ref, PaymentMethod m) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -73,7 +74,9 @@ class PaymentMethodSettingsScreen extends ConsumerWidget {
     );
     if (ok == true) {
       await ref.read(paymentMethodsProvider.notifier).delete(m.id);
+      return true;
     }
+    return false;
   }
 
   @override
@@ -107,32 +110,37 @@ class PaymentMethodSettingsScreen extends ConsumerWidget {
                       ),
                     ),
                   for (final m in methods) ...[
-                    SoftCard(
-                      onTap: () => _edit(context, ref, existing: m),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 42,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              color: m.color.withOpacity(0.18),
-                              borderRadius: BorderRadius.circular(13),
+                    SwipeToDelete(
+                      id: m.id,
+                      canDelete: !m.isBuiltIn,
+                      onDelete: () => _confirmDelete(context, ref, m),
+                      child: SoftCard(
+                        onTap: () => _edit(context, ref, existing: m),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                color: m.color.withOpacity(0.18),
+                                borderRadius: BorderRadius.circular(13),
+                              ),
+                              child: Icon(m.iconData, color: m.color),
                             ),
-                            child: Icon(m.iconData, color: m.color),
-                          ),
-                          const Gap(AppSpacing.md),
-                          Expanded(
-                              child: Text(m.name, style: AppType.body(15.5))),
-                          if (m.isBuiltIn)
-                            const Icon(Icons.lock_outline_rounded,
-                                size: 18, color: AppColors.textMuted)
-                          else
-                            Pressable(
-                              onTap: () => _confirmDelete(context, ref, m),
-                              child: const Icon(Icons.delete_outline_rounded,
-                                  color: AppColors.textMuted),
-                            ),
-                        ],
+                            const Gap(AppSpacing.md),
+                            Expanded(
+                                child: Text(m.name, style: AppType.body(15.5))),
+                            if (m.isBuiltIn)
+                              const Icon(Icons.lock_outline_rounded,
+                                  size: 18, color: AppColors.textMuted)
+                            else
+                              Pressable(
+                                onTap: () => _confirmDelete(context, ref, m),
+                                child: const Icon(Icons.delete_outline_rounded,
+                                    color: AppColors.textMuted),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                     const Gap(AppSpacing.md),

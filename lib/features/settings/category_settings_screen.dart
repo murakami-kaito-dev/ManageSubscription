@@ -12,6 +12,7 @@ import '../../core/widgets/section_header.dart';
 import '../../core/widgets/soft_button.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/soft_header.dart';
+import '../../core/widgets/swipe_to_delete.dart';
 import '../../data/models/category.dart';
 import '../../providers/premium_provider.dart';
 import '../../providers/subscription_providers.dart';
@@ -48,7 +49,7 @@ class CategorySettingsScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _confirmDelete(
+  Future<bool> _confirmDelete(
       BuildContext context, WidgetRef ref, Category c) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -73,7 +74,9 @@ class CategorySettingsScreen extends ConsumerWidget {
     );
     if (ok == true) {
       await ref.read(categoriesProvider.notifier).delete(c.id);
+      return true;
     }
+    return false;
   }
 
   @override
@@ -108,33 +111,38 @@ class CategorySettingsScreen extends ConsumerWidget {
                       ),
                     ),
                   for (final c in categories) ...[
-                    SoftCard(
-                      onTap: () => _edit(context, ref, existing: c),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 42,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              color: c.color.withOpacity(0.18),
-                              borderRadius: BorderRadius.circular(13),
+                    SwipeToDelete(
+                      id: c.id,
+                      canDelete: !c.isBuiltIn,
+                      onDelete: () => _confirmDelete(context, ref, c),
+                      child: SoftCard(
+                        onTap: () => _edit(context, ref, existing: c),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                color: c.color.withOpacity(0.18),
+                                borderRadius: BorderRadius.circular(13),
+                              ),
+                              child: Icon(c.iconData, color: c.color),
                             ),
-                            child: Icon(c.iconData, color: c.color),
-                          ),
-                          const Gap(AppSpacing.md),
-                          Expanded(
-                              child: Text(c.name, style: AppType.body(15.5))),
-                          // Built-in categories can be restyled but not deleted.
-                          if (c.isBuiltIn)
-                            const Icon(Icons.lock_outline_rounded,
-                                size: 18, color: AppColors.textMuted)
-                          else
-                            Pressable(
-                              onTap: () => _confirmDelete(context, ref, c),
-                              child: const Icon(Icons.delete_outline_rounded,
-                                  color: AppColors.textMuted),
-                            ),
-                        ],
+                            const Gap(AppSpacing.md),
+                            Expanded(
+                                child: Text(c.name, style: AppType.body(15.5))),
+                            // Built-in categories can be restyled but not deleted.
+                            if (c.isBuiltIn)
+                              const Icon(Icons.lock_outline_rounded,
+                                  size: 18, color: AppColors.textMuted)
+                            else
+                              Pressable(
+                                onTap: () => _confirmDelete(context, ref, c),
+                                child: const Icon(Icons.delete_outline_rounded,
+                                    color: AppColors.textMuted),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                     const Gap(AppSpacing.md),

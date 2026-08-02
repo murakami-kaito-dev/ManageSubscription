@@ -24,6 +24,7 @@ import '../../data/models/payment_method.dart';
 import '../../data/models/subscription.dart';
 import '../../providers/core_providers.dart';
 import '../../providers/premium_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../providers/subscription_providers.dart';
 import '../premium/premium_screen.dart';
 import '../settings/category_settings_screen.dart';
@@ -59,6 +60,7 @@ class _SubscriptionFormScreenState
   bool _pickingImage = false;
   late List<NotifyRule> _notifyRules;
   late bool _isPaused;
+  late bool _detailsExpanded;
 
   bool get _isEdit => widget.existing != null;
 
@@ -83,6 +85,8 @@ class _SubscriptionFormScreenState
     _imagePath = e?.imagePath;
     _notifyRules = [...?e?.notifyRules];
     _isPaused = e?.isPaused ?? false;
+    // Details start expanded only when the user opted into "常に表示".
+    _detailsExpanded = ref.read(settingsProvider).alwaysShowDetails;
   }
 
   String _trimAmount(double v) =>
@@ -147,6 +151,85 @@ class _SubscriptionFormScreenState
     if (result == null) return;
     await ref.read(paymentMethodsProvider.notifier).save(result);
     if (mounted) setState(() => _paymentMethodId = result.id);
+  }
+
+  Future<void> _editCategory(Category c) async {
+    final all = ref.read(categoriesProvider).valueOrNull ?? const [];
+    final result = await showDialog<Category>(
+      context: context,
+      builder: (_) => CategoryEditorDialog(
+        existing: c,
+        index: c.sortOrder,
+        nameEditable: !c.isBuiltIn,
+        existingNames: [for (final x in all) if (x.id != c.id) x.name],
+      ),
+    );
+    if (result != null) {
+      await ref.read(categoriesProvider.notifier).save(result);
+    }
+  }
+
+  Future<void> _deleteCategory(Category c) async {
+    final ok = await _confirmDeleteDialog(
+      title: 'カテゴリーを削除しますか？',
+      body: '「${c.name}」を削除します。\n\n'
+          'このカテゴリーを設定していたサブスクは「未設定」になります'
+          '（サブスク自体は削除されません）。\nこの操作は取り消せません。',
+    );
+    if (ok) {
+      if (_categoryId == c.id) setState(() => _categoryId = null);
+      await ref.read(categoriesProvider.notifier).delete(c.id);
+    }
+  }
+
+  Future<void> _editPaymentMethod(PaymentMethod m) async {
+    final all = ref.read(paymentMethodsProvider).valueOrNull ?? const [];
+    final result = await showDialog<PaymentMethod>(
+      context: context,
+      builder: (_) => PaymentMethodEditorDialog(
+        existing: m,
+        index: m.sortOrder,
+        nameEditable: !m.isBuiltIn,
+        existingNames: [for (final x in all) if (x.id != m.id) x.name],
+      ),
+    );
+    if (result != null) {
+      await ref.read(paymentMethodsProvider.notifier).save(result);
+    }
+  }
+
+  Future<void> _deletePaymentMethod(PaymentMethod m) async {
+    final ok = await _confirmDeleteDialog(
+      title: '支払い方法を削除しますか？',
+      body: '「${m.name}」を削除します。\n\n'
+          'この支払い方法を設定していたサブスクは「未設定」になります'
+          '（サブスク自体は削除されません）。\nこの操作は取り消せません。',
+    );
+    if (ok) {
+      if (_paymentMethodId == m.id) setState(() => _paymentMethodId = null);
+      await ref.read(paymentMethodsProvider.notifier).delete(m.id);
+    }
+  }
+
+  Future<bool> _confirmDeleteDialog(
+      {required String title, required String body}) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(body),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('キャンセル')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('削除',
+                  style: TextStyle(color: AppColors.danger))),
+        ],
+      ),
+    );
+    return ok ?? false;
   }
 
   Future<void> _addNotifyRule() async {
@@ -295,6 +378,160 @@ class _SubscriptionFormScreenState
     final isPremium = ref.watch(premiumProvider);
     final categories = ref.watch(categoriesProvider).valueOrNull ?? const [];
     final methods = ref.watch(paymentMethodsProvider).valueOrNull ?? const [];
+    final alwaysShow = ref.watch(settingsProvider).alwaysShowDetails;
+
+    // ── "詳細設定" content (icon / category / payment method / cospa) ──────────
+    final iconSection = _fieldCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _IconPreview(
+                imagePath: _imagePath,
+                emoji: _emoji.text.trim(),
+                colorValue: _colorValue,
+                name: _name.text.trim(),
+                busy: _pickingImage,
+                onTap: _chooseImageSource,
+              ),
+              const Gap(AppSpacing.lg),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _imagePath != null
+                          ? '画像を設定中'
+                          : (_emoji.text.trim().isNotEmpty
+                              ? '入力した文字を表示中'
+                              : '未設定（※名前の頭文字を表示中）'),
+                      style: AppType.body(13,
+                          weight: FontWeight.w700,
+                          color: _imagePath != null ||
+                                  _emoji.text.trim().isNotEmpty
+                              ? AppColors.primaryDeep
+                              : AppColors.textMuted),
+                    ),
+                    const Gap(AppSpacing.sm),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _MiniBtn(
+                          icon: Icons.image_rounded,
+                          label: '画像',
+                          onTap: _chooseImageSource,
+                        ),
+                        if (_imagePath != null)
+                          _MiniBtn(
+                            icon: Icons.close_rounded,
+                            label: '画像を消す',
+                            onTap: () => setState(() => _imagePath = null),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const Gap(AppSpacing.md),
+          // Shown as the icon when no image is set — any one character.
+          SizedBox(
+            width: 160,
+            child: TextFormField(
+              controller: _emoji,
+              enabled: _imagePath == null,
+              onChanged: (_) => setState(() {}),
+              decoration: _dec('表示する文字（1字）', hint: '例：N / 🎬'),
+              maxLength: 2,
+              buildCounter: (_,
+                      {required currentLength,
+                      required isFocused,
+                      maxLength}) =>
+                  null,
+            ),
+          ),
+          const Gap(AppSpacing.sm),
+          Text('背景の色',
+              style: AppType.body(12, color: AppColors.textSecondary)),
+          const Gap(AppSpacing.sm),
+          _ColorPicker(
+            selected: _colorValue,
+            onSelected: (v) => setState(() => _colorValue = v),
+          ),
+        ],
+      ),
+    );
+
+    final categorySection = _ChipPicker(
+      items: [
+        for (final c in categories)
+          (id: c.id, label: c.name, icon: c.iconData, color: c.color),
+      ],
+      selectedId: _categoryId,
+      onSelected: (id) => setState(() => _categoryId = id),
+      onAdd: () => _addCategory(categories.length),
+      onEdit: (id) => _editCategory(categories.firstWhere((c) => c.id == id)),
+      onDelete: (id) => _deleteCategory(categories.firstWhere((c) => c.id == id)),
+      canDelete: (id) => !categories.firstWhere((c) => c.id == id).isBuiltIn,
+    );
+
+    final paymentSection = _ChipPicker(
+      items: [
+        for (final m in methods)
+          (id: m.id, label: m.name, icon: m.iconData, color: m.color),
+      ],
+      selectedId: _paymentMethodId,
+      onSelected: (id) => setState(() => _paymentMethodId = id),
+      onAdd: () => _addPaymentMethod(methods.length),
+      onEdit: (id) => _editPaymentMethod(methods.firstWhere((m) => m.id == id)),
+      onDelete: (id) =>
+          _deletePaymentMethod(methods.firstWhere((m) => m.id == id)),
+      canDelete: (id) => !methods.firstWhere((m) => m.id == id).isBuiltIn,
+    );
+
+    final cospaSection = _fieldCard(
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: TextFormField(
+                  controller: _usage,
+                  decoration: _dec('月の推定利用回数', hint: '例：8'),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                  ],
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              const Gap(AppSpacing.md),
+              Expanded(
+                child: TextFormField(
+                  controller: _usageUnit,
+                  decoration: _dec('単位'),
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+            ],
+          ),
+          const Gap(AppSpacing.md),
+          CospaPreview(
+            monthlyAmount: _amountValue * _cycle.monthlyFactor,
+            currency: _currency,
+            usage: _usageValue,
+            unit: _usageUnit.text.trim().isEmpty
+                ? '回'
+                : _usageUnit.text.trim(),
+          ),
+        ],
+      ),
+    );
 
     return Scaffold(
       // Tap anywhere outside a text field to dismiss the keyboard.
@@ -403,176 +640,6 @@ class _SubscriptionFormScreenState
                           ],
                         ),
                       ),
-                      const SectionHeader('アイコン'),
-                      _fieldCard(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                _IconPreview(
-                                  imagePath: _imagePath,
-                                  emoji: _emoji.text.trim(),
-                                  colorValue: _colorValue,
-                                  name: _name.text.trim(),
-                                  busy: _pickingImage,
-                                  onTap: _chooseImageSource,
-                                ),
-                                const Gap(AppSpacing.lg),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        _imagePath != null
-                                            ? '画像を設定中'
-                                            : (_emoji.text.trim().isNotEmpty
-                                                ? '入力した文字を表示中'
-                                                : '未設定（※名前の頭文字を表示中）'),
-                                        style: AppType.body(13,
-                                            weight: FontWeight.w700,
-                                            color: _imagePath != null ||
-                                                    _emoji.text
-                                                        .trim()
-                                                        .isNotEmpty
-                                                ? AppColors.primaryDeep
-                                                : AppColors.textMuted),
-                                      ),
-                                      const Gap(AppSpacing.sm),
-                                      Wrap(
-                                        spacing: 8,
-                                        runSpacing: 8,
-                                        children: [
-                                          _MiniBtn(
-                                            icon: Icons.image_rounded,
-                                            label: '画像',
-                                            onTap: _chooseImageSource,
-                                          ),
-                                          if (_imagePath != null)
-                                            _MiniBtn(
-                                              icon: Icons.close_rounded,
-                                              label: '画像を消す',
-                                              onTap: () => setState(
-                                                  () => _imagePath = null),
-                                            ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Gap(AppSpacing.md),
-                            // Shown as the icon when no image is set — any one
-                            // character (a letter, kana, or emoji).
-                            SizedBox(
-                              width: 160,
-                              child: TextFormField(
-                                controller: _emoji,
-                                enabled: _imagePath == null,
-                                onChanged: (_) => setState(() {}),
-                                decoration:
-                                    _dec('表示する文字（1字）', hint: '例：N / 🎬'),
-                                maxLength: 2,
-                                buildCounter: (_,
-                                        {required currentLength,
-                                        required isFocused,
-                                        maxLength}) =>
-                                    null,
-                              ),
-                            ),
-                            const Gap(AppSpacing.sm),
-                            Text('背景の色',
-                                style: AppType.body(12,
-                                    color: AppColors.textSecondary)),
-                            const Gap(AppSpacing.sm),
-                            _ColorPicker(
-                              selected: _colorValue,
-                              onSelected: (v) =>
-                                  setState(() => _colorValue = v),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SectionHeader('カテゴリー'),
-                      _ChipPicker(
-                        items: [
-                          for (final c in categories)
-                            (
-                              id: c.id,
-                              label: c.name,
-                              icon: c.iconData,
-                              color: c.color
-                            ),
-                        ],
-                        selectedId: _categoryId,
-                        onSelected: (id) => setState(() => _categoryId = id),
-                        onAdd: () => _addCategory(categories.length),
-                      ),
-                      const SectionHeader('支払い方法'),
-                      _ChipPicker(
-                        items: [
-                          for (final m in methods)
-                            (
-                              id: m.id,
-                              label: m.name,
-                              icon: m.iconData,
-                              color: m.color
-                            ),
-                        ],
-                        selectedId: _paymentMethodId,
-                        onSelected: (id) =>
-                            setState(() => _paymentMethodId = id),
-                        onAdd: () => _addPaymentMethod(methods.length),
-                      ),
-                      SectionHeader('コスパチェッカー',
-                          trailing: Text('1回あたりの単価を自動計算',
-                              style: AppType.body(11,
-                                  color: AppColors.textMuted))),
-                      _fieldCard(
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  flex: 2,
-                                  child: TextFormField(
-                                    controller: _usage,
-                                    decoration: _dec('月の推定利用回数', hint: '例：8'),
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                            decimal: true),
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.allow(
-                                          RegExp(r'[0-9.]')),
-                                    ],
-                                    onChanged: (_) => setState(() {}),
-                                  ),
-                                ),
-                                const Gap(AppSpacing.md),
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: _usageUnit,
-                                    decoration: _dec('単位'),
-                                    onChanged: (_) => setState(() {}),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Gap(AppSpacing.md),
-                            CospaPreview(
-                              monthlyAmount:
-                                  _amountValue * _cycle.monthlyFactor,
-                              currency: _currency,
-                              usage: _usageValue,
-                              unit: _usageUnit.text.trim().isEmpty
-                                  ? '回'
-                                  : _usageUnit.text.trim(),
-                            ),
-                          ],
-                        ),
-                      ),
                       const SectionHeader('支払い日前の通知'),
                       _NotifyRulesEditor(
                         rules: _notifyRules,
@@ -616,6 +683,35 @@ class _SubscriptionFormScreenState
                           onPressed: _delete,
                         ),
                       ],
+                      // ── 詳細設定（デフォルトは折りたたみ）──────────────────────
+                      const Gap(AppSpacing.lg),
+                      _DetailsSection(
+                        expanded: _detailsExpanded,
+                        alwaysShow: alwaysShow,
+                        onToggleExpand: () => setState(
+                            () => _detailsExpanded = !_detailsExpanded),
+                        onToggleAlways: (v) {
+                          ref
+                              .read(settingsProvider.notifier)
+                              .setAlwaysShowDetails(v);
+                          setState(() {
+                            if (v) _detailsExpanded = true;
+                          });
+                        },
+                        children: [
+                          const SectionHeader('アイコン'),
+                          iconSection,
+                          const SectionHeader('カテゴリー'),
+                          categorySection,
+                          const SectionHeader('支払い方法'),
+                          paymentSection,
+                          SectionHeader('コスパチェッカー',
+                              trailing: Text('1回あたりの単価を自動計算',
+                                  style: AppType.body(11,
+                                      color: AppColors.textMuted))),
+                          cospaSection,
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -690,6 +786,116 @@ class _CycleSelector extends StatelessWidget {
   }
 }
 
+/// Collapsible "詳細設定" section holding the icon / category / payment method /
+/// cospa controls. Collapsed by default; a "常に表示" switch (persisted) makes it
+/// open automatically next time.
+class _DetailsSection extends StatelessWidget {
+  const _DetailsSection({
+    required this.expanded,
+    required this.alwaysShow,
+    required this.onToggleExpand,
+    required this.onToggleAlways,
+    required this.children,
+  });
+  final bool expanded;
+  final bool alwaysShow;
+  final VoidCallback onToggleExpand;
+  final ValueChanged<bool> onToggleAlways;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Pressable(
+          onTap: onToggleExpand,
+          scale: 0.99,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+              boxShadow: AppShadows.soft(),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.tune_rounded, color: AppColors.primaryDeep),
+                const Gap(AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('詳細設定をする',
+                          style: AppType.body(15, weight: FontWeight.w700)),
+                      Text('アイコン・カテゴリー・支払い方法・コスパ',
+                          style: AppType.body(11.5,
+                              color: AppColors.textMuted)),
+                    ],
+                  ),
+                ),
+                AnimatedRotation(
+                  turns: expanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: const Icon(Icons.expand_more_rounded,
+                      color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ),
+        AnimatedCrossFade(
+          firstChild: const SizedBox(width: double.infinity),
+          secondChild: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Gap(AppSpacing.sm),
+              _fieldCardStatic(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('常に表示',
+                              style:
+                                  AppType.body(14, weight: FontWeight.w700)),
+                          Text('次回から詳細設定を開いた状態にします',
+                              style: AppType.body(11.5,
+                                  color: AppColors.textMuted)),
+                        ],
+                      ),
+                    ),
+                    Switch(value: alwaysShow, onChanged: onToggleAlways),
+                  ],
+                ),
+              ),
+              ...children,
+            ],
+          ),
+          crossFadeState: expanded
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 220),
+        ),
+      ],
+    );
+  }
+
+  Widget _fieldCardStatic({required Widget child}) => Container(
+        margin: const EdgeInsets.only(bottom: AppSpacing.xs),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+          boxShadow: AppShadows.soft(),
+        ),
+        child: child,
+      );
+}
+
 class _ColorPicker extends StatelessWidget {
   const _ColorPicker({required this.selected, required this.onSelected});
   final int selected;
@@ -735,6 +941,9 @@ class _ChipPicker extends StatelessWidget {
     required this.selectedId,
     required this.onSelected,
     this.onAdd,
+    this.onEdit,
+    this.onDelete,
+    this.canDelete,
   });
   final List<({String id, String label, IconData icon, Color color})> items;
   final String? selectedId;
@@ -743,6 +952,11 @@ class _ChipPicker extends StatelessWidget {
   /// When provided, a "+" chip is appended that creates a new entry inline.
   final VoidCallback? onAdd;
 
+  /// Long-press actions. Tap always selects; long-press opens a menu.
+  final ValueChanged<String>? onEdit;
+  final ValueChanged<String>? onDelete;
+  final bool Function(String id)? canDelete;
+
   @override
   Widget build(BuildContext context) {
     return Wrap(
@@ -750,20 +964,80 @@ class _ChipPicker extends StatelessWidget {
       runSpacing: 8,
       children: [
         for (final it in items)
-          _chip(it, selectedId == it.id,
+          _chip(context, it, selectedId == it.id,
               () => onSelected(selectedId == it.id ? null : it.id)),
         if (onAdd != null) _addChip(onAdd!),
       ],
     );
   }
 
+  void _showMenu(
+      BuildContext context, ({String id, String label, IconData icon, Color color}) it) {
+    final deletable = canDelete?.call(it.id) ?? false;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.canvas,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Gap(AppSpacing.sm),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(it.icon, size: 18, color: it.color),
+                  const Gap(8),
+                  Text(it.label, style: AppType.display(16)),
+                ],
+              ),
+            ),
+            if (onEdit != null)
+              ListTile(
+                leading: const Icon(Icons.edit_rounded,
+                    color: AppColors.primaryDeep),
+                title: const Text('編集する'),
+                onTap: () {
+                  Navigator.pop(context);
+                  onEdit!(it.id);
+                },
+              ),
+            if (onDelete != null && deletable)
+              ListTile(
+                leading: const Icon(Icons.delete_outline_rounded,
+                    color: AppColors.danger),
+                title: const Text('削除する',
+                    style: TextStyle(color: AppColors.danger)),
+                onTap: () {
+                  Navigator.pop(context);
+                  onDelete!(it.id);
+                },
+              ),
+            if (onDelete != null && !deletable)
+              const ListTile(
+                leading: Icon(Icons.lock_outline_rounded,
+                    color: AppColors.textMuted),
+                title: Text('既定の項目は削除できません',
+                    style: TextStyle(color: AppColors.textMuted)),
+              ),
+            const Gap(AppSpacing.sm),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _chip(
+    BuildContext context,
     ({String id, String label, IconData icon, Color color}) it,
     bool sel,
     VoidCallback onTap,
   ) =>
       Pressable(
         onTap: onTap,
+        onLongPress:
+            onEdit != null ? () => _showMenu(context, it) : null,
         scale: 0.95,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
