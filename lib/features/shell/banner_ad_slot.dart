@@ -6,9 +6,10 @@ import '../../core/theme/app_colors.dart';
 import '../../providers/core_providers.dart';
 import '../../providers/premium_provider.dart';
 
-/// The fixed bottom banner. Free tier only — premium removes it entirely
-/// (returns a zero-size box). Renders a soft placeholder while/if the ad fails
-/// to load so the layout never jumps.
+/// The fixed bottom banner. Free tier only — premium removes it entirely.
+/// The slot only takes up space once a real ad has actually loaded; while
+/// loading or if it fails (e.g. no fill in dev), it collapses to nothing rather
+/// than showing an empty gray box.
 class BannerAdSlot extends ConsumerStatefulWidget {
   const BannerAdSlot({super.key});
 
@@ -51,7 +52,8 @@ class _BannerAdSlotState extends ConsumerState<BannerAdSlot> {
   @override
   Widget build(BuildContext context) {
     final isPremium = ref.watch(premiumProvider);
-    if (isPremium) return const SizedBox.shrink();
+    // Nothing to show unless a real ad has loaded: no gray placeholder.
+    if (isPremium || !_loaded || _ad == null) return const SizedBox.shrink();
 
     return SafeArea(
       top: false,
@@ -60,33 +62,11 @@ class _BannerAdSlotState extends ConsumerState<BannerAdSlot> {
         width: double.infinity,
         alignment: Alignment.center,
         color: AppColors.canvas,
-        child: _loaded && _ad != null
-            ? SizedBox(
-                width: _ad!.size.width.toDouble(),
-                height: _ad!.size.height.toDouble(),
-                child: AdWidget(ad: _ad!),
-              )
-            : const _Placeholder(),
-      ),
-    );
-  }
-}
-
-class _Placeholder extends StatelessWidget {
-  const _Placeholder();
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 44,
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      alignment: Alignment.center,
-      decoration: const BoxDecoration(
-        color: AppColors.surfaceSunken,
-        borderRadius: BorderRadius.all(Radius.circular(12)),
-      ),
-      child: const Text(
-        'ⓘ 広告  —  プレミアムで非表示',
-        style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+        child: SizedBox(
+          width: _ad!.size.width.toDouble(),
+          height: _ad!.size.height.toDouble(),
+          child: AdWidget(ad: _ad!),
+        ),
       ),
     );
   }
