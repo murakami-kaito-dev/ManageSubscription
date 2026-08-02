@@ -19,6 +19,7 @@ import '../../providers/premium_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/subscription_providers.dart';
 import '../premium/premium_screen.dart';
+import 'feedback_sheet.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -147,9 +148,7 @@ class SettingsScreen extends ConsumerWidget {
                         _Row(
                           icon: Icons.mail_rounded,
                           label: 'ご意見・ご要望',
-                          onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('ご意見ありがとうございます！')),
-                          ),
+                          onTap: () => showFeedbackSheet(context),
                         ),
                       ],
                     ),
