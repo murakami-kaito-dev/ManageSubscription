@@ -24,6 +24,7 @@ class AppTheme {
 
     return base.copyWith(
       colorScheme: scheme,
+      extensions: <ThemeExtension<dynamic>>[AppAccent.from(primary)],
       scaffoldBackgroundColor: AppColors.canvas,
       canvasColor: AppColors.canvas,
       textTheme: AppType.textTheme(base.textTheme),

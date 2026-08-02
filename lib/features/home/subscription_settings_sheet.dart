@@ -184,7 +184,7 @@ class _NavRow extends StatelessWidget {
             horizontal: AppSpacing.lg, vertical: AppSpacing.lg),
         child: Row(
           children: [
-            Icon(icon, size: 22, color: AppColors.primaryDeep),
+            Icon(icon, size: 22, color: AppAccent.of(context).deep),
             const Gap(AppSpacing.md),
             Expanded(child: Text(label, style: AppType.body(15))),
             const Icon(Icons.chevron_right_rounded,
@@ -220,8 +220,8 @@ class _SortRow extends StatelessWidget {
             if (mode.isPremium) const PremiumCrown(size: 15),
             if (selected) ...[
               const Gap(AppSpacing.sm),
-              const Icon(Icons.check_rounded,
-                  color: AppColors.primary, size: 20),
+              Icon(Icons.check_rounded,
+                  color: AppAccent.of(context).primary, size: 20),
             ],
           ],
         ),

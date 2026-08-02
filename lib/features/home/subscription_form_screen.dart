@@ -297,8 +297,8 @@ class _SubscriptionFormScreenState
           children: [
             const Gap(AppSpacing.md),
             ListTile(
-              leading: const Icon(Icons.photo_library_rounded,
-                  color: AppColors.primaryDeep),
+              leading: Icon(Icons.photo_library_rounded,
+                  color: AppAccent.of(context).deep),
               title: const Text('写真から選ぶ'),
               onTap: () {
                 Navigator.pop(context);
@@ -306,8 +306,8 @@ class _SubscriptionFormScreenState
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_camera_rounded,
-                  color: AppColors.primaryDeep),
+              leading: Icon(Icons.photo_camera_rounded,
+                  color: AppAccent.of(context).deep),
               title: const Text('カメラで撮影'),
               onTap: () {
                 Navigator.pop(context);
@@ -429,7 +429,7 @@ class _SubscriptionFormScreenState
                           weight: FontWeight.w700,
                           color: _imagePath != null ||
                                   _emoji.text.trim().isNotEmpty
-                              ? AppColors.primaryDeep
+                              ? AppAccent.of(context).deep
                               : AppColors.textMuted),
                     ),
                     const Gap(AppSpacing.sm),
@@ -759,8 +759,8 @@ class _SubscriptionFormScreenState
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                 child: Row(
                   children: [
-                    const Icon(Icons.event_rounded,
-                        color: AppColors.primaryDeep),
+                    Icon(Icons.event_rounded,
+                        color: AppAccent.of(context).deep),
                     const Gap(AppSpacing.md),
                     Expanded(
                       child: Column(
@@ -818,7 +818,7 @@ class _CycleSelector extends StatelessWidget {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color:
-                        value == c.$1 ? AppColors.primary : Colors.transparent,
+                        value == c.$1 ? AppAccent.of(context).primary : Colors.transparent,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Text(c.$2,
@@ -873,7 +873,7 @@ class _CustomIntervalRow extends StatelessWidget {
                             horizontal: 14, vertical: 9),
                         decoration: BoxDecoration(
                           color:
-                              unit == u ? AppColors.primary : AppColors.surface,
+                              unit == u ? AppAccent.of(context).primary : AppColors.surface,
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(u.shortLabel,
@@ -891,7 +891,7 @@ class _CustomIntervalRow extends StatelessWidget {
         ),
         const Gap(AppSpacing.sm),
         Text('「$count${unit.everyLabel}」に支払われます',
-            style: AppType.body(12.5, color: AppColors.primaryDeep)),
+            style: AppType.body(12.5, color: AppAccent.of(context).deep)),
       ],
     );
   }
@@ -915,7 +915,7 @@ class _Stepper extends StatelessWidget {
               color: AppColors.surface,
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 18, color: AppColors.primaryDeep),
+            child: Icon(icon, size: 18, color: AppAccent.of(context).deep),
           ),
         );
     return Row(
@@ -1108,8 +1108,8 @@ class _ChipPicker extends StatelessWidget {
             ),
             if (onEdit != null)
               ListTile(
-                leading: const Icon(Icons.edit_rounded,
-                    color: AppColors.primaryDeep),
+                leading: Icon(Icons.edit_rounded,
+                    color: AppAccent.of(context).deep),
                 title: const Text('編集する'),
                 onTap: () {
                   Navigator.pop(context);
@@ -1155,7 +1155,7 @@ class _ChipPicker extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
           decoration: BoxDecoration(
-            color: sel ? AppColors.primary : AppColors.surface,
+            color: sel ? AppAccent.of(context).primary : AppColors.surface,
             borderRadius: BorderRadius.circular(999),
             boxShadow: sel ? null : AppShadows.soft(),
           ),
@@ -1237,8 +1237,8 @@ class _NotifyRulesEditor extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 children: [
-                  const Icon(Icons.notifications_active_rounded,
-                      size: 20, color: AppColors.primaryDeep),
+                  Icon(Icons.notifications_active_rounded,
+                      size: 20, color: AppAccent.of(context).deep),
                   const Gap(AppSpacing.md),
                   Expanded(
                     child: Pressable(
@@ -1288,19 +1288,19 @@ class _NotifyRulesEditor extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 10),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: AppColors.primarySoft,
+                color: AppAccent.of(context).soft,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.add_rounded,
-                      size: 18, color: AppColors.primaryDeep),
+                  Icon(Icons.add_rounded,
+                      size: 18, color: AppAccent.of(context).deep),
                   const Gap(6),
                   Text('通知を追加',
                       style: AppType.body(14,
                           weight: FontWeight.w700,
-                          color: AppColors.primaryDeep)),
+                          color: AppAccent.of(context).deep)),
                 ],
               ),
             ),
@@ -1409,7 +1409,7 @@ class _DaysBeforeWheelState extends State<_DaysBeforeWheel> {
                 height: 40,
                 margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.12),
+                  color: AppAccent.of(context).primary.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
@@ -1433,7 +1433,7 @@ class _DaysBeforeWheelState extends State<_DaysBeforeWheel> {
                       i == 0 ? '当日' : '$i日前',
                       style: AppType.display(sel ? 20 : 16,
                           color: sel
-                              ? AppColors.primaryDeep
+                              ? AppAccent.of(context).deep
                               : AppColors.textMuted),
                     ),
                   );
@@ -1496,7 +1496,7 @@ class _WheelTimePickerState extends State<_WheelTimePicker> {
                 height: 40,
                 margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.12),
+                  color: AppAccent.of(context).primary.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
@@ -1557,7 +1557,7 @@ class _WheelTimePickerState extends State<_WheelTimePicker> {
             child: Text(
               '${i.toString().padLeft(2, '0')}$suffix',
               style: AppType.display(isSel ? 22 : 18,
-                  color: isSel ? AppColors.primaryDeep : AppColors.textMuted),
+                  color: isSel ? AppAccent.of(context).deep : AppColors.textMuted),
             ),
           );
         },
@@ -1633,8 +1633,8 @@ class _IconPreview extends StatelessWidget {
               bottom: 3,
               child: Container(
                 padding: const EdgeInsets.all(3),
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
+                decoration: BoxDecoration(
+                  color: AppAccent.of(context).primary,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.edit_rounded,
@@ -1670,7 +1670,7 @@ class _MiniBtn extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: AppColors.primaryDeep),
+            Icon(icon, size: 16, color: AppAccent.of(context).deep),
             const Gap(5),
             Text(label, style: AppType.body(12.5, weight: FontWeight.w600)),
           ],

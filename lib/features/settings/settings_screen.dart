@@ -198,7 +198,7 @@ class SettingsScreen extends ConsumerWidget {
               ListTile(
                 title: Text('${c.symbol}  ${c.code}'),
                 trailing: c == current
-                    ? const Icon(Icons.check_rounded, color: AppColors.primary)
+                    ? Icon(Icons.check_rounded, color: AppAccent.of(context).primary)
                     : null,
                 onTap: () => Navigator.pop(context, c),
               ),
@@ -275,7 +275,7 @@ class _PremiumBanner extends StatelessWidget {
         margin: const EdgeInsets.only(top: AppSpacing.sm),
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          color: AppColors.primarySoft,
+          color: AppAccent.of(context).soft,
           borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
         ),
         child: Row(
@@ -310,7 +310,7 @@ class _PremiumBanner extends StatelessWidget {
             colors: AppColors.premiumGradient,
           ),
           borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-          boxShadow: AppShadows.accentGlow(AppColors.primary, intensity: 1.2),
+          boxShadow: AppShadows.accentGlow(AppAccent.of(context).primary, intensity: 1.2),
         ),
         child: Row(
           children: [
@@ -362,7 +362,7 @@ class _Row extends StatelessWidget {
             horizontal: AppSpacing.lg, vertical: AppSpacing.lg),
         child: Row(
           children: [
-            Icon(icon, size: 22, color: AppColors.primaryDeep),
+            Icon(icon, size: 22, color: AppAccent.of(context).deep),
             const Gap(AppSpacing.md),
             Expanded(child: Text(label, style: AppType.body(15))),
             if (premium) ...[const PremiumCrown(size: 15), const Gap(AppSpacing.sm)],

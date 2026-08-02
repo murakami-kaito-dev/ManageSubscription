@@ -132,6 +132,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             values: [for (final d in data) d.amount],
             selectedIndex: _month - 1,
             onSelect: (i) => setState(() => _month = i + 1),
+            accent: AppAccent.of(context).primary,
           ),
         ),
         const Gap(AppSpacing.lg),
@@ -196,6 +197,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             values: [for (final e in data) e.amount],
             selectedIndex: selectedIndex,
             onSelect: (i) => setState(() => _selectedYear = data[i].year),
+            accent: AppAccent.of(context).primary,
           ),
         ),
         const Gap(AppSpacing.lg),
@@ -270,7 +272,7 @@ class _ScopeToggle extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: sel ? AppColors.primary : Colors.transparent,
+            color: sel ? AppAccent.of(context).primary : Colors.transparent,
             borderRadius: BorderRadius.circular(999),
           ),
           child: Text(label,
@@ -344,8 +346,8 @@ class _LockedYearPreview extends ConsumerWidget {
                 Container(
                   width: 64,
                   height: 64,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
+                  decoration: BoxDecoration(
+                    color: AppAccent.of(context).primary,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.lock_rounded,

@@ -59,11 +59,11 @@ class SoftEmptyState extends StatelessWidget {
             Container(
               width: 76,
               height: 76,
-              decoration: const BoxDecoration(
-                color: AppColors.primarySoft,
+              decoration: BoxDecoration(
+                color: AppAccent.of(context).soft,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 34, color: AppColors.primaryDeep),
+              child: Icon(icon, size: 34, color: AppAccent.of(context).deep),
             ),
             const Gap(AppSpacing.lg),
             Text(title,

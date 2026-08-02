@@ -158,7 +158,7 @@ class _Hero extends StatelessWidget {
               colors: AppColors.premiumGradient,
             ),
             borderRadius: BorderRadius.circular(38),
-            boxShadow: AppShadows.accentGlow(AppColors.primary, intensity: 1.4),
+            boxShadow: AppShadows.accentGlow(AppAccent.of(context).primary, intensity: 1.4),
           ),
           child: const Icon(Icons.savings_rounded,
               size: 64, color: AppColors.onPrimary),
@@ -241,7 +241,7 @@ class _ComparisonTable extends StatelessWidget {
                   width: 84,
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    color: AppAccent.of(context).primary,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text('プレミアム',
@@ -273,10 +273,10 @@ class _ComparisonTable extends StatelessWidget {
                     width: 84,
                     child: Center(
                       child: _rows[i].$3 == '∞'
-                          ? const Icon(Icons.all_inclusive_rounded,
-                              color: AppColors.primary, size: 22)
-                          : const Icon(Icons.check_circle_rounded,
-                              color: AppColors.primary, size: 22),
+                          ? Icon(Icons.all_inclusive_rounded,
+                              color: AppAccent.of(context).primary, size: 22)
+                          : Icon(Icons.check_circle_rounded,
+                              color: AppAccent.of(context).primary, size: 22),
                     ),
                   ),
                 ],

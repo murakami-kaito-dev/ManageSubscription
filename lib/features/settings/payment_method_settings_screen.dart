@@ -188,7 +188,7 @@ class _PaymentMethodEditorDialogState extends State<PaymentMethodEditorDialog> {
   String? _error;
   late int _icon = widget.existing?.icon ?? _icons.first.codePoint;
   late int _color =
-      widget.existing?.colorValue ?? AppColors.primaryDeep.value;
+      widget.existing?.colorValue ?? AppAccent.of(context).deep.value;
 
   static const _icons = IconRegistry.paymentIcons;
 

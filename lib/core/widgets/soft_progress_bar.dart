@@ -21,7 +21,7 @@ class SoftProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fill = color ?? AppColors.primary;
+    final fill = color ?? AppAccent.of(context).primary;
     final clamped = value.clamp(0.0, 1.0);
     return ClipRRect(
       borderRadius: BorderRadius.circular(height),

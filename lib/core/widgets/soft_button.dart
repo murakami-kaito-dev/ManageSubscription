@@ -33,7 +33,7 @@ class SoftButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = onPressed != null;
-    final primary = accent ?? AppColors.primary;
+    final primary = accent ?? AppAccent.of(context).primary;
 
     late final Color bg;
     late final Color fg;

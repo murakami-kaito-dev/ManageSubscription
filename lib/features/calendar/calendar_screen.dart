@@ -126,21 +126,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                             AppType.body(14, color: AppColors.coral),
                         defaultTextStyle: AppType.body(14),
                         todayDecoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.18),
+                          color: AppAccent.of(context).primary.withOpacity(0.18),
                           shape: BoxShape.circle,
                         ),
                         todayTextStyle: AppType.body(14,
                             weight: FontWeight.w700,
-                            color: AppColors.primaryDeep),
-                        selectedDecoration: const BoxDecoration(
-                          color: AppColors.primary,
+                            color: AppAccent.of(context).deep),
+                        selectedDecoration: BoxDecoration(
+                          color: AppAccent.of(context).primary,
                           shape: BoxShape.circle,
                         ),
                         selectedTextStyle: AppType.body(14,
                             weight: FontWeight.w700, color: AppColors.onPrimary),
                         markersMaxCount: 4,
-                        markerDecoration: const BoxDecoration(
-                          color: AppColors.primary,
+                        markerDecoration: BoxDecoration(
+                          color: AppAccent.of(context).primary,
                           shape: BoxShape.circle,
                         ),
                         markerSize: 5,
@@ -190,7 +190,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         Text(
                           fmt.format(selectedPayments.fold<double>(
                               0, (sum, s) => sum + s.amountIn(currency))),
-                          style: AppType.display(17, color: AppColors.primaryDeep),
+                          style: AppType.display(17, color: AppAccent.of(context).deep),
                         ),
                     ],
                   ),

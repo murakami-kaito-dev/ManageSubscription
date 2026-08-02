@@ -97,7 +97,7 @@ class _SoftNavBar extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          color: AppColors.primarySoft,
+                          color: AppAccent.of(context).soft,
                           borderRadius: BorderRadius.circular(18),
                         ),
                       ),
@@ -143,7 +143,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.primaryDeep : AppColors.textMuted;
+    final color = selected ? AppAccent.of(context).deep : AppColors.textMuted;
     return Pressable(
       onTap: onTap,
       scale: 0.9,

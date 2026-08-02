@@ -132,13 +132,13 @@ class _SummaryCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.primary, AppColors.primaryDeep],
+          colors: [AppAccent.of(context).primary, AppAccent.of(context).deep],
         ),
         borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-        boxShadow: AppShadows.accentGlow(AppColors.primary, intensity: 1.2),
+        boxShadow: AppShadows.accentGlow(AppAccent.of(context).primary, intensity: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,13 +263,13 @@ class _AddFab extends StatelessWidget {
         width: 62,
         height: 62,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.primary, AppColors.primaryDeep],
+            colors: [AppAccent.of(context).primary, AppAccent.of(context).deep],
           ),
           shape: BoxShape.circle,
-          boxShadow: AppShadows.accentGlow(AppColors.primary, intensity: 1.4),
+          boxShadow: AppShadows.accentGlow(AppAccent.of(context).primary, intensity: 1.4),
         ),
         child: const Icon(Icons.add_rounded, color: AppColors.onPrimary, size: 30),
       ),

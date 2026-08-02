@@ -122,7 +122,7 @@ class _ScopeTabs extends StatelessWidget {
                 height: 3,
                 width: sel ? 56 : 0,
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: AppAccent.of(context).primary,
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
@@ -166,7 +166,7 @@ class _AxisSelector extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: axis == a ? AppColors.primary : Colors.transparent,
+                    color: axis == a ? AppAccent.of(context).primary : Colors.transparent,
                     borderRadius: BorderRadius.circular(15),
                   ),
                   child: Row(
@@ -313,7 +313,7 @@ class _CospaList extends ConsumerWidget {
                       TextSpan(
                         text: CurrencyFormatter(subs[i].currency)
                             .format(subs[i].costPerUse!),
-                        style: AppType.display(17, color: AppColors.primaryDeep),
+                        style: AppType.display(17, color: AppAccent.of(context).deep),
                       ),
                       TextSpan(
                         text: ' /${subs[i].usageUnit}',
