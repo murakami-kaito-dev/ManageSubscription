@@ -36,6 +36,7 @@ class PaymentMethodSettingsScreen extends ConsumerWidget {
       builder: (_) => PaymentMethodEditorDialog(
         existing: existing,
         index: methods.length,
+        nameEditable: existing == null || !existing.isBuiltIn,
         existingNames: [
           for (final m in methods)
             if (m.id != existing?.id) m.name,
@@ -44,6 +45,34 @@ class PaymentMethodSettingsScreen extends ConsumerWidget {
     );
     if (result != null) {
       await ref.read(paymentMethodsProvider.notifier).save(result);
+    }
+  }
+
+  Future<void> _confirmDelete(
+      BuildContext context, WidgetRef ref, PaymentMethod m) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('支払い方法を削除しますか？'),
+        content: Text(
+          '「${m.name}」を削除します。\n\n'
+          'この支払い方法を設定していたサブスクは「未設定」になります'
+          '（サブスク自体は削除されません）。\n'
+          'この操作は取り消せません。',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('キャンセル')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('削除',
+                  style: TextStyle(color: AppColors.danger))),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await ref.read(paymentMethodsProvider.notifier).delete(m.id);
     }
   }
 
@@ -86,22 +115,23 @@ class PaymentMethodSettingsScreen extends ConsumerWidget {
                             width: 42,
                             height: 42,
                             decoration: BoxDecoration(
-                              color: AppColors.primarySoft,
+                              color: m.color.withOpacity(0.18),
                               borderRadius: BorderRadius.circular(13),
                             ),
-                            child: Icon(m.iconData,
-                                color: AppColors.primaryDeep),
+                            child: Icon(m.iconData, color: m.color),
                           ),
                           const Gap(AppSpacing.md),
                           Expanded(
                               child: Text(m.name, style: AppType.body(15.5))),
-                          Pressable(
-                            onTap: () => ref
-                                .read(paymentMethodsProvider.notifier)
-                                .delete(m.id),
-                            child: const Icon(Icons.delete_outline_rounded,
-                                color: AppColors.textMuted),
-                          ),
+                          if (m.isBuiltIn)
+                            const Icon(Icons.lock_outline_rounded,
+                                size: 18, color: AppColors.textMuted)
+                          else
+                            Pressable(
+                              onTap: () => _confirmDelete(context, ref, m),
+                              child: const Icon(Icons.delete_outline_rounded,
+                                  color: AppColors.textMuted),
+                            ),
                         ],
                       ),
                     ),
@@ -129,12 +159,16 @@ class PaymentMethodEditorDialog extends StatefulWidget {
     this.existing,
     required this.index,
     this.existingNames = const [],
+    this.nameEditable = true,
   });
   final PaymentMethod? existing;
   final int index;
 
   /// Names of the other payment methods, used to block duplicates.
   final List<String> existingNames;
+
+  /// Built-in methods keep their name fixed (icon/color still editable).
+  final bool nameEditable;
 
   @override
   State<PaymentMethodEditorDialog> createState() => _PaymentMethodEditorDialogState();
@@ -145,6 +179,8 @@ class _PaymentMethodEditorDialogState extends State<PaymentMethodEditorDialog> {
       TextEditingController(text: widget.existing?.name ?? '');
   String? _error;
   late int _icon = widget.existing?.icon ?? _icons.first.codePoint;
+  late int _color =
+      widget.existing?.colorValue ?? AppColors.primaryDeep.value;
 
   static const _icons = IconRegistry.paymentIcons;
 
@@ -168,7 +204,13 @@ class _PaymentMethodEditorDialogState extends State<PaymentMethodEditorDialog> {
         children: [
           TextField(
             controller: _name,
-            decoration: InputDecoration(labelText: '名前', errorText: _error),
+            enabled: widget.nameEditable,
+            decoration: InputDecoration(
+              labelText: '名前',
+              errorText: _error,
+              helperText:
+                  widget.nameEditable ? null : '既定の支払い方法名は変更できません',
+            ),
             onChanged: (_) {
               if (_error != null) setState(() => _error = null);
             },
@@ -188,12 +230,12 @@ class _PaymentMethodEditorDialogState extends State<PaymentMethodEditorDialog> {
                     height: 40,
                     decoration: BoxDecoration(
                       color: _icon == ic.codePoint
-                          ? AppColors.primarySoft
+                          ? Color(_color).withOpacity(0.2)
                           : AppColors.surfaceSunken,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: _icon == ic.codePoint
-                            ? AppColors.primary
+                            ? Color(_color)
                             : Colors.transparent,
                         width: 2,
                       ),
@@ -201,8 +243,35 @@ class _PaymentMethodEditorDialogState extends State<PaymentMethodEditorDialog> {
                     child: Icon(ic,
                         size: 20,
                         color: _icon == ic.codePoint
-                            ? AppColors.primaryDeep
+                            ? Color(_color)
                             : AppColors.textSecondary),
+                  ),
+                ),
+            ],
+          ),
+          const Gap(AppSpacing.lg),
+          const SectionHeader('アイコンカラー'),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (final col in AppColors.chartPalette)
+                Pressable(
+                  scale: 0.85,
+                  onTap: () => setState(() => _color = col.value),
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: col,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: _color == col.value
+                            ? AppColors.textPrimary
+                            : Colors.transparent,
+                        width: 3,
+                      ),
+                    ),
                   ),
                 ),
             ],
@@ -233,6 +302,7 @@ class _PaymentMethodEditorDialogState extends State<PaymentMethodEditorDialog> {
                 name: name,
                 icon: _icon,
                 sortOrder: widget.existing?.sortOrder ?? widget.index,
+                colorValue: _color,
               ),
             );
           },

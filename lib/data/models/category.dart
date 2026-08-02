@@ -22,6 +22,9 @@ class Category {
   IconData get iconData =>
       IconRegistry.resolve(icon, fallback: IconRegistry.fallbackCategory);
 
+  /// The three seeded categories (ids cat_0..) can't be deleted, only restyled.
+  bool get isBuiltIn => id.startsWith('cat_');
+
   Category copyWith({
     String? name,
     int? colorValue,

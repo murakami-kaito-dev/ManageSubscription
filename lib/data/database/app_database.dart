@@ -18,10 +18,20 @@ class AppDatabase {
     final path = p.join(dir.path, 'manage_subscription.db');
     return openDatabase(
       path,
-      version: 1,
+      version: 2,
       onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Payment methods gained a color; existing rows default to primaryDeep.
+      await db.execute(
+        'ALTER TABLE payment_methods ADD COLUMN color INTEGER NOT NULL DEFAULT ${0xFF546C60}',
+      );
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -40,7 +50,8 @@ class AppDatabase {
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         icon INTEGER NOT NULL,
-        sort_order INTEGER NOT NULL DEFAULT 0
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        color INTEGER NOT NULL DEFAULT ${0xFF546C60}
       )
     ''');
 
@@ -94,9 +105,9 @@ class AppDatabase {
     }
 
     final methods = [
-      ('クレジットカード', Icons.credit_card_rounded.codePoint),
-      ('App Store', Icons.apple_rounded.codePoint),
-      ('PayPay', Icons.account_balance_wallet_rounded.codePoint),
+      ('クレジットカード', Icons.credit_card_rounded.codePoint, 0xFF546C60),
+      ('App Store', Icons.apple_rounded.codePoint, 0xFF6E9080),
+      ('PayPay', Icons.account_balance_wallet_rounded.codePoint, 0xFFE1836B),
     ];
     for (var i = 0; i < methods.length; i++) {
       batch.insert('payment_methods', {
@@ -104,6 +115,7 @@ class AppDatabase {
         'name': methods[i].$1,
         'icon': methods[i].$2,
         'sort_order': i,
+        'color': methods[i].$3,
       });
     }
 

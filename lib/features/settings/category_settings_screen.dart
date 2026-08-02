@@ -35,6 +35,8 @@ class CategorySettingsScreen extends ConsumerWidget {
       builder: (_) => CategoryEditorDialog(
         existing: existing,
         index: categories.length,
+        // Built-in categories keep their name; only icon/color are editable.
+        nameEditable: existing == null || !existing.isBuiltIn,
         existingNames: [
           for (final c in categories)
             if (c.id != existing?.id) c.name,
@@ -43,6 +45,34 @@ class CategorySettingsScreen extends ConsumerWidget {
     );
     if (result != null) {
       await ref.read(categoriesProvider.notifier).save(result);
+    }
+  }
+
+  Future<void> _confirmDelete(
+      BuildContext context, WidgetRef ref, Category c) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('カテゴリーを削除しますか？'),
+        content: Text(
+          '「${c.name}」を削除します。\n\n'
+          'このカテゴリーを設定していたサブスクは「未設定」になります'
+          '（サブスク自体は削除されません）。\n'
+          'この操作は取り消せません。',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('キャンセル')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('削除',
+                  style: TextStyle(color: AppColors.danger))),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await ref.read(categoriesProvider.notifier).delete(c.id);
     }
   }
 
@@ -94,13 +124,16 @@ class CategorySettingsScreen extends ConsumerWidget {
                           const Gap(AppSpacing.md),
                           Expanded(
                               child: Text(c.name, style: AppType.body(15.5))),
-                          Pressable(
-                            onTap: () => ref
-                                .read(categoriesProvider.notifier)
-                                .delete(c.id),
-                            child: const Icon(Icons.delete_outline_rounded,
-                                color: AppColors.textMuted),
-                          ),
+                          // Built-in categories can be restyled but not deleted.
+                          if (c.isBuiltIn)
+                            const Icon(Icons.lock_outline_rounded,
+                                size: 18, color: AppColors.textMuted)
+                          else
+                            Pressable(
+                              onTap: () => _confirmDelete(context, ref, c),
+                              child: const Icon(Icons.delete_outline_rounded,
+                                  color: AppColors.textMuted),
+                            ),
                         ],
                       ),
                     ),
@@ -128,12 +161,16 @@ class CategoryEditorDialog extends StatefulWidget {
     this.existing,
     required this.index,
     this.existingNames = const [],
+    this.nameEditable = true,
   });
   final Category? existing;
   final int index;
 
   /// Names of the other categories, used to block duplicates.
   final List<String> existingNames;
+
+  /// Built-in categories keep their name fixed (icon/color still editable).
+  final bool nameEditable;
 
   @override
   State<CategoryEditorDialog> createState() => _CategoryEditorDialogState();
@@ -170,9 +207,12 @@ class _CategoryEditorDialogState extends State<CategoryEditorDialog> {
           children: [
             TextField(
               controller: _name,
+              enabled: widget.nameEditable,
               decoration: InputDecoration(
                 labelText: '名前',
                 errorText: _error,
+                helperText:
+                    widget.nameEditable ? null : '既定のカテゴリー名は変更できません',
               ),
               onChanged: (_) {
                 if (_error != null) setState(() => _error = null);

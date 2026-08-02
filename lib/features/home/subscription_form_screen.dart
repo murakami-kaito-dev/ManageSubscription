@@ -428,7 +428,7 @@ class _SubscriptionFormScreenState
                                         _imagePath != null
                                             ? '画像を設定中'
                                             : (_emoji.text.trim().isNotEmpty
-                                                ? '絵文字を設定中'
+                                                ? '入力した文字を表示中'
                                                 : '未設定（※名前の頭文字を表示中）'),
                                         style: AppType.body(13,
                                             weight: FontWeight.w700,
@@ -464,14 +464,16 @@ class _SubscriptionFormScreenState
                               ],
                             ),
                             const Gap(AppSpacing.md),
-                            // Emoji is used when no image is set.
+                            // Shown as the icon when no image is set — any one
+                            // character (a letter, kana, or emoji).
                             SizedBox(
-                              width: 140,
+                              width: 160,
                               child: TextFormField(
                                 controller: _emoji,
                                 enabled: _imagePath == null,
                                 onChanged: (_) => setState(() {}),
-                                decoration: _dec('絵文字', hint: '🎬'),
+                                decoration:
+                                    _dec('表示する文字（1字）', hint: '例：N / 🎬'),
                                 maxLength: 2,
                                 buildCounter: (_,
                                         {required currentLength,
@@ -516,7 +518,7 @@ class _SubscriptionFormScreenState
                               id: m.id,
                               label: m.name,
                               icon: m.iconData,
-                              color: AppColors.primaryDeep
+                              color: m.color
                             ),
                         ],
                         selectedId: _paymentMethodId,
