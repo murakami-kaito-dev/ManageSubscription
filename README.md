@@ -58,18 +58,18 @@ flutter pub get
 flutter run
 ```
 
-カテゴリー/支払い方法のアイコンはユーザー選択のコードポイントをDBに保存し、実行時に
-`IconData` を生成します。そのためリリースビルドではアイコンのツリーシェイクを無効化します:
+アイコンは const な `IconRegistry` 経由で解決するため、通常どおりツリーシェイクが効きます
+（`--no-tree-shake-icons` は不要）:
 ```bash
-flutter build apk --release --no-tree-shake-icons
-flutter build ios --release --no-tree-shake-icons
+flutter build apk --release
+flutter build ios --release
 ```
 
 ### 開発者ビルド（自分の端末だけ全機能解放）
 `DEV_UNLOCK=true` を渡したビルドでのみ、購入なしで全プレミアム機能が有効になります。
 通常ビルド（フラグ無し）は無料ユーザーとして動作し、プレミアムは購入導線から解放されます。
 ```bash
-flutter run --release --no-tree-shake-icons --dart-define=DEV_UNLOCK=true
+flutter run --release --dart-define=DEV_UNLOCK=true
 ```
 
 ### 課金 (RevenueCat)
