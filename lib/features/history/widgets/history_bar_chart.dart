@@ -3,25 +3,29 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../providers/analytics_providers.dart';
 
-/// 12-month spend bars. The selected month is highlighted; empty/future months
-/// render as soft sunken tracks so the chart reads even with sparse data.
+/// A generic spend bar chart used by both the monthly (12 bars) and yearly
+/// views. Bars with no spend render only as a soft light track; bars with
+/// spend are filled with the accent, and the selected bar is emphasized.
 class HistoryBarChart extends StatelessWidget {
   const HistoryBarChart({
     super.key,
-    required this.data,
-    required this.selectedMonth,
+    required this.labels,
+    required this.values,
+    required this.selectedIndex,
     required this.onSelect,
+    this.accent = AppColors.primary,
   });
 
-  final List<MonthlySpend> data;
-  final int selectedMonth; // 1..12
+  final List<String> labels;
+  final List<double> values;
+  final int selectedIndex;
   final ValueChanged<int> onSelect;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
-    final maxY = data.fold<double>(0, (m, e) => e.amount > m ? e.amount : m);
+    final maxY = values.fold<double>(0, (m, v) => v > m ? v : m);
     final safeMax = maxY <= 0 ? 1.0 : maxY * 1.25;
 
     return AspectRatio(
@@ -42,7 +46,7 @@ class HistoryBarChart extends StatelessWidget {
             touchCallback: (event, response) {
               if (event.isInterestedForInteractions &&
                   response?.spot != null) {
-                onSelect(response!.spot!.touchedBarGroupIndex + 1);
+                onSelect(response!.spot!.touchedBarGroupIndex);
               }
             },
           ),
@@ -58,11 +62,12 @@ class HistoryBarChart extends StatelessWidget {
                 showTitles: true,
                 reservedSize: 24,
                 getTitlesWidget: (value, meta) {
-                  final m = value.toInt() + 1;
-                  final sel = m == selectedMonth;
+                  final i = value.toInt();
+                  if (i < 0 || i >= labels.length) return const SizedBox();
+                  final sel = i == selectedIndex;
                   return Padding(
                     padding: const EdgeInsets.only(top: 6),
-                    child: Text('$m',
+                    child: Text(labels[i],
                         style: AppType.body(11,
                             weight: sel ? FontWeight.w800 : FontWeight.w500,
                             color: sel
@@ -76,21 +81,22 @@ class HistoryBarChart extends StatelessWidget {
           gridData: const FlGridData(show: false),
           borderData: FlBorderData(show: false),
           barGroups: [
-            for (var i = 0; i < data.length; i++)
+            for (var i = 0; i < values.length; i++)
               BarChartGroupData(
                 x: i,
                 barRods: [
                   BarChartRodData(
-                    toY: data[i].amount,
+                    toY: values[i],
                     width: 14,
-                    color: (i + 1) == selectedMonth
-                        ? AppColors.primary
-                        : AppColors.primary.withOpacity(0.3),
+                    color: i == selectedIndex
+                        ? accent
+                        : accent.withOpacity(0.4),
                     borderRadius: BorderRadius.circular(6),
                     backDrawRodData: BackgroundBarChartRodData(
                       show: true,
                       toY: safeMax,
-                      color: AppColors.surfaceSunken,
+                      // A very light track so empty periods stay subtle.
+                      color: AppColors.shadowDark.withOpacity(0.18),
                     ),
                   ),
                 ],

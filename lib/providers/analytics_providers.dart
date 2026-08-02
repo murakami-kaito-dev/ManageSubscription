@@ -190,3 +190,52 @@ final monthPaymentsProvider =
   rows.sort((a, b) => a.date.compareTo(b.date));
   return rows;
 });
+
+@immutable
+class YearSpend {
+  const YearSpend(this.year, this.amount);
+  final int year;
+  final double amount;
+}
+
+/// Total billed spend per year for a window ending at [q.endYear] and spanning
+/// [q.count] years — drives the yearly history bar chart.
+final yearlyHistoryProvider =
+    Provider.family<List<YearSpend>, ({int endYear, int count})>((ref, q) {
+  final subs = ref.watch(subscriptionsProvider).valueOrNull ?? const [];
+  final currency = ref.watch(settingsProvider).mainCurrency;
+  final result = <YearSpend>[];
+  for (var y = q.endYear - q.count + 1; y <= q.endYear; y++) {
+    double total = 0;
+    for (final s in subs) {
+      if (s.isPaused) continue;
+      final payments = Billing.paymentsInRange(
+          s.firstPaymentDate, s.cycle, DateTime(y, 1, 1), DateTime(y, 12, 31));
+      total += payments.length * s.amountIn(currency);
+    }
+    result.add(YearSpend(y, total));
+  }
+  return result;
+});
+
+/// Per-subscription total for a whole [year] (for the yearly detail list).
+final yearSubscriptionTotalsProvider =
+    Provider.family<List<({Subscription sub, int count, double total})>, int>(
+        (ref, year) {
+  final subs = ref.watch(subscriptionsProvider).valueOrNull ?? const [];
+  final currency = ref.watch(settingsProvider).mainCurrency;
+  final rows = <({Subscription sub, int count, double total})>[];
+  for (final s in subs) {
+    if (s.isPaused) continue;
+    final payments = Billing.paymentsInRange(
+        s.firstPaymentDate, s.cycle, DateTime(year, 1, 1), DateTime(year, 12, 31));
+    if (payments.isEmpty) continue;
+    rows.add((
+      sub: s,
+      count: payments.length,
+      total: payments.length * s.amountIn(currency),
+    ));
+  }
+  rows.sort((a, b) => b.total.compareTo(a.total));
+  return rows;
+});
