@@ -65,6 +65,13 @@ flutter build apk --release --no-tree-shake-icons
 flutter build ios --release --no-tree-shake-icons
 ```
 
+### 開発者ビルド（自分の端末だけ全機能解放）
+`DEV_UNLOCK=true` を渡したビルドでのみ、購入なしで全プレミアム機能が有効になります。
+通常ビルド（フラグ無し）は無料ユーザーとして動作し、プレミアムは購入導線から解放されます。
+```bash
+flutter run --release --no-tree-shake-icons --dart-define=DEV_UNLOCK=true
+```
+
 ### 課金 (RevenueCat)
 デフォルトはキー不要で動作する**モック実装**（購入すると即プレミアム付与、設定画面の
 バージョン番号を長押しで ON/OFF 切替）。本番化する場合は
