@@ -70,15 +70,18 @@ class NotificationService {
       final now = tz.TZDateTime.now(tz.local);
       for (final s in subs) {
         if (s.isPaused) continue;
-        for (final days in s.notifyDaysBefore) {
-          final fireDate = s.nextPaymentDate.subtract(Duration(days: days));
-          final scheduled = tz.TZDateTime(
-              tz.local, fireDate.year, fireDate.month, fireDate.day, 9);
+        for (final rule in s.notifyRules) {
+          final fireDate =
+              s.nextPaymentDate.subtract(Duration(days: rule.daysBefore));
+          final scheduled = tz.TZDateTime(tz.local, fireDate.year,
+              fireDate.month, fireDate.day, rule.hour, rule.minute);
           if (scheduled.isBefore(now)) continue;
           await _plugin.zonedSchedule(
             id++,
             '${s.name} の支払いが近づいています',
-            days == 0 ? '本日が支払い日です' : '$days日後に支払いがあります',
+            rule.daysBefore == 0
+                ? '本日が支払い日です'
+                : '${rule.daysBefore}日後（${s.nextPaymentDate.month}/${s.nextPaymentDate.day}）に支払いがあります',
             scheduled,
             _details,
             androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,

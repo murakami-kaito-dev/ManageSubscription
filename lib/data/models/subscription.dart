@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/utils/billing.dart';
 import '../../core/utils/currency.dart';
+import 'notify_rule.dart';
 
 @immutable
 class Subscription {
@@ -21,7 +22,7 @@ class Subscription {
     this.usageUnit = '回',
     this.isPaused = false,
     this.imagePath,
-    this.notifyDaysBefore = const [1],
+    this.notifyRules = const [NotifyRule(daysBefore: 1)],
     this.sortOrder = 0,
     required this.createdAt,
   });
@@ -44,7 +45,7 @@ class Subscription {
 
   final bool isPaused;
   final String? imagePath; // premium-only local image
-  final List<int> notifyDaysBefore; // reminder offsets (days before payment)
+  final List<NotifyRule> notifyRules; // "N days before at HH:MM" reminders
   final int sortOrder;
   final DateTime createdAt;
 
@@ -90,7 +91,7 @@ class Subscription {
     String? usageUnit,
     bool? isPaused,
     Object? imagePath = _sentinel,
-    List<int>? notifyDaysBefore,
+    List<NotifyRule>? notifyRules,
     int? sortOrder,
   }) =>
       Subscription(
@@ -113,7 +114,7 @@ class Subscription {
         isPaused: isPaused ?? this.isPaused,
         imagePath:
             imagePath == _sentinel ? this.imagePath : imagePath as String?,
-        notifyDaysBefore: notifyDaysBefore ?? this.notifyDaysBefore,
+        notifyRules: notifyRules ?? this.notifyRules,
         sortOrder: sortOrder ?? this.sortOrder,
         createdAt: createdAt,
       );
@@ -134,7 +135,7 @@ class Subscription {
         'usage_unit': usageUnit,
         'is_paused': isPaused ? 1 : 0,
         'image_path': imagePath,
-        'notify_days': notifyDaysBefore.join(','),
+        'notify_days': NotifyRule.encode(notifyRules),
         'sort_order': sortOrder,
         'created_at': createdAt.millisecondsSinceEpoch,
       };
@@ -156,20 +157,11 @@ class Subscription {
         usageUnit: (m['usage_unit'] as String?) ?? '回',
         isPaused: (m['is_paused'] as int? ?? 0) == 1,
         imagePath: m['image_path'] as String?,
-        notifyDaysBefore: _parseDays(m['notify_days'] as String?),
+        notifyRules: NotifyRule.decode(m['notify_days'] as String?),
         sortOrder: m['sort_order'] as int? ?? 0,
         createdAt:
             DateTime.fromMillisecondsSinceEpoch(m['created_at'] as int),
       );
-
-  static List<int> _parseDays(String? raw) {
-    if (raw == null || raw.isEmpty) return const [];
-    return raw
-        .split(',')
-        .map((e) => int.tryParse(e.trim()))
-        .whereType<int>()
-        .toList();
-  }
 
   static const Object _sentinel = Object();
 }

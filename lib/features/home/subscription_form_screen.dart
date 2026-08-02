@@ -18,6 +18,7 @@ import '../../core/widgets/soft_button.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/soft_header.dart';
 import '../../data/models/category.dart';
+import '../../data/models/notify_rule.dart';
 import '../../data/models/payment_method.dart';
 import '../../data/models/subscription.dart';
 import '../../providers/premium_provider.dart';
@@ -52,7 +53,7 @@ class _SubscriptionFormScreenState
   late int _colorValue;
   String? _categoryId;
   String? _paymentMethodId;
-  late Set<int> _notifyDays;
+  late List<NotifyRule> _notifyRules;
   late bool _isPaused;
 
   bool get _isEdit => widget.existing != null;
@@ -75,8 +76,7 @@ class _SubscriptionFormScreenState
     _colorValue = e?.colorValue ?? AppColors.chartPalette.first.value;
     _categoryId = e?.categoryId;
     _paymentMethodId = e?.paymentMethodId;
-    _notifyDays = {...?e?.notifyDaysBefore};
-    if (_notifyDays.isEmpty) _notifyDays = {1};
+    _notifyRules = [...?e?.notifyRules];
     _isPaused = e?.isPaused ?? false;
   }
 
@@ -136,6 +136,22 @@ class _SubscriptionFormScreenState
     if (mounted) setState(() => _paymentMethodId = result.id);
   }
 
+  Future<void> _addNotifyRule() async {
+    final rule = await showDialog<NotifyRule>(
+      context: context,
+      builder: (_) => const _NotifyRuleDialog(),
+    );
+    if (rule != null) setState(() => _notifyRules.add(rule));
+  }
+
+  Future<void> _editNotifyRule(int index) async {
+    final rule = await showDialog<NotifyRule>(
+      context: context,
+      builder: (_) => _NotifyRuleDialog(initial: _notifyRules[index]),
+    );
+    if (rule != null) setState(() => _notifyRules[index] = rule);
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     final id = widget.existing?.id ?? const Uuid().v4();
@@ -157,7 +173,7 @@ class _SubscriptionFormScreenState
           _usageUnit.text.trim().isEmpty ? '回' : _usageUnit.text.trim(),
       isPaused: _isPaused,
       imagePath: widget.existing?.imagePath,
-      notifyDaysBefore: _notifyDays.toList()..sort(),
+      notifyRules: _notifyRules,
       sortOrder: widget.existing?.sortOrder ?? count,
       createdAt: widget.existing?.createdAt ?? DateTime.now(),
     );
@@ -398,11 +414,13 @@ class _SubscriptionFormScreenState
                       ),
                     ),
                     const SectionHeader('支払い日前の通知'),
-                    _NotifyPicker(
-                      selected: _notifyDays,
+                    _NotifyRulesEditor(
+                      rules: _notifyRules,
                       limit: PremiumLimits.notifyRuleLimit(isPremium),
-                      isPremium: isPremium,
-                      onChanged: (days) => setState(() => _notifyDays = days),
+                      onAdd: _addNotifyRule,
+                      onEdit: _editNotifyRule,
+                      onRemove: (i) =>
+                          setState(() => _notifyRules.removeAt(i)),
                       onNeedPremium: () => PremiumScreen.show(context,
                           reason:
                               '無料版で設定できる通知は${PremiumLimits.maxNotifyRules}件までです。'),
@@ -624,64 +642,213 @@ class _ChipPicker extends StatelessWidget {
       );
 }
 
-class _NotifyPicker extends StatelessWidget {
-  const _NotifyPicker({
-    required this.selected,
+/// Lists "N days before at HH:MM" reminder rules with add/edit/remove, like a
+/// calendar app. The add button respects the free-tier limit.
+class _NotifyRulesEditor extends StatelessWidget {
+  const _NotifyRulesEditor({
+    required this.rules,
     required this.limit,
-    required this.isPremium,
-    required this.onChanged,
+    required this.onAdd,
+    required this.onEdit,
+    required this.onRemove,
     required this.onNeedPremium,
   });
-  final Set<int> selected;
+  final List<NotifyRule> rules;
   final int limit;
-  final bool isPremium;
-  final ValueChanged<Set<int>> onChanged;
+  final VoidCallback onAdd;
+  final ValueChanged<int> onEdit;
+  final ValueChanged<int> onRemove;
   final VoidCallback onNeedPremium;
-
-  static const _options = [0, 1, 3, 7];
 
   @override
   Widget build(BuildContext context) {
-    String label(int d) => d == 0 ? '当日' : '$d日前';
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final d in _options)
-          Pressable(
-            scale: 0.95,
-            onTap: () {
-              final next = {...selected};
-              if (next.contains(d)) {
-                next.remove(d);
-              } else {
-                if (next.length >= limit) {
-                  onNeedPremium();
-                  return;
-                }
-                next.add(d);
-              }
-              onChanged(next);
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: selected.contains(d)
-                    ? AppColors.primary
-                    : AppColors.surface,
-                borderRadius: BorderRadius.circular(999),
-                boxShadow: selected.contains(d) ? null : AppShadows.soft(),
+    return SoftCard(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      child: Column(
+        children: [
+          for (var i = 0; i < rules.length; i++)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  const Icon(Icons.notifications_active_rounded,
+                      size: 20, color: AppColors.primaryDeep),
+                  const Gap(AppSpacing.md),
+                  Expanded(
+                    child: Pressable(
+                      onTap: () => onEdit(i),
+                      scale: 0.98,
+                      child: Row(
+                        children: [
+                          Text(rules[i].dayLabel,
+                              style: AppType.body(15, weight: FontWeight.w700)),
+                          const Gap(AppSpacing.sm),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceSunken,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(rules[i].timeLabel,
+                                style: AppType.body(13,
+                                    weight: FontWeight.w600,
+                                    color: AppColors.textSecondary)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Pressable(
+                    onTap: () => onRemove(i),
+                    child: const Icon(Icons.close_rounded,
+                        size: 20, color: AppColors.textMuted),
+                  ),
+                ],
               ),
-              child: Text(label(d),
-                  style: AppType.body(13.5,
-                      weight: FontWeight.w600,
-                      color: selected.contains(d)
-                          ? AppColors.onPrimary
-                          : AppColors.textPrimary)),
+            ),
+          if (rules.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text('通知は設定されていません',
+                  style: AppType.body(13, color: AppColors.textMuted)),
+            ),
+          const Gap(AppSpacing.xs),
+          Pressable(
+            onTap: rules.length >= limit ? onNeedPremium : onAdd,
+            scale: 0.98,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.add_rounded,
+                      size: 18, color: AppColors.primaryDeep),
+                  const Gap(6),
+                  Text('通知を追加',
+                      style: AppType.body(14,
+                          weight: FontWeight.w700,
+                          color: AppColors.primaryDeep)),
+                ],
+              ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Dialog to choose "how many days before" and "at what time".
+class _NotifyRuleDialog extends StatefulWidget {
+  const _NotifyRuleDialog({this.initial});
+  final NotifyRule? initial;
+
+  @override
+  State<_NotifyRuleDialog> createState() => _NotifyRuleDialogState();
+}
+
+class _NotifyRuleDialogState extends State<_NotifyRuleDialog> {
+  late int _days = widget.initial?.daysBefore ?? 1;
+  late TimeOfDay _time =
+      widget.initial?.time ?? const TimeOfDay(hour: 9, minute: 0);
+
+  static const _dayOptions = [0, 1, 2, 3, 5, 7, 14, 30];
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(context: context, initialTime: _time);
+    if (picked != null) setState(() => _time = picked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusCard)),
+      title: Text('通知のタイミング', style: AppType.display(19)),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SectionHeader('支払い日の何日前'),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final d in _dayOptions)
+                  Pressable(
+                    scale: 0.94,
+                    onTap: () => setState(() => _days = d),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 9),
+                      decoration: BoxDecoration(
+                        color: _days == d
+                            ? AppColors.primary
+                            : AppColors.surfaceSunken,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(d == 0 ? '当日' : '$d日前',
+                          style: AppType.body(13.5,
+                              weight: FontWeight.w600,
+                              color: _days == d
+                                  ? AppColors.onPrimary
+                                  : AppColors.textPrimary)),
+                    ),
+                  ),
+              ],
+            ),
+            const SectionHeader('通知する時刻'),
+            Pressable(
+              onTap: _pickTime,
+              scale: 0.98,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceSunken,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.schedule_rounded,
+                        color: AppColors.primaryDeep),
+                    const Gap(AppSpacing.md),
+                    Text(
+                      _time.format(context),
+                      style: AppType.display(18),
+                    ),
+                    const Spacer(),
+                    const Icon(Icons.chevron_right_rounded,
+                        color: AppColors.textMuted),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル')),
+        TextButton(
+          onPressed: () => Navigator.pop(
+            context,
+            NotifyRule(
+                daysBefore: _days, hour: _time.hour, minute: _time.minute),
+          ),
+          child: const Text('決定'),
+        ),
       ],
     );
   }
