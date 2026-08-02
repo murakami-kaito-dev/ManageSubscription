@@ -163,7 +163,7 @@ final monthlyHistoryProvider =
       final start = DateTime(year, m, 1);
       final end = DateTime(year, m + 1, 0);
       final payments =
-          Billing.paymentsInRange(s.firstPaymentDate, s.cycle, start, end);
+          Billing.paymentsInRange(s.firstPaymentDate, s.recurrence, start, end);
       if (payments.isNotEmpty) {
         totals[m - 1] += payments.length * s.amountIn(currency);
       }
@@ -183,7 +183,7 @@ final monthPaymentsProvider =
   for (final s in subs) {
     if (s.isPaused) continue;
     for (final d
-        in Billing.paymentsInRange(s.firstPaymentDate, s.cycle, start, end)) {
+        in Billing.paymentsInRange(s.firstPaymentDate, s.recurrence, start, end)) {
       rows.add((sub: s, date: d));
     }
   }
@@ -210,7 +210,7 @@ final yearlyHistoryProvider =
     for (final s in subs) {
       if (s.isPaused) continue;
       final payments = Billing.paymentsInRange(
-          s.firstPaymentDate, s.cycle, DateTime(y, 1, 1), DateTime(y, 12, 31));
+          s.firstPaymentDate, s.recurrence, DateTime(y, 1, 1), DateTime(y, 12, 31));
       total += payments.length * s.amountIn(currency);
     }
     result.add(YearSpend(y, total));
@@ -228,7 +228,7 @@ final yearSubscriptionTotalsProvider =
   for (final s in subs) {
     if (s.isPaused) continue;
     final payments = Billing.paymentsInRange(
-        s.firstPaymentDate, s.cycle, DateTime(year, 1, 1), DateTime(year, 12, 31));
+        s.firstPaymentDate, s.recurrence, DateTime(year, 1, 1), DateTime(year, 12, 31));
     if (payments.isEmpty) continue;
     rows.add((
       sub: s,

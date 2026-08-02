@@ -8,22 +8,40 @@ import 'package:manage_subscription/core/utils/currency.dart';
 import 'package:manage_subscription/data/models/subscription.dart';
 
 void main() {
-  group('BillingCycle factors', () {
+  group('Recurrence factors', () {
     test('monthly-equivalent multipliers', () {
-      expect(BillingCycle.monthly.monthlyFactor, 1);
-      expect(BillingCycle.yearly.monthlyFactor, closeTo(1 / 12, 1e-9));
-      expect(BillingCycle.weekly.monthlyFactor, closeTo(52 / 12, 1e-9));
+      expect(const Recurrence(1, IntervalUnit.month).monthlyFactor, 1);
+      expect(const Recurrence(12, IntervalUnit.month).monthlyFactor,
+          closeTo(1 / 12, 1e-9));
+      expect(const Recurrence(1, IntervalUnit.week).monthlyFactor,
+          closeTo(52 / 12, 1e-9));
+    });
+
+    test('custom "every N days" occurs ~30.44/N times a month', () {
+      expect(const Recurrence(10, IntervalUnit.day).monthlyFactor,
+          closeTo((365.25 / 12) / 10, 1e-9));
     });
   });
 
   group('Billing date math', () {
+    const monthly = Recurrence(1, IntervalUnit.month);
+
     test('nextPaymentDate advances a past monthly anchor to the future', () {
       final next = Billing.nextPaymentDate(
         DateTime(2026, 1, 15),
-        BillingCycle.monthly,
+        monthly,
         from: DateTime(2026, 3, 20),
       );
       expect(next, DateTime(2026, 4, 15));
+    });
+
+    test('custom every-3-days recurrence advances correctly', () {
+      final next = Billing.nextPaymentDate(
+        DateTime(2026, 3, 1),
+        const Recurrence(3, IntervalUnit.day),
+        from: DateTime(2026, 3, 8),
+      );
+      expect(next, DateTime(2026, 3, 10));
     });
 
     test('daysUntil counts calendar days', () {
@@ -36,7 +54,7 @@ void main() {
     test('periodProgress is between 0 and 1 mid-cycle', () {
       final p = Billing.periodProgress(
         DateTime(2026, 1, 15),
-        BillingCycle.monthly,
+        monthly,
         from: DateTime(2026, 3, 20),
       );
       expect(p, greaterThan(0));
@@ -46,7 +64,7 @@ void main() {
     test('paymentsInRange returns one occurrence per month', () {
       final payments = Billing.paymentsInRange(
         DateTime(2026, 1, 10),
-        BillingCycle.monthly,
+        monthly,
         DateTime(2026, 1, 1),
         DateTime(2026, 3, 31),
       );
@@ -61,7 +79,7 @@ void main() {
       // Anchored on the 31st, the February occurrence must clamp to the 28th.
       final feb = Billing.paymentsInRange(
         DateTime(2026, 1, 31),
-        BillingCycle.monthly,
+        monthly,
         DateTime(2026, 2, 1),
         DateTime(2026, 2, 28),
       );

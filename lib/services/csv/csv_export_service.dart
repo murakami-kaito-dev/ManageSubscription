@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../core/utils/billing.dart';
 import '../../data/models/category.dart';
 import '../../data/models/payment_method.dart';
 import '../../data/models/subscription.dart';
@@ -44,7 +43,7 @@ class CsvExportService {
         s.name,
         s.amount,
         s.currencyCode,
-        s.cycle.label,
+        s.periodLabel,
         df.format(s.firstPaymentDate),
         df.format(s.nextPaymentDate),
         categories[s.categoryId]?.name ?? '',

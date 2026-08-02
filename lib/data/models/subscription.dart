@@ -24,6 +24,8 @@ class Subscription {
     this.imagePath,
     this.notifyRules = const [NotifyRule(daysBefore: 1)],
     this.sortOrder = 0,
+    this.intervalCount = 1,
+    this.intervalUnit = IntervalUnit.month,
     required this.createdAt,
   });
 
@@ -47,10 +49,31 @@ class Subscription {
   final String? imagePath; // premium-only local image
   final List<NotifyRule> notifyRules; // "N days before at HH:MM" reminders
   final int sortOrder;
+
+  /// Custom interval — only meaningful when [cycle] == custom.
+  final int intervalCount;
+  final IntervalUnit intervalUnit;
+
   final DateTime createdAt;
 
   Color get color => Color(colorValue);
   AppCurrency get currency => AppCurrencyX.fromCode(currencyCode);
+
+  /// Normalized recurrence used by all billing math.
+  Recurrence get recurrence => switch (cycle) {
+        BillingCycle.monthly => const Recurrence(1, IntervalUnit.month),
+        BillingCycle.yearly => const Recurrence(12, IntervalUnit.month),
+        BillingCycle.weekly => const Recurrence(1, IntervalUnit.week),
+        BillingCycle.custom => Recurrence(intervalCount, intervalUnit),
+      };
+
+  /// Compact "/…" period suffix shown next to the amount.
+  String get periodLabel => switch (cycle) {
+        BillingCycle.monthly => '月',
+        BillingCycle.yearly => '年',
+        BillingCycle.weekly => '週',
+        BillingCycle.custom => '$intervalCount${intervalUnit.shortLabel}',
+      };
 
   /// A single glyph for compact avatars: the custom character/emoji when set,
   /// otherwise the name's first character, otherwise a placeholder. Never
@@ -63,8 +86,8 @@ class Subscription {
   }
 
   // ── Derived money ─────────────────────────────────────────────────────
-  double get monthlyAmount => amount * cycle.monthlyFactor;
-  double get yearlyAmount => amount * cycle.yearlyFactor;
+  double get monthlyAmount => amount * recurrence.monthlyFactor;
+  double get yearlyAmount => amount * recurrence.yearlyFactor;
 
   double monthlyAmountIn(AppCurrency target) =>
       CurrencyRates.convert(monthlyAmount, currencyCode, target.code);
@@ -75,9 +98,10 @@ class Subscription {
 
   // ── Derived dates ─────────────────────────────────────────────────────
   DateTime get nextPaymentDate =>
-      Billing.nextPaymentDate(firstPaymentDate, cycle);
+      Billing.nextPaymentDate(firstPaymentDate, recurrence);
   int get daysUntilNextPayment => Billing.daysUntil(nextPaymentDate);
-  double get periodProgress => Billing.periodProgress(firstPaymentDate, cycle);
+  double get periodProgress =>
+      Billing.periodProgress(firstPaymentDate, recurrence);
 
   /// Cospa: cost per single use, in the subscription's own currency (monthly
   /// spend ÷ monthly uses). Null when usage isn't tracked.
@@ -103,6 +127,8 @@ class Subscription {
     Object? imagePath = _sentinel,
     List<NotifyRule>? notifyRules,
     int? sortOrder,
+    int? intervalCount,
+    IntervalUnit? intervalUnit,
   }) =>
       Subscription(
         id: id,
@@ -126,6 +152,8 @@ class Subscription {
             imagePath == _sentinel ? this.imagePath : imagePath as String?,
         notifyRules: notifyRules ?? this.notifyRules,
         sortOrder: sortOrder ?? this.sortOrder,
+        intervalCount: intervalCount ?? this.intervalCount,
+        intervalUnit: intervalUnit ?? this.intervalUnit,
         createdAt: createdAt,
       );
 
@@ -147,6 +175,8 @@ class Subscription {
         'image_path': imagePath,
         'notify_days': NotifyRule.encode(notifyRules),
         'sort_order': sortOrder,
+        'interval_count': intervalCount,
+        'interval_unit': intervalUnit.name,
         'created_at': createdAt.millisecondsSinceEpoch,
       };
 
@@ -169,6 +199,8 @@ class Subscription {
         imagePath: m['image_path'] as String?,
         notifyRules: NotifyRule.decode(m['notify_days'] as String?),
         sortOrder: m['sort_order'] as int? ?? 0,
+        intervalCount: (m['interval_count'] as int?) ?? 1,
+        intervalUnit: IntervalUnitX.fromName(m['interval_unit'] as String?),
         createdAt:
             DateTime.fromMillisecondsSinceEpoch(m['created_at'] as int),
       );

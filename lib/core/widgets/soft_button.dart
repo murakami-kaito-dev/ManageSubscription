@@ -6,7 +6,7 @@ import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import 'pressable.dart';
 
-enum SoftButtonKind { primary, coral, neutral, ghost }
+enum SoftButtonKind { primary, coral, neutral, ghost, danger }
 
 /// Primary call-to-action button with the shared press-squish, a tinted glow
 /// for accent kinds, and an optional leading icon.
@@ -57,6 +57,11 @@ class SoftButton extends StatelessWidget {
       case SoftButtonKind.ghost:
         bg = Colors.transparent;
         fg = primary;
+        shadow = const [];
+        break;
+      case SoftButtonKind.danger:
+        bg = AppColors.danger.withOpacity(0.12);
+        fg = AppColors.danger;
         shadow = const [];
         break;
     }

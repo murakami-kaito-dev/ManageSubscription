@@ -18,7 +18,7 @@ class AppDatabase {
     final path = p.join(dir.path, 'manage_subscription.db');
     return openDatabase(
       path,
-      version: 2,
+      version: 3,
       onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
@@ -30,6 +30,15 @@ class AppDatabase {
       // Payment methods gained a color; existing rows default to primaryDeep.
       await db.execute(
         'ALTER TABLE payment_methods ADD COLUMN color INTEGER NOT NULL DEFAULT ${0xFF546C60}',
+      );
+    }
+    if (oldVersion < 3) {
+      // Subscriptions gained a custom recurrence interval.
+      await db.execute(
+        "ALTER TABLE subscriptions ADD COLUMN interval_count INTEGER NOT NULL DEFAULT 1",
+      );
+      await db.execute(
+        "ALTER TABLE subscriptions ADD COLUMN interval_unit TEXT NOT NULL DEFAULT 'month'",
       );
     }
   }
@@ -74,6 +83,8 @@ class AppDatabase {
         image_path TEXT,
         notify_days TEXT,
         sort_order INTEGER NOT NULL DEFAULT 0,
+        interval_count INTEGER NOT NULL DEFAULT 1,
+        interval_unit TEXT NOT NULL DEFAULT 'month',
         created_at INTEGER NOT NULL
       )
     ''');

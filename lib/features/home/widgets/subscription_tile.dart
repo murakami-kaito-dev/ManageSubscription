@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/utils/billing.dart';
 import '../../../core/utils/currency.dart';
 import '../../../core/widgets/soft_card.dart';
 import '../../../core/widgets/soft_progress_bar.dart';
@@ -81,7 +80,7 @@ class SubscriptionTile extends StatelessWidget {
                           style: AppType.display(20, weight: FontWeight.w800),
                         ),
                         TextSpan(
-                          text: ' /${sub.cycle.label}',
+                          text: ' /${sub.periodLabel}',
                           style: AppType.body(12,
                               weight: FontWeight.w600,
                               color: AppColors.textMuted),

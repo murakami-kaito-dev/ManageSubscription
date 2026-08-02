@@ -52,6 +52,8 @@ class _SubscriptionFormScreenState
 
   late AppCurrency _currency;
   late BillingCycle _cycle;
+  late int _intervalCount;
+  late IntervalUnit _intervalUnit;
   late DateTime _firstPayment;
   late int _colorValue;
   String? _categoryId;
@@ -78,6 +80,8 @@ class _SubscriptionFormScreenState
     _memo = TextEditingController(text: e?.memo ?? '');
     _currency = e?.currency ?? AppCurrency.jpy;
     _cycle = e?.cycle ?? BillingCycle.monthly;
+    _intervalCount = e?.intervalCount ?? 1;
+    _intervalUnit = e?.intervalUnit ?? IntervalUnit.month;
     _firstPayment = e?.firstPaymentDate ?? DateTime.now();
     _colorValue = e?.colorValue ?? AppColors.chartPalette.first.value;
     _categoryId = e?.categoryId;
@@ -102,6 +106,13 @@ class _SubscriptionFormScreenState
 
   double get _amountValue => double.tryParse(_amount.text.trim()) ?? 0;
   double get _usageValue => double.tryParse(_usage.text.trim()) ?? 0;
+
+  Recurrence get _recurrence => switch (_cycle) {
+        BillingCycle.monthly => const Recurrence(1, IntervalUnit.month),
+        BillingCycle.yearly => const Recurrence(12, IntervalUnit.month),
+        BillingCycle.weekly => const Recurrence(1, IntervalUnit.week),
+        BillingCycle.custom => Recurrence(_intervalCount, _intervalUnit),
+      };
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -324,6 +335,8 @@ class _SubscriptionFormScreenState
       amount: _amountValue,
       currencyCode: _currency.code,
       cycle: _cycle,
+      intervalCount: _intervalCount,
+      intervalUnit: _intervalUnit,
       firstPaymentDate: _firstPayment,
       colorValue: _colorValue,
       emoji: _emoji.text.trim().isEmpty ? null : _emoji.text.trim(),
@@ -522,7 +535,7 @@ class _SubscriptionFormScreenState
           ),
           const Gap(AppSpacing.md),
           CospaPreview(
-            monthlyAmount: _amountValue * _cycle.monthlyFactor,
+            monthlyAmount: _amountValue * _recurrence.monthlyFactor,
             currency: _currency,
             usage: _usageValue,
             unit: _usageUnit.text.trim().isEmpty
@@ -556,90 +569,10 @@ class _SubscriptionFormScreenState
                     padding: const EdgeInsets.fromLTRB(
                         AppSpacing.lg, 0, AppSpacing.lg, 120),
                     children: [
-                      _fieldCard(
-                        child: TextFormField(
-                          controller: _name,
-                          decoration: _dec('サービス名', hint: '例：Netflix'),
-                          textInputAction: TextInputAction.next,
-                          validator: (v) => (v == null || v.trim().isEmpty)
-                              ? '名前を入力してください'
-                              : null,
-                        ),
-                      ),
-                      const Gap(AppSpacing.md),
-                      _fieldCard(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child: TextFormField(
-                                controller: _amount,
-                                decoration: _dec('金額'),
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                        decimal: true),
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.allow(
-                                      RegExp(r'[0-9.]')),
-                                ],
-                                onChanged: (_) => setState(() {}),
-                                validator: (v) =>
-                                    _amountValue < 0 ? '正しい金額を入力してください' : null,
-                              ),
-                            ),
-                            const Gap(AppSpacing.md),
-                            Expanded(
-                              child: DropdownButtonFormField<AppCurrency>(
-                                value: _currency,
-                                decoration: _dec('通貨'),
-                                items: [
-                                  for (final c in AppCurrency.values)
-                                    DropdownMenuItem(
-                                        value: c,
-                                        child: Text('${c.symbol} ${c.code}')),
-                                ],
-                                onChanged: (v) =>
-                                    setState(() => _currency = v ?? _currency),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SectionHeader('支払いサイクル'),
-                      _CycleSelector(
-                        value: _cycle,
-                        onChanged: (c) => setState(() => _cycle = c),
-                      ),
-                      const Gap(AppSpacing.md),
-                      _fieldCard(
-                        onTap: _pickDate,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.event_rounded,
-                                color: AppColors.primaryDeep),
-                            const Gap(AppSpacing.md),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('初回（次回）支払日',
-                                      style: AppType.body(12,
-                                          color: AppColors.textSecondary)),
-                                  const Gap(2),
-                                  Text(
-                                      DateFormat('yyyy年M月d日')
-                                          .format(_firstPayment),
-                                      style: AppType.body(16,
-                                          weight: FontWeight.w700)),
-                                ],
-                              ),
-                            ),
-                            const Icon(Icons.chevron_right_rounded,
-                                color: AppColors.textMuted),
-                          ],
-                        ),
-                      ),
+                      const SectionHeader('基本情報'),
+                      _basicInfoCard(),
+                      const SectionHeader('支払いサイクル・初回支払日'),
+                      _cycleDateCard(),
                       const SectionHeader('支払い日前の通知'),
                       _NotifyRulesEditor(
                         rules: _notifyRules,
@@ -679,7 +612,7 @@ class _SubscriptionFormScreenState
                         SoftButton(
                           label: 'このサブスクを削除',
                           icon: Icons.delete_outline_rounded,
-                          kind: SoftButtonKind.neutral,
+                          kind: SoftButtonKind.danger,
                           onPressed: _delete,
                         ),
                       ],
@@ -739,6 +672,115 @@ class _SubscriptionFormScreenState
         labelStyle: AppType.body(13, color: AppColors.textSecondary),
         hintStyle: AppType.body(15, color: AppColors.textMuted),
       );
+
+  Widget get _innerDivider => Divider(
+      height: 1, color: AppColors.textMuted.withOpacity(0.18));
+
+  /// One card holding service name + amount + currency together.
+  Widget _basicInfoCard() => _fieldCard(
+        child: Column(
+          children: [
+            TextFormField(
+              controller: _name,
+              decoration: _dec('サービス名', hint: '例：Netflix'),
+              textInputAction: TextInputAction.next,
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? '名前を入力してください' : null,
+            ),
+            _innerDivider,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: TextFormField(
+                    controller: _amount,
+                    decoration: _dec('金額'),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                    ],
+                    onChanged: (_) => setState(() {}),
+                    validator: (v) =>
+                        _amountValue < 0 ? '正しい金額を入力してください' : null,
+                  ),
+                ),
+                const Gap(AppSpacing.md),
+                Expanded(
+                  child: DropdownButtonFormField<AppCurrency>(
+                    value: _currency,
+                    decoration: _dec('通貨'),
+                    items: [
+                      for (final c in AppCurrency.values)
+                        DropdownMenuItem(
+                            value: c, child: Text('${c.symbol} ${c.code}')),
+                    ],
+                    onChanged: (v) =>
+                        setState(() => _currency = v ?? _currency),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+
+  /// One card holding the cycle selector (incl. custom) + first payment date.
+  Widget _cycleDateCard() => _fieldCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Gap(AppSpacing.xs),
+            _CycleSelector(
+              value: _cycle,
+              onChanged: (c) => setState(() => _cycle = c),
+            ),
+            if (_cycle == BillingCycle.custom) ...[
+              const Gap(AppSpacing.md),
+              _CustomIntervalRow(
+                count: _intervalCount,
+                unit: _intervalUnit,
+                onCountChanged: (v) =>
+                    setState(() => _intervalCount = v.clamp(1, 999)),
+                onUnitChanged: (u) => setState(() => _intervalUnit = u),
+              ),
+            ],
+            const Gap(AppSpacing.sm),
+            _innerDivider,
+            Pressable(
+              onTap: _pickDate,
+              scale: 0.99,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                child: Row(
+                  children: [
+                    const Icon(Icons.event_rounded,
+                        color: AppColors.primaryDeep),
+                    const Gap(AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('初回支払日',
+                              style: AppType.body(12,
+                                  color: AppColors.textSecondary)),
+                          const Gap(2),
+                          Text(DateFormat('yyyy年M月d日').format(_firstPayment),
+                              style:
+                                  AppType.body(16, weight: FontWeight.w700)),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded,
+                        color: AppColors.textMuted),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
 }
 
 class _CycleSelector extends StatelessWidget {
@@ -752,9 +794,14 @@ class _CycleSelector extends StatelessWidget {
       (BillingCycle.monthly, '月額'),
       (BillingCycle.yearly, '年額'),
       (BillingCycle.weekly, '週額'),
+      (BillingCycle.custom, 'カスタム'),
     ];
-    return SoftCard(
-      padding: const EdgeInsets.all(6),
+    return Container(
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceSunken,
+        borderRadius: BorderRadius.circular(18),
+      ),
       child: Row(
         children: [
           for (final c in cycles)
@@ -764,15 +811,15 @@ class _CycleSelector extends StatelessWidget {
                 scale: 0.96,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 11),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color:
                         value == c.$1 ? AppColors.primary : Colors.transparent,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   child: Text(c.$2,
-                      style: AppType.body(14,
+                      style: AppType.body(13.5,
                           weight: FontWeight.w700,
                           color: value == c.$1
                               ? AppColors.onPrimary
@@ -782,6 +829,105 @@ class _CycleSelector extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// Custom interval controls: "毎 [N] [日/週/ヶ月] ごと" with a live preview.
+class _CustomIntervalRow extends StatelessWidget {
+  const _CustomIntervalRow({
+    required this.count,
+    required this.unit,
+    required this.onCountChanged,
+    required this.onUnitChanged,
+  });
+  final int count;
+  final IntervalUnit unit;
+  final ValueChanged<int> onCountChanged;
+  final ValueChanged<IntervalUnit> onUnitChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text('毎', style: AppType.body(14)),
+            const Gap(AppSpacing.sm),
+            _Stepper(value: count, onChanged: onCountChanged),
+            const Gap(AppSpacing.md),
+            Expanded(
+              child: Wrap(
+                spacing: 8,
+                children: [
+                  for (final u in IntervalUnit.values)
+                    Pressable(
+                      scale: 0.94,
+                      onTap: () => onUnitChanged(u),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 9),
+                        decoration: BoxDecoration(
+                          color: unit == u
+                              ? AppColors.primary
+                              : AppColors.surface,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(u.shortLabel,
+                            style: AppType.body(13.5,
+                                weight: FontWeight.w700,
+                                color: unit == u
+                                    ? AppColors.onPrimary
+                                    : AppColors.textPrimary)),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const Gap(AppSpacing.sm),
+        Text('「$count${unit.everyLabel}」に支払われます',
+            style: AppType.body(12.5, color: AppColors.primaryDeep)),
+      ],
+    );
+  }
+}
+
+class _Stepper extends StatelessWidget {
+  const _Stepper({required this.value, required this.onChanged});
+  final int value;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget btn(IconData icon, VoidCallback onTap) => Pressable(
+          onTap: onTap,
+          scale: 0.9,
+          child: Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 18, color: AppColors.primaryDeep),
+          ),
+        );
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        btn(Icons.remove_rounded, () => onChanged(value - 1)),
+        Container(
+          width: 34,
+          alignment: Alignment.center,
+          child: Text('$value',
+              style: AppType.display(18, weight: FontWeight.w800)),
+        ),
+        btn(Icons.add_rounded, () => onChanged(value + 1)),
+      ],
     );
   }
 }
@@ -808,39 +954,29 @@ class _DetailsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Plain text header (like 状態 / メモ), tappable to expand.
         Pressable(
           onTap: onToggleExpand,
           scale: 0.99,
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg, vertical: AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-              boxShadow: AppShadows.soft(),
-            ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xs, AppSpacing.lg, AppSpacing.xs, AppSpacing.sm),
             child: Row(
               children: [
-                const Icon(Icons.tune_rounded, color: AppColors.primaryDeep),
-                const Gap(AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('詳細設定をする',
-                          style: AppType.body(15, weight: FontWeight.w700)),
-                      Text('アイコン・カテゴリー・支払い方法・コスパ',
-                          style: AppType.body(11.5,
-                              color: AppColors.textMuted)),
-                    ],
-                  ),
-                ),
+                Text('詳細設定をする',
+                    style: AppType.body(13,
+                        weight: FontWeight.w700,
+                        color: AppColors.textSecondary)),
+                const Gap(6),
                 AnimatedRotation(
                   turns: expanded ? 0.5 : 0,
                   duration: const Duration(milliseconds: 200),
                   child: const Icon(Icons.expand_more_rounded,
-                      color: AppColors.textSecondary),
+                      size: 18, color: AppColors.textSecondary),
                 ),
+                const Spacer(),
+                Text('アイコン・カテゴリー・支払い方法・コスパ',
+                    style: AppType.body(11, color: AppColors.textMuted)),
               ],
             ),
           ),
@@ -850,22 +986,14 @@ class _DetailsSection extends StatelessWidget {
           secondChild: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Gap(AppSpacing.sm),
-              _fieldCardStatic(
+              // "常に表示" — a plain label + toggle, no card background.
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
                 child: Row(
                   children: [
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('常に表示',
-                              style:
-                                  AppType.body(14, weight: FontWeight.w700)),
-                          Text('次回から詳細設定を開いた状態にします',
-                              style: AppType.body(11.5,
-                                  color: AppColors.textMuted)),
-                        ],
-                      ),
+                      child: Text('常に表示',
+                          style: AppType.body(15)),
                     ),
                     Switch(value: alwaysShow, onChanged: onToggleAlways),
                   ],
@@ -882,18 +1010,6 @@ class _DetailsSection extends StatelessWidget {
       ],
     );
   }
-
-  Widget _fieldCardStatic({required Widget child}) => Container(
-        margin: const EdgeInsets.only(bottom: AppSpacing.xs),
-        padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-          boxShadow: AppShadows.soft(),
-        ),
-        child: child,
-      );
 }
 
 class _ColorPicker extends StatelessWidget {
@@ -1214,8 +1330,6 @@ class _NotifyRuleDialogState extends State<_NotifyRuleDialog> {
   late int _hour = widget.initial?.hour ?? 9;
   late int _minute = widget.initial?.minute ?? 0;
 
-  static const _dayOptions = [0, 1, 2, 3, 5, 7, 14, 30];
-
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -1229,32 +1343,9 @@ class _NotifyRuleDialogState extends State<_NotifyRuleDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SectionHeader('支払い日の何日前'),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final d in _dayOptions)
-                  Pressable(
-                    scale: 0.94,
-                    onTap: () => setState(() => _days = d),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 9),
-                      decoration: BoxDecoration(
-                        color: _days == d
-                            ? AppColors.primary
-                            : AppColors.surfaceSunken,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(d == 0 ? '当日' : '$d日前',
-                          style: AppType.body(13.5,
-                              weight: FontWeight.w600,
-                              color: _days == d
-                                  ? AppColors.onPrimary
-                                  : AppColors.textPrimary)),
-                    ),
-                  ),
-              ],
+            _DaysBeforeWheel(
+              value: _days,
+              onChanged: (d) => setState(() => _days = d),
             ),
             const SectionHeader('通知する時刻'),
             _WheelTimePicker(
@@ -1280,6 +1371,83 @@ class _NotifyRuleDialogState extends State<_NotifyRuleDialog> {
           child: const Text('決定'),
         ),
       ],
+    );
+  }
+}
+
+/// A single vertical wheel to pick "how many days before" (0 = 当日).
+class _DaysBeforeWheel extends StatefulWidget {
+  const _DaysBeforeWheel({required this.value, required this.onChanged});
+  final int value;
+  final ValueChanged<int> onChanged;
+
+  @override
+  State<_DaysBeforeWheel> createState() => _DaysBeforeWheelState();
+}
+
+class _DaysBeforeWheelState extends State<_DaysBeforeWheel> {
+  static const _max = 60;
+  late final FixedExtentScrollController _ctrl =
+      FixedExtentScrollController(initialItem: widget.value.clamp(0, _max));
+  late int _value = widget.value;
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceSunken,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      child: SizedBox(
+        height: 130,
+        child: Stack(
+          children: [
+            Center(
+              child: Container(
+                height: 40,
+                margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            ListWheelScrollView.useDelegate(
+              controller: _ctrl,
+              itemExtent: 40,
+              perspective: 0.004,
+              diameterRatio: 1.3,
+              physics: const FixedExtentScrollPhysics(),
+              onSelectedItemChanged: (i) {
+                setState(() => _value = i);
+                widget.onChanged(i);
+              },
+              childDelegate: ListWheelChildBuilderDelegate(
+                childCount: _max + 1,
+                builder: (context, i) {
+                  final sel = i == _value;
+                  return Center(
+                    child: Text(
+                      i == 0 ? '当日' : '$i日前',
+                      style: AppType.display(sel ? 20 : 16,
+                          color: sel
+                              ? AppColors.primaryDeep
+                              : AppColors.textMuted),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

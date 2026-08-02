@@ -8,7 +8,6 @@ import '../../core/widgets/section_header.dart';
 import '../../core/widgets/soft_button.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/soft_header.dart';
-import '../../core/utils/billing.dart';
 import '../../core/utils/currency.dart';
 import '../../providers/subscription_providers.dart';
 
@@ -68,7 +67,7 @@ class PausedSubscriptionsScreen extends ConsumerWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(s.name, style: AppType.body(15.5, weight: FontWeight.w700)),
-                                    Text('${fmt.format(s.amount)} /${s.cycle.label}',
+                                    Text('${fmt.format(s.amount)} /${s.periodLabel}',
                                         style: AppType.body(12,
                                             color: AppColors.textSecondary)),
                                   ],

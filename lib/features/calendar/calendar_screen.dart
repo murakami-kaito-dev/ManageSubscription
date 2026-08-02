@@ -38,7 +38,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return subs.where((s) {
       if (s.isPaused) return false;
       final list = Billing.paymentsInRange(
-          s.firstPaymentDate, s.cycle, target, target);
+          s.firstPaymentDate, s.recurrence, target, target);
       return list.isNotEmpty;
     }).toList();
   }
@@ -58,7 +58,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     double monthTotal = 0;
     for (final s in subs) {
       final payments = Billing.paymentsInRange(
-          s.firstPaymentDate, s.cycle, monthStart, monthEnd);
+          s.firstPaymentDate, s.recurrence, monthStart, monthEnd);
       monthTotal += payments.length * s.amountIn(currency);
     }
 
