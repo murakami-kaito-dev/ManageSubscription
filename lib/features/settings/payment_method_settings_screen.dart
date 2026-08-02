@@ -32,7 +32,7 @@ class PaymentMethodSettingsScreen extends ConsumerWidget {
     }
     final result = await showDialog<PaymentMethod>(
       context: context,
-      builder: (_) => _MethodDialog(existing: existing, index: methods.length),
+      builder: (_) => PaymentMethodEditorDialog(existing: existing, index: methods.length),
     );
     if (result != null) {
       await ref.read(paymentMethodsProvider.notifier).save(result);
@@ -115,16 +115,17 @@ class PaymentMethodSettingsScreen extends ConsumerWidget {
   }
 }
 
-class _MethodDialog extends StatefulWidget {
-  const _MethodDialog({this.existing, required this.index});
+class PaymentMethodEditorDialog extends StatefulWidget {
+  const PaymentMethodEditorDialog(
+      {super.key, this.existing, required this.index});
   final PaymentMethod? existing;
   final int index;
 
   @override
-  State<_MethodDialog> createState() => _MethodDialogState();
+  State<PaymentMethodEditorDialog> createState() => _PaymentMethodEditorDialogState();
 }
 
-class _MethodDialogState extends State<_MethodDialog> {
+class _PaymentMethodEditorDialogState extends State<PaymentMethodEditorDialog> {
   late final TextEditingController _name =
       TextEditingController(text: widget.existing?.name ?? '');
   late int _icon = widget.existing?.icon ?? _icons.first.codePoint;

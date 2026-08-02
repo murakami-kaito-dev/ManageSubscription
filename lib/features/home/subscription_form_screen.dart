@@ -17,10 +17,14 @@ import '../../core/widgets/section_header.dart';
 import '../../core/widgets/soft_button.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/soft_header.dart';
+import '../../data/models/category.dart';
+import '../../data/models/payment_method.dart';
 import '../../data/models/subscription.dart';
 import '../../providers/premium_provider.dart';
 import '../../providers/subscription_providers.dart';
 import '../premium/premium_screen.dart';
+import '../settings/category_settings_screen.dart';
+import '../settings/payment_method_settings_screen.dart';
 import 'widgets/cospa_preview.dart';
 
 class SubscriptionFormScreen extends ConsumerStatefulWidget {
@@ -98,6 +102,38 @@ class _SubscriptionFormScreenState
       lastDate: DateTime(2100),
     );
     if (picked != null) setState(() => _firstPayment = picked);
+  }
+
+  Future<void> _addCategory(int currentCount) async {
+    final isPremium = ref.read(premiumProvider);
+    if (!PremiumLimits.canAddCategory(isPremium, currentCount)) {
+      PremiumScreen.show(context,
+          reason: '無料版のカテゴリーは${PremiumLimits.maxCategories}件までです。');
+      return;
+    }
+    final result = await showDialog<Category>(
+      context: context,
+      builder: (_) => CategoryEditorDialog(index: currentCount),
+    );
+    if (result == null) return;
+    await ref.read(categoriesProvider.notifier).save(result);
+    if (mounted) setState(() => _categoryId = result.id);
+  }
+
+  Future<void> _addPaymentMethod(int currentCount) async {
+    final isPremium = ref.read(premiumProvider);
+    if (!PremiumLimits.canAddPaymentMethod(isPremium, currentCount)) {
+      PremiumScreen.show(context,
+          reason: '無料版の支払い方法は${PremiumLimits.maxPaymentMethods}件までです。');
+      return;
+    }
+    final result = await showDialog<PaymentMethod>(
+      context: context,
+      builder: (_) => PaymentMethodEditorDialog(index: currentCount),
+    );
+    if (result == null) return;
+    await ref.read(paymentMethodsProvider.notifier).save(result);
+    if (mounted) setState(() => _paymentMethodId = result.id);
   }
 
   Future<void> _save() async {
@@ -302,6 +338,7 @@ class _SubscriptionFormScreenState
                       ],
                       selectedId: _categoryId,
                       onSelected: (id) => setState(() => _categoryId = id),
+                      onAdd: () => _addCategory(categories.length),
                     ),
                     const SectionHeader('支払い方法'),
                     _ChipPicker(
@@ -311,6 +348,7 @@ class _SubscriptionFormScreenState
                       selectedId: _paymentMethodId,
                       onSelected: (id) =>
                           setState(() => _paymentMethodId = id),
+                      onAdd: () => _addPaymentMethod(methods.length),
                     ),
                     SectionHeader('コスパチェッカー',
                         trailing: Text('1回あたりの単価を自動計算',
@@ -525,17 +563,17 @@ class _ChipPicker extends StatelessWidget {
     required this.items,
     required this.selectedId,
     required this.onSelected,
+    this.onAdd,
   });
   final List<({String id, String label})> items;
   final String? selectedId;
   final ValueChanged<String?> onSelected;
 
+  /// When provided, a "+" chip is appended that creates a new entry inline.
+  final VoidCallback? onAdd;
+
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) {
-      return Text('設定画面から追加できます',
-          style: AppType.body(13, color: AppColors.textMuted));
-    }
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -543,6 +581,7 @@ class _ChipPicker extends StatelessWidget {
         for (final it in items)
           _chip(it.label, selectedId == it.id,
               () => onSelected(selectedId == it.id ? null : it.id)),
+        if (onAdd != null) _addChip(onAdd!),
       ],
     );
   }
@@ -563,6 +602,24 @@ class _ChipPicker extends StatelessWidget {
               style: AppType.body(13.5,
                   weight: FontWeight.w600,
                   color: sel ? AppColors.onPrimary : AppColors.textPrimary)),
+        ),
+      );
+
+  /// A compact circular "+" the same height as the chips.
+  Widget _addChip(VoidCallback onTap) => Pressable(
+        onTap: onTap,
+        scale: 0.9,
+        child: Container(
+          width: 42,
+          height: 42,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppColors.primarySoft,
+            shape: BoxShape.circle,
+            boxShadow: AppShadows.soft(),
+          ),
+          child: const Icon(Icons.add_rounded,
+              color: AppColors.primaryDeep, size: 22),
         ),
       );
 }

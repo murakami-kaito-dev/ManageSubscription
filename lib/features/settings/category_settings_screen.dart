@@ -31,7 +31,7 @@ class CategorySettingsScreen extends ConsumerWidget {
     }
     final result = await showDialog<Category>(
       context: context,
-      builder: (_) => _CategoryDialog(existing: existing, index: categories.length),
+      builder: (_) => CategoryEditorDialog(existing: existing, index: categories.length),
     );
     if (result != null) {
       await ref.read(categoriesProvider.notifier).save(result);
@@ -114,16 +114,16 @@ class CategorySettingsScreen extends ConsumerWidget {
   }
 }
 
-class _CategoryDialog extends StatefulWidget {
-  const _CategoryDialog({this.existing, required this.index});
+class CategoryEditorDialog extends StatefulWidget {
+  const CategoryEditorDialog({super.key, this.existing, required this.index});
   final Category? existing;
   final int index;
 
   @override
-  State<_CategoryDialog> createState() => _CategoryDialogState();
+  State<CategoryEditorDialog> createState() => _CategoryEditorDialogState();
 }
 
-class _CategoryDialogState extends State<_CategoryDialog> {
+class _CategoryEditorDialogState extends State<CategoryEditorDialog> {
   late final TextEditingController _name =
       TextEditingController(text: widget.existing?.name ?? '');
   late int _color =
