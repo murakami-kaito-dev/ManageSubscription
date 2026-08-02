@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sed -n '/Future<int> getNewCardsCount/,/^  }/p' lib/features/study/data/local_card_repository.dart)",
+      "Bash(sed -n '/Future<int> getReviewCardsCount/,/^  }/p' lib/features/study/data/local_card_repository.dart)",
+      "Bash(sed -n '/Future<List<TechCard>> getPracticeCards/,/^  }/p' lib/features/study/data/local_card_repository.dart)",
+      "Bash(sed -n '/Future<List<TechCard>> getCardsForReview/,/^  }/p' lib/features/study/data/local_card_repository.dart)",
+      "Bash(python3 -c \"from PIL import Image; im=Image.open\\('ITEngIcon.png'\\); print\\('size:', im.size, 'mode:', im.mode\\)\")",
+      "Bash(sips -g pixelWidth -g pixelHeight -g hasAlpha ITEngIcon.png)",
+      "Bash(git mv *)",
+      "Bash(dart run *)",
+      "Bash(sips -g hasAlpha -g pixelWidth ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png)",
+      "Bash(sed -n '/Future<List<TechCard>> getCardsInRange/,/^  }/p' lib/features/study/data/local_card_repository.dart)",
+      "Bash(sed -n '/Future<void> loadRangeSession/,/^  }/p' lib/features/study/providers/study_providers.dart)",
+      "Bash(sed -n '/path: .\\\\/study.,/,/\\),/p' lib/app.dart)",
+      "Bash(grep -vE \"^Analyzing|^\\\\s*$|To update|flutter upgrade|^┌|^│|^└\")",
+      "Bash(grep -c 'borderRadius: BorderRadius.circular\\(AppTheme.cardBorderRadius\\), *)",
+      "Bash(grep -vE \"^Analyzing|^\\\\s*$|To update|flutter upgrade|^┌|^│|^└|prefer_const\")",
+      "Bash(flutter build *)",
+      "Bash(cd /Users/kaitomurakami/Dev/Products/ship_it_english *)",
+      "Read(//Users/kaitomurakami/.claude/**)",
+      "Bash(sips -g hasAlpha -g pixelWidth -g pixelHeight ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png)",
+      "Bash(grep -nA12 \"flutter_launcher_icons:\" pubspec.yaml)",
+      "Bash(xcodebuild -list -project ios/Runner.xcodeproj)",
+      "Bash(plutil -lint ios/Runner/PrivacyInfo.xcprivacy)",
+      "Edit(/.claude/skills/app-store-release/**)",
+      "Bash(sips -g hasAlpha -g pixelWidth store/icon/app_store_icon_1024.png)",
+      "Bash(chmod +x store/screenshots/capture.sh)"
+    ]
+  }
+}

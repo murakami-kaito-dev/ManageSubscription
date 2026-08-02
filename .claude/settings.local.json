@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter analyze *)",
+      "Bash(flutter test *)",
+      "Bash(xcrun simctl *)",
+      "Bash(open -a Simulator)",
+      "Bash(flutter run *)",
+      "Bash(python3 -c ' *)",
+      "Bash(flutter pub *)",
+      "Bash(python3 \"/private/tmp/claude-501/-Users-kaitomurakami-Dev-Products-ship-it-english/a012065a-9fd4-40e0-acca-65e30e8ceac7/scratchpad/gen_context_en.py\")",
+      "Bash(grep -vE \"prefer_const|^Analyzing|^$\")",
+      "Bash(kill %1)",
+      "WebSearch",
+      "Bash(python3 -)",
+      "Bash(python3 \"/private/tmp/claude-501/-Users-kaitomurakami-Dev-Products-ship-it-english/a012065a-9fd4-40e0-acca-65e30e8ceac7/scratchpad/add_cards_v12.py\")",
+      "Bash(echo \"exit: $?\")",
+      "Bash(flutter devices *)",
+      "Bash(cd \"/Users/kaitomurakami/.claude/projects/-Users-kaitomurakami-Dev-Products-ship-it-english/memory\" *)",
+      "Read(//Users/kaitomurakami/.claude/projects/-Users-kaitomurakami-Dev-Products-ship-it-english/memory/**)",
+      "Bash(grep -rn \"static.*instance\\\\|abstract class FilePicker\\\\|pickFiles\" ~/.pub-cache/hosted/pub.dev/file_picker-11.0.2/lib/src/file_picker.dart 2>/dev/null | head -10)",
+      "Read(//Users/kaitomurakami/.pub-cache/hosted/pub.dev/file_picker-11.0.2/lib/src/**)",
+      "Bash(python3 /private/tmp/claude-501/-Users-kaitomurakami-Dev-Products-ship-it-english/a012065a-9fd4-40e0-acca-65e30e8ceac7/scratchpad/gen_cards_1500.py)",
+      "Bash(python3 -c \"import json; d=json.load\\(open\\('assets/data/cards.json'\\)\\); print\\('valid JSON,', len\\(d['cards']\\),'cards, size', __import__\\('os'\\).path.getsize\\('assets/data/cards.json'\\)//1024,'KB'\\)\")",
+      "Bash(grep -vE \"^$\")",
+      "Bash(rm -rf ~/Library/Developer/Xcode/DerivedData/*)",
+      "Bash(flutter clean *)"
+    ]
+  }
+}
