@@ -110,6 +110,12 @@ void main() {
     test('costPerUse is null when usage is not tracked', () {
       expect(sub(usage: 0).costPerUse, isNull);
     });
+
+    test('displayGlyph never throws on empty name/emoji', () {
+      expect(sub().copyWith(name: '').displayGlyph, '?');
+      expect(sub().copyWith(name: 'Netflix').displayGlyph, 'N');
+      expect(sub().copyWith(name: 'Netflix', emoji: '🎬').displayGlyph, '🎬');
+    });
   });
 
   group('PremiumLimits (free-tier gates)', () {

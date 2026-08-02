@@ -52,6 +52,16 @@ class Subscription {
   Color get color => Color(colorValue);
   AppCurrency get currency => AppCurrencyX.fromCode(currencyCode);
 
+  /// A single glyph for compact avatars: the custom character/emoji when set,
+  /// otherwise the name's first character, otherwise a placeholder. Never
+  /// throws on empty strings (unlike `name.characters.first`).
+  String get displayGlyph {
+    final e = emoji?.trim() ?? '';
+    if (e.isNotEmpty) return e;
+    final chars = name.characters;
+    return chars.isEmpty ? '?' : chars.first;
+  }
+
   // ── Derived money ─────────────────────────────────────────────────────
   double get monthlyAmount => amount * cycle.monthlyFactor;
   double get yearlyAmount => amount * cycle.yearlyFactor;

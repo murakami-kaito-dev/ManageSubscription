@@ -59,7 +59,7 @@ class PausedSubscriptionsScreen extends ConsumerWidget {
                                   color: s.color.withOpacity(0.16),
                                   borderRadius: BorderRadius.circular(13),
                                 ),
-                                child: Text(s.emoji ?? s.name.characters.first,
+                                child: Text(s.displayGlyph,
                                     style: const TextStyle(fontSize: 20)),
                               ),
                               const Gap(AppSpacing.md),

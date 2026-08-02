@@ -391,7 +391,7 @@ class _PaymentRow extends StatelessWidget {
               color: sub.color.withOpacity(0.16),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Text(sub.emoji ?? sub.name.characters.first,
+            child: Text(sub.displayGlyph,
                 style: const TextStyle(fontSize: 18)),
           ),
           const Gap(AppSpacing.md),
