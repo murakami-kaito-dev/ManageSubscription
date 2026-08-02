@@ -1,0 +1,387 @@
+import 'package:confetti/confetti.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/premium_limits.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_shadows.dart';
+import '../../core/theme/app_spacing.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/widgets/pressable.dart';
+import '../../core/widgets/soft_button.dart';
+import '../../providers/premium_provider.dart';
+
+class PremiumScreen extends ConsumerStatefulWidget {
+  const PremiumScreen({super.key, this.reason});
+
+  final String? reason;
+
+  static Future<void> show(BuildContext context, {String? reason}) {
+    return Navigator.of(context).push(MaterialPageRoute(
+      fullscreenDialog: true,
+      builder: (_) => PremiumScreen(reason: reason),
+    ));
+  }
+
+  @override
+  ConsumerState<PremiumScreen> createState() => _PremiumScreenState();
+}
+
+class _PremiumScreenState extends ConsumerState<PremiumScreen> {
+  late final ConfettiController _confetti =
+      ConfettiController(duration: const Duration(seconds: 2));
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _confetti.dispose();
+    super.dispose();
+  }
+
+  Future<void> _purchase() async {
+    setState(() => _busy = true);
+    final ok = await ref.read(premiumProvider.notifier).purchase();
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (ok) {
+      _confetti.play();
+      await _celebrate();
+      if (mounted) Navigator.of(context).pop();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('購入を完了できませんでした。もう一度お試しください。')),
+      );
+    }
+  }
+
+  Future<void> _celebrate() async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _CelebrationDialog(),
+    );
+  }
+
+  Future<void> _restore() async {
+    final ok = await ref.read(premiumProvider.notifier).restore();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(ok ? 'プレミアムを復元しました' : '復元できる購入がありませんでした')),
+    );
+    if (ok) Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: SoftIconButton(
+                      icon: Icons.close_rounded,
+                      onTap: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.xl, 0, AppSpacing.xl, AppSpacing.lg),
+                    children: [
+                      const _Hero(),
+                      if (widget.reason != null) ...[
+                        const Gap(AppSpacing.lg),
+                        _ReasonBanner(text: widget.reason!),
+                      ],
+                      const Gap(AppSpacing.xl),
+                      Text('プレミアム機能',
+                          textAlign: TextAlign.center,
+                          style: AppType.display(22)),
+                      const Gap(AppSpacing.lg),
+                      const _ComparisonTable(),
+                    ],
+                  ),
+                ),
+                _PurchaseBar(busy: _busy, onPurchase: _purchase, onRestore: _restore),
+              ],
+            ),
+          ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confetti,
+              blastDirectionality: BlastDirectionality.explosive,
+              numberOfParticles: 24,
+              gravity: 0.25,
+              colors: AppColors.chartPalette,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Hero extends StatelessWidget {
+  const _Hero();
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+          decoration: BoxDecoration(
+            color: AppColors.gold,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text('一生分のお得をあなたに',
+              style: AppType.body(13,
+                  weight: FontWeight.w700, color: AppColors.onPrimary)),
+        ),
+        const Gap(AppSpacing.md),
+        Text('サブスク管理 プレミアム',
+            textAlign: TextAlign.center, style: AppType.display(27)),
+        const Gap(AppSpacing.xl),
+        Container(
+          width: 130,
+          height: 130,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: AppColors.premiumGradient,
+            ),
+            borderRadius: BorderRadius.circular(38),
+            boxShadow: AppShadows.accentGlow(AppColors.primary, intensity: 1.4),
+          ),
+          child: const Icon(Icons.savings_rounded,
+              size: 64, color: AppColors.onPrimary),
+        ),
+      ],
+    );
+  }
+}
+
+class _ReasonBanner extends StatelessWidget {
+  const _ReasonBanner({required this.text});
+  final String text;
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.coralSoft,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.lock_rounded, color: AppColors.coral, size: 20),
+          const Gap(AppSpacing.sm),
+          Expanded(
+            child: Text(text,
+                style: AppType.body(13,
+                    color: AppColors.textPrimary, height: 1.5)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ComparisonTable extends StatelessWidget {
+  const _ComparisonTable();
+
+  static const _rows = [
+    ('サブスクリプション登録数', '${PremiumLimits.maxSubscriptions}', '∞'),
+    ('カテゴリー登録数', '${PremiumLimits.maxCategories}', '∞'),
+    ('支払い方法登録数', '${PremiumLimits.maxPaymentMethods}', '∞'),
+    ('支払い日前通知の設定数', '${PremiumLimits.maxNotifyRules}', '∞'),
+    ('全広告の非表示', '×', '✓'),
+    ('画像の登録', '×', '✓'),
+    ('CSVエクスポート', '×', '✓'),
+    ('自動並べ替え', '×', '✓'),
+    ('テーマカラーの変更', '×', '✓'),
+    ('カテゴリ/支払い方法別の分析', '×', '✓'),
+    ('全期間の閲覧', '×', '✓'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        boxShadow: AppShadows.soft(),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.sm),
+            child: Row(
+              children: [
+                Expanded(
+                    child: Text('機能',
+                        style: AppType.body(13,
+                            weight: FontWeight.w700,
+                            color: AppColors.textSecondary))),
+                SizedBox(
+                    width: 54,
+                    child: Text('無料',
+                        textAlign: TextAlign.center,
+                        style: AppType.body(13,
+                            weight: FontWeight.w700,
+                            color: AppColors.textSecondary))),
+                Container(
+                  width: 84,
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text('プレミアム',
+                      textAlign: TextAlign.center,
+                      style: AppType.body(12,
+                          weight: FontWeight.w700, color: AppColors.onPrimary)),
+                ),
+              ],
+            ),
+          ),
+          for (var i = 0; i < _rows.length; i++)
+            Container(
+              color: i.isEven ? AppColors.canvas.withOpacity(0.5) : null,
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg, vertical: 13),
+              child: Row(
+                children: [
+                  Expanded(
+                      child: Text(_rows[i].$1, style: AppType.body(13.5))),
+                  SizedBox(
+                    width: 54,
+                    child: Text(_rows[i].$2,
+                        textAlign: TextAlign.center,
+                        style: AppType.body(14,
+                            weight: FontWeight.w700,
+                            color: AppColors.textMuted)),
+                  ),
+                  SizedBox(
+                    width: 84,
+                    child: Center(
+                      child: _rows[i].$3 == '∞'
+                          ? const Icon(Icons.all_inclusive_rounded,
+                              color: AppColors.primary, size: 22)
+                          : const Icon(Icons.check_circle_rounded,
+                              color: AppColors.primary, size: 22),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PurchaseBar extends StatelessWidget {
+  const _PurchaseBar({
+    required this.busy,
+    required this.onPurchase,
+    required this.onRestore,
+  });
+  final bool busy;
+  final VoidCallback onPurchase;
+  final VoidCallback onRestore;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.md, AppSpacing.xl,
+          AppSpacing.md + MediaQuery.of(context).padding.bottom),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusSheet)),
+        boxShadow: AppShadows.raised(),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('はじめの7日間無料、その後 ¥2,800 / 年',
+              style: AppType.body(14,
+                  weight: FontWeight.w600, color: AppColors.textSecondary)),
+          const Gap(AppSpacing.md),
+          SoftButton(
+            label: busy ? '処理中…' : '無料で試す',
+            icon: busy ? null : Icons.workspace_premium_rounded,
+            onPressed: busy ? null : onPurchase,
+          ),
+          const Gap(AppSpacing.sm),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _link('購入を復元', onRestore),
+              _link('利用規約', () {}),
+              _link('プライバシーポリシー', () {}),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _link(String label, VoidCallback onTap) => Pressable(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: Text(label,
+              style: AppType.body(12, color: AppColors.textMuted)),
+        ),
+      );
+}
+
+class _CelebrationDialog extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusCard)),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.7, end: 1),
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.elasticOut,
+        builder: (context, scale, child) =>
+            Transform.scale(scale: scale, child: child),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xxl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.workspace_premium_rounded,
+                  size: 60, color: AppColors.gold),
+              const Gap(AppSpacing.md),
+              Text('プレミアム開始！', style: AppType.display(22)),
+              const Gap(AppSpacing.sm),
+              Text('すべての機能が使えるようになりました。',
+                  textAlign: TextAlign.center,
+                  style: AppType.body(14, color: AppColors.textSecondary)),
+              const Gap(AppSpacing.xl),
+              SoftButton(
+                label: 'はじめる',
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -1,0 +1,398 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
+
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_shadows.dart';
+import '../../core/theme/app_spacing.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/utils/currency.dart';
+import '../../core/widgets/premium_crown.dart';
+import '../../core/widgets/pressable.dart';
+import '../../core/widgets/section_header.dart';
+import '../../core/widgets/soft_button.dart';
+import '../../core/widgets/soft_card.dart';
+import '../../core/widgets/soft_header.dart';
+import '../../data/models/app_settings.dart';
+import '../../providers/core_providers.dart';
+import '../../providers/premium_provider.dart';
+import '../../providers/settings_provider.dart';
+import '../../providers/subscription_providers.dart';
+import '../premium/premium_screen.dart';
+
+class SettingsScreen extends ConsumerWidget {
+  const SettingsScreen({super.key});
+
+  Future<void> _exportCsv(BuildContext context, WidgetRef ref) async {
+    if (!ref.read(premiumProvider)) {
+      PremiumScreen.show(context, reason: 'CSVエクスポートはプレミアム機能です。');
+      return;
+    }
+    final subs = ref.read(subscriptionsProvider).valueOrNull ?? const [];
+    if (subs.isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('エクスポートするデータがありません')));
+      return;
+    }
+    await ref.read(csvExportServiceProvider).exportSubscriptions(
+          subs,
+          ref.read(categoriesMapProvider),
+          ref.read(paymentMethodsMapProvider),
+        );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isPremium = ref.watch(premiumProvider);
+    final settings = ref.watch(settingsProvider);
+
+    return Scaffold(
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            SoftHeader(
+              title: '設定',
+              trailing: SoftIconButton(
+                icon: Icons.close_rounded,
+                onTap: () => Navigator.of(context).pop(),
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg, 0, AppSpacing.lg, 40),
+                children: [
+                  _PremiumBanner(isPremium: isPremium),
+                  const SectionHeader('設定'),
+                  SoftCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        _Row(
+                          icon: Icons.palette_rounded,
+                          label: 'テーマカラーを選択',
+                          premium: true,
+                          trailing: Container(
+                            width: 22,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              color: isPremium
+                                  ? settings.accent
+                                  : AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          onTap: () => _pickAccent(context, ref, isPremium),
+                        ),
+                        const _Div(),
+                        _Row(
+                          icon: Icons.currency_yen_rounded,
+                          label: 'メイン通貨',
+                          trailing: Text(settings.mainCurrency.code,
+                              style: AppType.body(14,
+                                  color: AppColors.textSecondary)),
+                          onTap: () => _pickCurrency(context, ref),
+                        ),
+                        const _Div(),
+                        _Row(
+                          icon: Icons.description_rounded,
+                          label: 'データをCSVエクスポート',
+                          premium: true,
+                          onTap: () => _exportCsv(context, ref),
+                        ),
+                        const _Div(),
+                        _Row(
+                          icon: Icons.notifications_rounded,
+                          label: '支払い日前に通知でお知らせ',
+                          trailing: Switch(
+                            value: settings.notifyEnabled,
+                            onChanged: (v) {
+                              ref
+                                  .read(settingsProvider.notifier)
+                                  .setNotifyEnabled(v);
+                              if (v) {
+                                ref
+                                    .read(notificationServiceProvider)
+                                    .requestPermission();
+                              }
+                              final subs = ref
+                                      .read(subscriptionsProvider)
+                                      .valueOrNull ??
+                                  const [];
+                              ref
+                                  .read(notificationServiceProvider)
+                                  .rescheduleAll(subs, enabled: v);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SectionHeader('アプリ'),
+                  SoftCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        _Row(
+                          icon: Icons.favorite_rounded,
+                          label: 'サブスク管理を応援する',
+                          onTap: () => PremiumScreen.show(context),
+                        ),
+                        const _Div(),
+                        _Row(
+                          icon: Icons.share_rounded,
+                          label: 'シェア',
+                          onTap: () => SharePlus.instance.share(
+                            ShareParams(
+                                text:
+                                    'サブスク管理アプリで毎月の支払いを見える化しよう！'),
+                          ),
+                        ),
+                        const _Div(),
+                        _Row(
+                          icon: Icons.mail_rounded,
+                          label: 'ご意見・ご要望',
+                          onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('ご意見ありがとうございます！')),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Gap(AppSpacing.xxl),
+                  Center(
+                    child: Pressable(
+                      // Hidden debug: long-press version to toggle premium.
+                      onLongPress: () async {
+                        await ref.read(premiumProvider.notifier).debugToggle();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text(ref.read(premiumProvider)
+                                  ? 'デバッグ: プレミアム ON'
+                                  : 'デバッグ: プレミアム OFF')));
+                        }
+                      },
+                      child: Text('v1.0.0',
+                          style:
+                              AppType.body(12, color: AppColors.textMuted)),
+                    ),
+                  ),
+                  const Gap(AppSpacing.lg),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickCurrency(BuildContext context, WidgetRef ref) async {
+    final current = ref.read(settingsProvider).mainCurrency;
+    final picked = await showModalBottomSheet<AppCurrency>(
+      context: context,
+      backgroundColor: AppColors.canvas,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Gap(AppSpacing.lg),
+            Text('メイン通貨', style: AppType.display(18)),
+            const Gap(AppSpacing.sm),
+            for (final c in AppCurrency.values)
+              ListTile(
+                title: Text('${c.symbol}  ${c.code}'),
+                trailing: c == current
+                    ? const Icon(Icons.check_rounded, color: AppColors.primary)
+                    : null,
+                onTap: () => Navigator.pop(context, c),
+              ),
+            const Gap(AppSpacing.lg),
+          ],
+        ),
+      ),
+    );
+    if (picked != null) {
+      await ref.read(settingsProvider.notifier).setCurrency(picked);
+    }
+  }
+
+  Future<void> _pickAccent(
+      BuildContext context, WidgetRef ref, bool isPremium) async {
+    if (!isPremium) {
+      PremiumScreen.show(context, reason: 'テーマカラーの変更はプレミアム機能です。');
+      return;
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.canvas,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('テーマカラー', style: AppType.display(18)),
+              const Gap(AppSpacing.xl),
+              Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  for (final a in ThemeAccent.options)
+                    Pressable(
+                      scale: 0.85,
+                      onTap: () {
+                        ref
+                            .read(settingsProvider.notifier)
+                            .setAccent(a.color.value);
+                        Navigator.pop(context);
+                      },
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              color: a.color,
+                              shape: BoxShape.circle,
+                              boxShadow: AppShadows.soft(),
+                            ),
+                          ),
+                          const Gap(6),
+                          Text(a.name, style: AppType.body(11)),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+              const Gap(AppSpacing.lg),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PremiumBanner extends StatelessWidget {
+  const _PremiumBanner({required this.isPremium});
+  final bool isPremium;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isPremium) {
+      return Container(
+        margin: const EdgeInsets.only(top: AppSpacing.sm),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: AppColors.primarySoft,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.workspace_premium_rounded,
+                color: AppColors.gold, size: 28),
+            const Gap(AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('プレミアム会員', style: AppType.display(17)),
+                  Text('すべての機能をご利用いただけます',
+                      style: AppType.body(12,
+                          color: AppColors.textSecondary)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return Pressable(
+      onTap: () => PremiumScreen.show(context),
+      child: Container(
+        margin: const EdgeInsets.only(top: AppSpacing.sm),
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: AppColors.premiumGradient,
+          ),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+          boxShadow: AppShadows.accentGlow(AppColors.primary, intensity: 1.2),
+        ),
+        child: Row(
+          children: [
+            const Text('👑', style: TextStyle(fontSize: 30)),
+            const Gap(AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('プレミアムを無料でお試し',
+                      style: AppType.display(19, color: AppColors.onPrimary)),
+                  const Gap(2),
+                  Text('一生分のお得をあなたに',
+                      style: AppType.body(12.5,
+                          color: AppColors.onPrimary.withOpacity(0.9))),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded,
+                color: AppColors.onPrimary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Row extends StatelessWidget {
+  const _Row({
+    required this.icon,
+    required this.label,
+    this.trailing,
+    this.onTap,
+    this.premium = false,
+  });
+  final IconData icon;
+  final String label;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final bool premium;
+
+  @override
+  Widget build(BuildContext context) {
+    return Pressable(
+      onTap: onTap,
+      scale: 0.99,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg, vertical: AppSpacing.lg),
+        child: Row(
+          children: [
+            Icon(icon, size: 22, color: AppColors.primaryDeep),
+            const Gap(AppSpacing.md),
+            Expanded(child: Text(label, style: AppType.body(15))),
+            if (premium) ...[const PremiumCrown(size: 15), const Gap(AppSpacing.sm)],
+            if (trailing != null) trailing!,
+            if (trailing == null && !premium)
+              const Icon(Icons.chevron_right_rounded,
+                  color: AppColors.textMuted),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Div extends StatelessWidget {
+  const _Div();
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        child: Divider(height: 1, color: AppColors.textMuted.withOpacity(0.15)),
+      );
+}
