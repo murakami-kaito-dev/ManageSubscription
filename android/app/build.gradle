@@ -7,7 +7,8 @@ plugins {
 
 android {
     namespace = "com.example.manage_subscription"
-    compileSdk = flutter.compileSdkVersion
+    // Pinned to 35: modern plugins (share_plus, google_mobile_ads) require it.
+    compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

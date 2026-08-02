@@ -58,6 +58,13 @@ flutter pub get
 flutter run
 ```
 
+カテゴリー/支払い方法のアイコンはユーザー選択のコードポイントをDBに保存し、実行時に
+`IconData` を生成します。そのためリリースビルドではアイコンのツリーシェイクを無効化します:
+```bash
+flutter build apk --release --no-tree-shake-icons
+flutter build ios --release --no-tree-shake-icons
+```
+
 ### 課金 (RevenueCat)
 デフォルトはキー不要で動作する**モック実装**（購入すると即プレミアム付与、設定画面の
 バージョン番号を長押しで ON/OFF 切替）。本番化する場合は
