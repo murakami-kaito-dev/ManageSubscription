@@ -33,7 +33,14 @@ class PaymentMethodSettingsScreen extends ConsumerWidget {
     }
     final result = await showDialog<PaymentMethod>(
       context: context,
-      builder: (_) => PaymentMethodEditorDialog(existing: existing, index: methods.length),
+      builder: (_) => PaymentMethodEditorDialog(
+        existing: existing,
+        index: methods.length,
+        existingNames: [
+          for (final m in methods)
+            if (m.id != existing?.id) m.name,
+        ],
+      ),
     );
     if (result != null) {
       await ref.read(paymentMethodsProvider.notifier).save(result);
@@ -117,10 +124,17 @@ class PaymentMethodSettingsScreen extends ConsumerWidget {
 }
 
 class PaymentMethodEditorDialog extends StatefulWidget {
-  const PaymentMethodEditorDialog(
-      {super.key, this.existing, required this.index});
+  const PaymentMethodEditorDialog({
+    super.key,
+    this.existing,
+    required this.index,
+    this.existingNames = const [],
+  });
   final PaymentMethod? existing;
   final int index;
+
+  /// Names of the other payment methods, used to block duplicates.
+  final List<String> existingNames;
 
   @override
   State<PaymentMethodEditorDialog> createState() => _PaymentMethodEditorDialogState();
@@ -129,6 +143,7 @@ class PaymentMethodEditorDialog extends StatefulWidget {
 class _PaymentMethodEditorDialogState extends State<PaymentMethodEditorDialog> {
   late final TextEditingController _name =
       TextEditingController(text: widget.existing?.name ?? '');
+  String? _error;
   late int _icon = widget.existing?.icon ?? _icons.first.codePoint;
 
   static const _icons = IconRegistry.paymentIcons;
@@ -153,7 +168,10 @@ class _PaymentMethodEditorDialogState extends State<PaymentMethodEditorDialog> {
         children: [
           TextField(
             controller: _name,
-            decoration: const InputDecoration(labelText: '名前'),
+            decoration: InputDecoration(labelText: '名前', errorText: _error),
+            onChanged: (_) {
+              if (_error != null) setState(() => _error = null);
+            },
           ),
           const Gap(AppSpacing.lg),
           const SectionHeader('アイコン'),
@@ -197,12 +215,22 @@ class _PaymentMethodEditorDialogState extends State<PaymentMethodEditorDialog> {
             child: const Text('キャンセル')),
         TextButton(
           onPressed: () {
-            if (_name.text.trim().isEmpty) return;
+            final name = _name.text.trim();
+            if (name.isEmpty) {
+              setState(() => _error = '名前を入力してください');
+              return;
+            }
+            final exists = widget.existingNames
+                .any((n) => n.trim().toLowerCase() == name.toLowerCase());
+            if (exists) {
+              setState(() => _error = '「$name」はすでに存在します');
+              return;
+            }
             Navigator.pop(
               context,
               PaymentMethod(
                 id: widget.existing?.id ?? const Uuid().v4(),
-                name: _name.text.trim(),
+                name: name,
                 icon: _icon,
                 sortOrder: widget.existing?.sortOrder ?? widget.index,
               ),

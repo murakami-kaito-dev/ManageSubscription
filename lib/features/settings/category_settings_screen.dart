@@ -32,7 +32,14 @@ class CategorySettingsScreen extends ConsumerWidget {
     }
     final result = await showDialog<Category>(
       context: context,
-      builder: (_) => CategoryEditorDialog(existing: existing, index: categories.length),
+      builder: (_) => CategoryEditorDialog(
+        existing: existing,
+        index: categories.length,
+        existingNames: [
+          for (final c in categories)
+            if (c.id != existing?.id) c.name,
+        ],
+      ),
     );
     if (result != null) {
       await ref.read(categoriesProvider.notifier).save(result);
@@ -116,9 +123,17 @@ class CategorySettingsScreen extends ConsumerWidget {
 }
 
 class CategoryEditorDialog extends StatefulWidget {
-  const CategoryEditorDialog({super.key, this.existing, required this.index});
+  const CategoryEditorDialog({
+    super.key,
+    this.existing,
+    required this.index,
+    this.existingNames = const [],
+  });
   final Category? existing;
   final int index;
+
+  /// Names of the other categories, used to block duplicates.
+  final List<String> existingNames;
 
   @override
   State<CategoryEditorDialog> createState() => _CategoryEditorDialogState();
@@ -127,6 +142,7 @@ class CategoryEditorDialog extends StatefulWidget {
 class _CategoryEditorDialogState extends State<CategoryEditorDialog> {
   late final TextEditingController _name =
       TextEditingController(text: widget.existing?.name ?? '');
+  String? _error;
   late int _color =
       widget.existing?.colorValue ?? AppColors.chartPalette.first.value;
   late int _icon = widget.existing?.icon ?? _icons.first.codePoint;
@@ -154,7 +170,13 @@ class _CategoryEditorDialogState extends State<CategoryEditorDialog> {
           children: [
             TextField(
               controller: _name,
-              decoration: const InputDecoration(labelText: '名前'),
+              decoration: InputDecoration(
+                labelText: '名前',
+                errorText: _error,
+              ),
+              onChanged: (_) {
+                if (_error != null) setState(() => _error = null);
+              },
             ),
             const Gap(AppSpacing.lg),
             const SectionHeader('アイコン'),
@@ -226,12 +248,22 @@ class _CategoryEditorDialogState extends State<CategoryEditorDialog> {
             child: const Text('キャンセル')),
         TextButton(
           onPressed: () {
-            if (_name.text.trim().isEmpty) return;
+            final name = _name.text.trim();
+            if (name.isEmpty) {
+              setState(() => _error = '名前を入力してください');
+              return;
+            }
+            final exists = widget.existingNames
+                .any((n) => n.trim().toLowerCase() == name.toLowerCase());
+            if (exists) {
+              setState(() => _error = '「$name」はすでに存在します');
+              return;
+            }
             Navigator.pop(
               context,
               Category(
                 id: widget.existing?.id ?? const Uuid().v4(),
-                name: _name.text.trim(),
+                name: name,
                 colorValue: _color,
                 icon: _icon,
                 sortOrder: widget.existing?.sortOrder ?? widget.index,

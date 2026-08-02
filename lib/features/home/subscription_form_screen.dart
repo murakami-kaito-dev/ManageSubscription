@@ -67,8 +67,8 @@ class _SubscriptionFormScreenState
     super.initState();
     final e = widget.existing;
     _name = TextEditingController(text: e?.name ?? '');
-    _amount = TextEditingController(
-        text: e != null ? _trimAmount(e.amount) : '');
+    _amount =
+        TextEditingController(text: e != null ? _trimAmount(e.amount) : '');
     _emoji = TextEditingController(text: e?.emoji ?? '');
     _usage = TextEditingController(
         text: e != null && e.usageCount > 0 ? _trimAmount(e.usageCount) : '');
@@ -116,9 +116,13 @@ class _SubscriptionFormScreenState
           reason: '無料版のカテゴリーは${PremiumLimits.maxCategories}件までです。');
       return;
     }
+    final existing = ref.read(categoriesProvider).valueOrNull ?? const [];
     final result = await showDialog<Category>(
       context: context,
-      builder: (_) => CategoryEditorDialog(index: currentCount),
+      builder: (_) => CategoryEditorDialog(
+        index: currentCount,
+        existingNames: [for (final c in existing) c.name],
+      ),
     );
     if (result == null) return;
     await ref.read(categoriesProvider.notifier).save(result);
@@ -132,9 +136,13 @@ class _SubscriptionFormScreenState
           reason: '無料版の支払い方法は${PremiumLimits.maxPaymentMethods}件までです。');
       return;
     }
+    final existing = ref.read(paymentMethodsProvider).valueOrNull ?? const [];
     final result = await showDialog<PaymentMethod>(
       context: context,
-      builder: (_) => PaymentMethodEditorDialog(index: currentCount),
+      builder: (_) => PaymentMethodEditorDialog(
+        index: currentCount,
+        existingNames: [for (final m in existing) m.name],
+      ),
     );
     if (result == null) return;
     await ref.read(paymentMethodsProvider.notifier).save(result);
@@ -240,8 +248,7 @@ class _SubscriptionFormScreenState
       paymentMethodId: _paymentMethodId,
       memo: _memo.text.trim().isEmpty ? null : _memo.text.trim(),
       usageCount: _usageValue,
-      usageUnit:
-          _usageUnit.text.trim().isEmpty ? '回' : _usageUnit.text.trim(),
+      usageUnit: _usageUnit.text.trim().isEmpty ? '回' : _usageUnit.text.trim(),
       isPaused: _isPaused,
       imagePath: _imagePath,
       notifyRules: _notifyRules,
@@ -270,12 +277,15 @@ class _SubscriptionFormScreenState
               child: const Text('キャンセル')),
           TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('削除', style: TextStyle(color: AppColors.danger))),
+              child:
+                  const Text('削除', style: TextStyle(color: AppColors.danger))),
         ],
       ),
     );
     if (ok == true) {
-      await ref.read(subscriptionsProvider.notifier).delete(widget.existing!.id);
+      await ref
+          .read(subscriptionsProvider.notifier)
+          .delete(widget.existing!.id);
       if (mounted) Navigator.of(context).pop();
     }
   }
@@ -292,308 +302,326 @@ class _SubscriptionFormScreenState
         onTap: () => FocusScope.of(context).unfocus(),
         behavior: HitTestBehavior.opaque,
         child: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            SoftHeader(
-              title: _isEdit ? '編集' : '新規追加',
-              trailing: SoftIconButton(
-                icon: Icons.close_rounded,
-                onTap: () => Navigator.of(context).pop(),
+          bottom: false,
+          child: Column(
+            children: [
+              SoftHeader(
+                title: _isEdit ? '編集' : '新規追加',
+                trailing: SoftIconButton(
+                  icon: Icons.close_rounded,
+                  onTap: () => Navigator.of(context).pop(),
+                ),
               ),
-            ),
-            Expanded(
-              child: Form(
-                key: _formKey,
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.lg, 0, AppSpacing.lg, 120),
-                  children: [
-                    _fieldCard(
-                      child: TextFormField(
-                        controller: _name,
-                        decoration: _dec('サービス名', hint: '例：Netflix'),
-                        textInputAction: TextInputAction.next,
-                        validator: (v) =>
-                            (v == null || v.trim().isEmpty) ? '名前を入力してください' : null,
+              Expanded(
+                child: Form(
+                  key: _formKey,
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg, 0, AppSpacing.lg, 120),
+                    children: [
+                      _fieldCard(
+                        child: TextFormField(
+                          controller: _name,
+                          decoration: _dec('サービス名', hint: '例：Netflix'),
+                          textInputAction: TextInputAction.next,
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? '名前を入力してください'
+                              : null,
+                        ),
                       ),
-                    ),
-                    const Gap(AppSpacing.md),
-                    _fieldCard(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            flex: 2,
-                            child: TextFormField(
-                              controller: _amount,
-                              decoration: _dec('金額'),
-                              keyboardType: const TextInputType.numberWithOptions(
-                                  decimal: true),
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(
-                                    RegExp(r'[0-9.]')),
-                              ],
-                              onChanged: (_) => setState(() {}),
-                              validator: (v) =>
-                                  _amountValue < 0 ? '正しい金額を入力してください' : null,
-                            ),
-                          ),
-                          const Gap(AppSpacing.md),
-                          Expanded(
-                            child: DropdownButtonFormField<AppCurrency>(
-                              value: _currency,
-                              decoration: _dec('通貨'),
-                              items: [
-                                for (final c in AppCurrency.values)
-                                  DropdownMenuItem(
-                                      value: c,
-                                      child: Text('${c.symbol} ${c.code}')),
-                              ],
-                              onChanged: (v) =>
-                                  setState(() => _currency = v ?? _currency),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SectionHeader('支払いサイクル'),
-                    _CycleSelector(
-                      value: _cycle,
-                      onChanged: (c) => setState(() => _cycle = c),
-                    ),
-                    const Gap(AppSpacing.md),
-                    _fieldCard(
-                      onTap: _pickDate,
-                      child: Row(
-                        children: [
-                          const Icon(Icons.event_rounded,
-                              color: AppColors.primaryDeep),
-                          const Gap(AppSpacing.md),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('初回（次回）支払日',
-                                    style: AppType.body(12,
-                                        color: AppColors.textSecondary)),
-                                const Gap(2),
-                                Text(
-                                    DateFormat('yyyy年M月d日')
-                                        .format(_firstPayment),
-                                    style: AppType.body(16,
-                                        weight: FontWeight.w700)),
-                              ],
-                            ),
-                          ),
-                          const Icon(Icons.chevron_right_rounded,
-                              color: AppColors.textMuted),
-                        ],
-                      ),
-                    ),
-                    const SectionHeader('アイコン'),
-                    _fieldCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              _IconPreview(
-                                imagePath: _imagePath,
-                                emoji: _emoji.text.trim(),
-                                colorValue: _colorValue,
-                                name: _name.text.trim(),
-                                busy: _pickingImage,
-                                onTap: _chooseImageSource,
-                              ),
-                              const Gap(AppSpacing.lg),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      _imagePath != null
-                                          ? '画像を設定中'
-                                          : (_emoji.text.trim().isNotEmpty
-                                              ? '絵文字を設定中'
-                                              : '未設定（名前の頭文字を表示）'),
-                                      style: AppType.body(13,
-                                          weight: FontWeight.w700,
-                                          color: _imagePath != null ||
-                                                  _emoji.text.trim().isNotEmpty
-                                              ? AppColors.primaryDeep
-                                              : AppColors.textMuted),
-                                    ),
-                                    const Gap(AppSpacing.sm),
-                                    Wrap(
-                                      spacing: 8,
-                                      runSpacing: 8,
-                                      children: [
-                                        _MiniBtn(
-                                          icon: Icons.image_rounded,
-                                          label: '画像',
-                                          onTap: _chooseImageSource,
-                                        ),
-                                        if (_imagePath != null)
-                                          _MiniBtn(
-                                            icon: Icons.close_rounded,
-                                            label: '画像を消す',
-                                            onTap: () => setState(
-                                                () => _imagePath = null),
-                                          ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const Gap(AppSpacing.md),
-                          // Emoji is used when no image is set.
-                          SizedBox(
-                            width: 140,
-                            child: TextFormField(
-                              controller: _emoji,
-                              enabled: _imagePath == null,
-                              onChanged: (_) => setState(() {}),
-                              decoration: _dec('絵文字', hint: '🎬'),
-                              maxLength: 2,
-                              buildCounter: (_,
-                                      {required currentLength,
-                                      required isFocused,
-                                      maxLength}) =>
-                                  null,
-                            ),
-                          ),
-                          const Gap(AppSpacing.sm),
-                          Text('背景の色',
-                              style: AppType.body(12,
-                                  color: AppColors.textSecondary)),
-                          const Gap(AppSpacing.sm),
-                          _ColorPicker(
-                            selected: _colorValue,
-                            onSelected: (v) => setState(() => _colorValue = v),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SectionHeader('カテゴリー'),
-                    _ChipPicker(
-                      items: [
-                        for (final c in categories) (id: c.id, label: c.name),
-                      ],
-                      selectedId: _categoryId,
-                      onSelected: (id) => setState(() => _categoryId = id),
-                      onAdd: () => _addCategory(categories.length),
-                    ),
-                    const SectionHeader('支払い方法'),
-                    _ChipPicker(
-                      items: [
-                        for (final m in methods) (id: m.id, label: m.name),
-                      ],
-                      selectedId: _paymentMethodId,
-                      onSelected: (id) =>
-                          setState(() => _paymentMethodId = id),
-                      onAdd: () => _addPaymentMethod(methods.length),
-                    ),
-                    SectionHeader('コスパチェッカー',
-                        trailing: Text('1回あたりの単価を自動計算',
-                            style: AppType.body(11,
-                                color: AppColors.textMuted))),
-                    _fieldCard(
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                flex: 2,
-                                child: TextFormField(
-                                  controller: _usage,
-                                  decoration:
-                                      _dec('月の推定利用回数', hint: '例：8'),
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                          decimal: true),
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.allow(
-                                        RegExp(r'[0-9.]')),
-                                  ],
-                                  onChanged: (_) => setState(() {}),
-                                ),
-                              ),
-                              const Gap(AppSpacing.md),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: _usageUnit,
-                                  decoration: _dec('単位'),
-                                  onChanged: (_) => setState(() {}),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const Gap(AppSpacing.md),
-                          CospaPreview(
-                            monthlyAmount: _amountValue * _cycle.monthlyFactor,
-                            currency: _currency,
-                            usage: _usageValue,
-                            unit: _usageUnit.text.trim().isEmpty
-                                ? '回'
-                                : _usageUnit.text.trim(),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SectionHeader('支払い日前の通知'),
-                    _NotifyRulesEditor(
-                      rules: _notifyRules,
-                      limit: PremiumLimits.notifyRuleLimit(isPremium),
-                      onAdd: _addNotifyRule,
-                      onEdit: _editNotifyRule,
-                      onRemove: (i) =>
-                          setState(() => _notifyRules.removeAt(i)),
-                      onNeedPremium: () => PremiumScreen.show(context,
-                          reason:
-                              '無料版で設定できる通知は${PremiumLimits.maxNotifyRules}件までです。'),
-                    ),
-                    const SectionHeader('メモ'),
-                    _fieldCard(
-                      child: TextFormField(
-                        controller: _memo,
-                        decoration: _dec('メモ', hint: '任意'),
-                        maxLines: 3,
-                      ),
-                    ),
-                    if (_isEdit) ...[
-                      const SectionHeader('状態'),
+                      const Gap(AppSpacing.md),
                       _fieldCard(
                         child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
-                                child: Text('このサブスクを停止中にする',
-                                    style: AppType.body(15))),
-                            Switch(
-                              value: _isPaused,
-                              onChanged: (v) => setState(() => _isPaused = v),
+                              flex: 2,
+                              child: TextFormField(
+                                controller: _amount,
+                                decoration: _dec('金額'),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(
+                                      RegExp(r'[0-9.]')),
+                                ],
+                                onChanged: (_) => setState(() {}),
+                                validator: (v) =>
+                                    _amountValue < 0 ? '正しい金額を入力してください' : null,
+                              ),
+                            ),
+                            const Gap(AppSpacing.md),
+                            Expanded(
+                              child: DropdownButtonFormField<AppCurrency>(
+                                value: _currency,
+                                decoration: _dec('通貨'),
+                                items: [
+                                  for (final c in AppCurrency.values)
+                                    DropdownMenuItem(
+                                        value: c,
+                                        child: Text('${c.symbol} ${c.code}')),
+                                ],
+                                onChanged: (v) =>
+                                    setState(() => _currency = v ?? _currency),
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      const Gap(AppSpacing.lg),
-                      SoftButton(
-                        label: 'このサブスクを削除',
-                        icon: Icons.delete_outline_rounded,
-                        kind: SoftButtonKind.neutral,
-                        onPressed: _delete,
+                      const SectionHeader('支払いサイクル'),
+                      _CycleSelector(
+                        value: _cycle,
+                        onChanged: (c) => setState(() => _cycle = c),
                       ),
+                      const Gap(AppSpacing.md),
+                      _fieldCard(
+                        onTap: _pickDate,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.event_rounded,
+                                color: AppColors.primaryDeep),
+                            const Gap(AppSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('初回（次回）支払日',
+                                      style: AppType.body(12,
+                                          color: AppColors.textSecondary)),
+                                  const Gap(2),
+                                  Text(
+                                      DateFormat('yyyy年M月d日')
+                                          .format(_firstPayment),
+                                      style: AppType.body(16,
+                                          weight: FontWeight.w700)),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right_rounded,
+                                color: AppColors.textMuted),
+                          ],
+                        ),
+                      ),
+                      const SectionHeader('アイコン'),
+                      _fieldCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                _IconPreview(
+                                  imagePath: _imagePath,
+                                  emoji: _emoji.text.trim(),
+                                  colorValue: _colorValue,
+                                  name: _name.text.trim(),
+                                  busy: _pickingImage,
+                                  onTap: _chooseImageSource,
+                                ),
+                                const Gap(AppSpacing.lg),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _imagePath != null
+                                            ? '画像を設定中'
+                                            : (_emoji.text.trim().isNotEmpty
+                                                ? '絵文字を設定中'
+                                                : '未設定（※名前の頭文字を表示中）'),
+                                        style: AppType.body(13,
+                                            weight: FontWeight.w700,
+                                            color: _imagePath != null ||
+                                                    _emoji.text
+                                                        .trim()
+                                                        .isNotEmpty
+                                                ? AppColors.primaryDeep
+                                                : AppColors.textMuted),
+                                      ),
+                                      const Gap(AppSpacing.sm),
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: [
+                                          _MiniBtn(
+                                            icon: Icons.image_rounded,
+                                            label: '画像',
+                                            onTap: _chooseImageSource,
+                                          ),
+                                          if (_imagePath != null)
+                                            _MiniBtn(
+                                              icon: Icons.close_rounded,
+                                              label: '画像を消す',
+                                              onTap: () => setState(
+                                                  () => _imagePath = null),
+                                            ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Gap(AppSpacing.md),
+                            // Emoji is used when no image is set.
+                            SizedBox(
+                              width: 140,
+                              child: TextFormField(
+                                controller: _emoji,
+                                enabled: _imagePath == null,
+                                onChanged: (_) => setState(() {}),
+                                decoration: _dec('絵文字', hint: '🎬'),
+                                maxLength: 2,
+                                buildCounter: (_,
+                                        {required currentLength,
+                                        required isFocused,
+                                        maxLength}) =>
+                                    null,
+                              ),
+                            ),
+                            const Gap(AppSpacing.sm),
+                            Text('背景の色',
+                                style: AppType.body(12,
+                                    color: AppColors.textSecondary)),
+                            const Gap(AppSpacing.sm),
+                            _ColorPicker(
+                              selected: _colorValue,
+                              onSelected: (v) =>
+                                  setState(() => _colorValue = v),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SectionHeader('カテゴリー'),
+                      _ChipPicker(
+                        items: [
+                          for (final c in categories)
+                            (
+                              id: c.id,
+                              label: c.name,
+                              icon: c.iconData,
+                              color: c.color
+                            ),
+                        ],
+                        selectedId: _categoryId,
+                        onSelected: (id) => setState(() => _categoryId = id),
+                        onAdd: () => _addCategory(categories.length),
+                      ),
+                      const SectionHeader('支払い方法'),
+                      _ChipPicker(
+                        items: [
+                          for (final m in methods)
+                            (
+                              id: m.id,
+                              label: m.name,
+                              icon: m.iconData,
+                              color: AppColors.primaryDeep
+                            ),
+                        ],
+                        selectedId: _paymentMethodId,
+                        onSelected: (id) =>
+                            setState(() => _paymentMethodId = id),
+                        onAdd: () => _addPaymentMethod(methods.length),
+                      ),
+                      SectionHeader('コスパチェッカー',
+                          trailing: Text('1回あたりの単価を自動計算',
+                              style: AppType.body(11,
+                                  color: AppColors.textMuted))),
+                      _fieldCard(
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  flex: 2,
+                                  child: TextFormField(
+                                    controller: _usage,
+                                    decoration: _dec('月の推定利用回数', hint: '例：8'),
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                            decimal: true),
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(
+                                          RegExp(r'[0-9.]')),
+                                    ],
+                                    onChanged: (_) => setState(() {}),
+                                  ),
+                                ),
+                                const Gap(AppSpacing.md),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _usageUnit,
+                                    decoration: _dec('単位'),
+                                    onChanged: (_) => setState(() {}),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Gap(AppSpacing.md),
+                            CospaPreview(
+                              monthlyAmount:
+                                  _amountValue * _cycle.monthlyFactor,
+                              currency: _currency,
+                              usage: _usageValue,
+                              unit: _usageUnit.text.trim().isEmpty
+                                  ? '回'
+                                  : _usageUnit.text.trim(),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SectionHeader('支払い日前の通知'),
+                      _NotifyRulesEditor(
+                        rules: _notifyRules,
+                        limit: PremiumLimits.notifyRuleLimit(isPremium),
+                        onAdd: _addNotifyRule,
+                        onEdit: _editNotifyRule,
+                        onRemove: (i) =>
+                            setState(() => _notifyRules.removeAt(i)),
+                        onNeedPremium: () => PremiumScreen.show(context,
+                            reason:
+                                '無料版で設定できる通知は${PremiumLimits.maxNotifyRules}件までです。'),
+                      ),
+                      const SectionHeader('メモ'),
+                      _fieldCard(
+                        child: TextFormField(
+                          controller: _memo,
+                          decoration: _dec('メモ', hint: '任意'),
+                          maxLines: 3,
+                        ),
+                      ),
+                      if (_isEdit) ...[
+                        const SectionHeader('状態'),
+                        _fieldCard(
+                          child: Row(
+                            children: [
+                              Expanded(
+                                  child: Text('このサブスクを停止中にする',
+                                      style: AppType.body(15))),
+                              Switch(
+                                value: _isPaused,
+                                onChanged: (v) => setState(() => _isPaused = v),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Gap(AppSpacing.lg),
+                        SoftButton(
+                          label: 'このサブスクを削除',
+                          icon: Icons.delete_outline_rounded,
+                          kind: SoftButtonKind.neutral,
+                          onPressed: _delete,
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-            _SaveBar(onSave: _save, label: _isEdit ? '保存する' : '追加する'),
-          ],
+              _SaveBar(onSave: _save, label: _isEdit ? '保存する' : '追加する'),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -641,9 +669,8 @@ class _CycleSelector extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: value == c.$1
-                        ? AppColors.primary
-                        : Colors.transparent,
+                    color:
+                        value == c.$1 ? AppColors.primary : Colors.transparent,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(c.$2,
@@ -707,7 +734,7 @@ class _ChipPicker extends StatelessWidget {
     required this.onSelected,
     this.onAdd,
   });
-  final List<({String id, String label})> items;
+  final List<({String id, String label, IconData icon, Color color})> items;
   final String? selectedId;
   final ValueChanged<String?> onSelected;
 
@@ -721,29 +748,56 @@ class _ChipPicker extends StatelessWidget {
       runSpacing: 8,
       children: [
         for (final it in items)
-          _chip(it.label, selectedId == it.id,
+          _chip(it, selectedId == it.id,
               () => onSelected(selectedId == it.id ? null : it.id)),
         if (onAdd != null) _addChip(onAdd!),
       ],
     );
   }
 
-  Widget _chip(String label, bool sel, VoidCallback onTap) => Pressable(
+  Widget _chip(
+    ({String id, String label, IconData icon, Color color}) it,
+    bool sel,
+    VoidCallback onTap,
+  ) =>
+      Pressable(
         onTap: onTap,
         scale: 0.95,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
           decoration: BoxDecoration(
             color: sel ? AppColors.primary : AppColors.surface,
             borderRadius: BorderRadius.circular(999),
             boxShadow: sel ? null : AppShadows.soft(),
           ),
-          child: Text(label,
-              style: AppType.body(13.5,
-                  weight: FontWeight.w600,
-                  color: sel ? AppColors.onPrimary : AppColors.textPrimary)),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // A color-tinted disc carrying the chosen icon, so the icon and
+              // color the user picked are actually visible on the chip.
+              Container(
+                width: 26,
+                height: 26,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: sel
+                      ? AppColors.onPrimary.withOpacity(0.25)
+                      : it.color.withOpacity(0.18),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(it.icon,
+                    size: 15,
+                    color: sel ? AppColors.onPrimary : it.color),
+              ),
+              const Gap(8),
+              Text(it.label,
+                  style: AppType.body(13.5,
+                      weight: FontWeight.w600,
+                      color:
+                          sel ? AppColors.onPrimary : AppColors.textPrimary)),
+            ],
+          ),
         ),
       );
 
@@ -881,15 +935,10 @@ class _NotifyRuleDialog extends StatefulWidget {
 
 class _NotifyRuleDialogState extends State<_NotifyRuleDialog> {
   late int _days = widget.initial?.daysBefore ?? 1;
-  late TimeOfDay _time =
-      widget.initial?.time ?? const TimeOfDay(hour: 9, minute: 0);
+  late int _hour = widget.initial?.hour ?? 9;
+  late int _minute = widget.initial?.minute ?? 0;
 
   static const _dayOptions = [0, 1, 2, 3, 5, 7, 14, 30];
-
-  Future<void> _pickTime() async {
-    final picked = await showTimePicker(context: context, initialTime: _time);
-    if (picked != null) setState(() => _time = picked);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -932,31 +981,13 @@ class _NotifyRuleDialogState extends State<_NotifyRuleDialog> {
               ],
             ),
             const SectionHeader('通知する時刻'),
-            Pressable(
-              onTap: _pickTime,
-              scale: 0.98,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg, vertical: AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceSunken,
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.schedule_rounded,
-                        color: AppColors.primaryDeep),
-                    const Gap(AppSpacing.md),
-                    Text(
-                      _time.format(context),
-                      style: AppType.display(18),
-                    ),
-                    const Spacer(),
-                    const Icon(Icons.chevron_right_rounded,
-                        color: AppColors.textMuted),
-                  ],
-                ),
-              ),
+            _WheelTimePicker(
+              hour: _hour,
+              minute: _minute,
+              onChanged: (h, m) => setState(() {
+                _hour = h;
+                _minute = m;
+              }),
             ),
           ],
         ),
@@ -968,12 +999,130 @@ class _NotifyRuleDialogState extends State<_NotifyRuleDialog> {
         TextButton(
           onPressed: () => Navigator.pop(
             context,
-            NotifyRule(
-                daysBefore: _days, hour: _time.hour, minute: _time.minute),
+            NotifyRule(daysBefore: _days, hour: _hour, minute: _minute),
           ),
           child: const Text('決定'),
         ),
       ],
+    );
+  }
+}
+
+/// A scrollable hour:minute picker (vertical number wheels) — familiar to
+/// Japanese users and clearer than the analog clock dial.
+class _WheelTimePicker extends StatefulWidget {
+  const _WheelTimePicker({
+    required this.hour,
+    required this.minute,
+    required this.onChanged,
+  });
+  final int hour;
+  final int minute;
+  final void Function(int hour, int minute) onChanged;
+
+  @override
+  State<_WheelTimePicker> createState() => _WheelTimePickerState();
+}
+
+class _WheelTimePickerState extends State<_WheelTimePicker> {
+  late final FixedExtentScrollController _hourCtrl =
+      FixedExtentScrollController(initialItem: widget.hour);
+  late final FixedExtentScrollController _minCtrl =
+      FixedExtentScrollController(initialItem: widget.minute);
+  late int _hour = widget.hour;
+  late int _minute = widget.minute;
+
+  @override
+  void dispose() {
+    _hourCtrl.dispose();
+    _minCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceSunken,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      child: SizedBox(
+        height: 150,
+        child: Stack(
+          children: [
+            // Highlight band for the centered (selected) row.
+            Center(
+              child: Container(
+                height: 40,
+                margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: _wheel(
+                    controller: _hourCtrl,
+                    count: 24,
+                    suffix: '時',
+                    onSelected: (h) {
+                      setState(() => _hour = h);
+                      widget.onChanged(h, _minute);
+                    },
+                  ),
+                ),
+                Text(':',
+                    style: AppType.display(22, color: AppColors.textMuted)),
+                Expanded(
+                  child: _wheel(
+                    controller: _minCtrl,
+                    count: 60,
+                    suffix: '分',
+                    onSelected: (m) {
+                      setState(() => _minute = m);
+                      widget.onChanged(_hour, m);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _wheel({
+    required FixedExtentScrollController controller,
+    required int count,
+    required String suffix,
+    required ValueChanged<int> onSelected,
+  }) {
+    final selected = suffix == '時' ? _hour : _minute;
+    return ListWheelScrollView.useDelegate(
+      controller: controller,
+      itemExtent: 40,
+      perspective: 0.004,
+      diameterRatio: 1.3,
+      physics: const FixedExtentScrollPhysics(),
+      onSelectedItemChanged: onSelected,
+      childDelegate: ListWheelChildBuilderDelegate(
+        childCount: count,
+        builder: (context, i) {
+          final isSel = i == selected;
+          return Center(
+            child: Text(
+              '${i.toString().padLeft(2, '0')}$suffix',
+              style: AppType.display(isSel ? 22 : 18,
+                  color: isSel ? AppColors.primaryDeep : AppColors.textMuted),
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -1010,7 +1159,8 @@ class _IconPreview extends StatelessWidget {
         child: Image.file(File(imagePath!), fit: BoxFit.cover),
       );
     } else if (emoji.isNotEmpty) {
-      content = Center(child: Text(emoji, style: const TextStyle(fontSize: 34)));
+      content =
+          Center(child: Text(emoji, style: const TextStyle(fontSize: 34)));
     } else {
       content = Center(
         child: Text(
@@ -1083,8 +1233,7 @@ class _MiniBtn extends StatelessWidget {
           children: [
             Icon(icon, size: 16, color: AppColors.primaryDeep),
             const Gap(5),
-            Text(label,
-                style: AppType.body(12.5, weight: FontWeight.w600)),
+            Text(label, style: AppType.body(12.5, weight: FontWeight.w600)),
           ],
         ),
       ),
@@ -1102,7 +1251,8 @@ class _SaveBar extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg,
           AppSpacing.md + MediaQuery.of(context).padding.bottom),
       decoration: const BoxDecoration(color: AppColors.canvas),
-      child: SoftButton(label: label, icon: Icons.check_rounded, onPressed: onSave),
+      child: SoftButton(
+          label: label, icon: Icons.check_rounded, onPressed: onSave),
     );
   }
 }
