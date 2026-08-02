@@ -172,7 +172,10 @@ class _SubscriptionFormScreenState
         existing: c,
         index: c.sortOrder,
         nameEditable: !c.isBuiltIn,
-        existingNames: [for (final x in all) if (x.id != c.id) x.name],
+        existingNames: [
+          for (final x in all)
+            if (x.id != c.id) x.name
+        ],
       ),
     );
     if (result != null) {
@@ -201,7 +204,10 @@ class _SubscriptionFormScreenState
         existing: m,
         index: m.sortOrder,
         nameEditable: !m.isBuiltIn,
-        existingNames: [for (final x in all) if (x.id != m.id) x.name],
+        existingNames: [
+          for (final x in all)
+            if (x.id != m.id) x.name
+        ],
       ),
     );
     if (result != null) {
@@ -235,8 +241,8 @@ class _SubscriptionFormScreenState
               child: const Text('キャンセル')),
           TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('削除',
-                  style: TextStyle(color: AppColors.danger))),
+              child:
+                  const Text('削除', style: TextStyle(color: AppColors.danger))),
         ],
       ),
     );
@@ -467,8 +473,7 @@ class _SubscriptionFormScreenState
             ),
           ),
           const Gap(AppSpacing.sm),
-          Text('背景の色',
-              style: AppType.body(12, color: AppColors.textSecondary)),
+          Text('背景の色', style: AppType.body(12, color: AppColors.textSecondary)),
           const Gap(AppSpacing.sm),
           _ColorPicker(
             selected: _colorValue,
@@ -487,7 +492,8 @@ class _SubscriptionFormScreenState
       onSelected: (id) => setState(() => _categoryId = id),
       onAdd: () => _addCategory(categories.length),
       onEdit: (id) => _editCategory(categories.firstWhere((c) => c.id == id)),
-      onDelete: (id) => _deleteCategory(categories.firstWhere((c) => c.id == id)),
+      onDelete: (id) =>
+          _deleteCategory(categories.firstWhere((c) => c.id == id)),
       canDelete: (id) => !categories.firstWhere((c) => c.id == id).isBuiltIn,
     );
 
@@ -538,9 +544,7 @@ class _SubscriptionFormScreenState
             monthlyAmount: _amountValue * _recurrence.monthlyFactor,
             currency: _currency,
             usage: _usageValue,
-            unit: _usageUnit.text.trim().isEmpty
-                ? '回'
-                : _usageUnit.text.trim(),
+            unit: _usageUnit.text.trim().isEmpty ? '回' : _usageUnit.text.trim(),
           ),
         ],
       ),
@@ -673,8 +677,8 @@ class _SubscriptionFormScreenState
         hintStyle: AppType.body(15, color: AppColors.textMuted),
       );
 
-  Widget get _innerDivider => Divider(
-      height: 1, color: AppColors.textMuted.withOpacity(0.18));
+  Widget get _innerDivider =>
+      Divider(height: 1, color: AppColors.textMuted.withOpacity(0.18));
 
   /// One card holding service name + amount + currency together.
   Widget _basicInfoCard() => _fieldCard(
@@ -767,8 +771,7 @@ class _SubscriptionFormScreenState
                                   color: AppColors.textSecondary)),
                           const Gap(2),
                           Text(DateFormat('yyyy年M月d日').format(_firstPayment),
-                              style:
-                                  AppType.body(16, weight: FontWeight.w700)),
+                              style: AppType.body(16, weight: FontWeight.w700)),
                         ],
                       ),
                     ),
@@ -869,9 +872,8 @@ class _CustomIntervalRow extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 14, vertical: 9),
                         decoration: BoxDecoration(
-                          color: unit == u
-                              ? AppColors.primary
-                              : AppColors.surface,
+                          color:
+                              unit == u ? AppColors.primary : AppColors.surface,
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(u.shortLabel,
@@ -974,9 +976,6 @@ class _DetailsSection extends StatelessWidget {
                   child: const Icon(Icons.expand_more_rounded,
                       size: 18, color: AppColors.textSecondary),
                 ),
-                const Spacer(),
-                Text('アイコン・カテゴリー・支払い方法・コスパ',
-                    style: AppType.body(11, color: AppColors.textMuted)),
               ],
             ),
           ),
@@ -992,8 +991,7 @@ class _DetailsSection extends StatelessWidget {
                 child: Row(
                   children: [
                     Expanded(
-                      child: Text('常に表示',
-                          style: AppType.body(15)),
+                      child: Text('常に表示', style: AppType.body(15)),
                     ),
                     Switch(value: alwaysShow, onChanged: onToggleAlways),
                   ],
@@ -1002,9 +1000,8 @@ class _DetailsSection extends StatelessWidget {
               ...children,
             ],
           ),
-          crossFadeState: expanded
-              ? CrossFadeState.showSecond
-              : CrossFadeState.showFirst,
+          crossFadeState:
+              expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
           duration: const Duration(milliseconds: 220),
         ),
       ],
@@ -1087,8 +1084,8 @@ class _ChipPicker extends StatelessWidget {
     );
   }
 
-  void _showMenu(
-      BuildContext context, ({String id, String label, IconData icon, Color color}) it) {
+  void _showMenu(BuildContext context,
+      ({String id, String label, IconData icon, Color color}) it) {
     final deletable = canDelete?.call(it.id) ?? false;
     showModalBottomSheet<void>(
       context: context,
@@ -1152,8 +1149,7 @@ class _ChipPicker extends StatelessWidget {
   ) =>
       Pressable(
         onTap: onTap,
-        onLongPress:
-            onEdit != null ? () => _showMenu(context, it) : null,
+        onLongPress: onEdit != null ? () => _showMenu(context, it) : null,
         scale: 0.95,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
@@ -1179,8 +1175,7 @@ class _ChipPicker extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Icon(it.icon,
-                    size: 15,
-                    color: sel ? AppColors.onPrimary : it.color),
+                    size: 15, color: sel ? AppColors.onPrimary : it.color),
               ),
               const Gap(8),
               Text(it.label,

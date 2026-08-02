@@ -68,6 +68,7 @@ class _SoftNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final count = tabs.length;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -78,17 +79,46 @@ class _SoftNavBar extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          child: Row(
+          // A single highlight pill slides to the selected tab, so exactly one
+          // tab is ever highlighted (no lingering deselection fade).
+          child: Stack(
             children: [
-              for (var i = 0; i < tabs.length; i++)
-                Expanded(
-                  child: _NavItem(
-                    icon: tabs[i].icon,
-                    label: tabs[i].label,
-                    selected: i == index,
-                    onTap: () => onTap(i),
+              Positioned.fill(
+                child: AnimatedAlign(
+                  duration: const Duration(milliseconds: 260),
+                  curve: Curves.easeOutCubic,
+                  alignment: count <= 1
+                      ? Alignment.center
+                      : Alignment((index / (count - 1)) * 2 - 1, 0),
+                  child: FractionallySizedBox(
+                    widthFactor: 1 / count,
+                    heightFactor: 1,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: AppColors.primarySoft,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
+              ),
+              Row(
+                children: [
+                  for (var i = 0; i < count; i++)
+                    Expanded(
+                      child: _NavItem(
+                        key: ValueKey('nav_$i'),
+                        icon: tabs[i].icon,
+                        label: tabs[i].label,
+                        selected: i == index,
+                        onTap: () => onTap(i),
+                      ),
+                    ),
+                ],
+              ),
             ],
           ),
         ),
@@ -99,6 +129,7 @@ class _SoftNavBar extends StatelessWidget {
 
 class _NavItem extends StatelessWidget {
   const _NavItem({
+    super.key,
     required this.icon,
     required this.label,
     required this.selected,
@@ -116,14 +147,8 @@ class _NavItem extends StatelessWidget {
     return Pressable(
       onTap: onTap,
       scale: 0.9,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOut,
+      child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.primarySoft : Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
-        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
