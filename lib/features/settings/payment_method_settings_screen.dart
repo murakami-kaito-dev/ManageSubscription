@@ -91,7 +91,7 @@ class PaymentMethodSettingsScreen extends ConsumerWidget {
           children: [
             SoftHeader(
               title: '支払い方法設定',
-              trailing: SoftIconButton(
+              leading: SoftIconButton(
                 icon: Icons.arrow_back_rounded,
                 onTap: () => Navigator.of(context).pop(),
               ),

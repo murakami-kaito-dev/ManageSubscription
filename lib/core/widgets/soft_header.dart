@@ -11,12 +11,16 @@ class SoftHeader extends StatelessWidget {
     super.key,
     required this.title,
     this.onSettings,
+    this.leading,
     this.trailing,
     this.subtitle,
   });
 
   final String title;
   final VoidCallback? onSettings;
+
+  /// Custom left-slot widget (e.g. a back button). Overrides [onSettings].
+  final Widget? leading;
   final Widget? trailing;
   final Widget? subtitle;
 
@@ -34,10 +38,12 @@ class SoftHeader extends StatelessWidget {
               children: [
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: onSettings == null
-                      ? const SizedBox(width: 44)
-                      : SoftIconButton(
-                          icon: Icons.settings_rounded, onTap: onSettings),
+                  child: leading ??
+                      (onSettings == null
+                          ? const SizedBox(width: 44)
+                          : SoftIconButton(
+                              icon: Icons.settings_rounded,
+                              onTap: onSettings)),
                 ),
                 Text(title, style: AppType.display(20, weight: FontWeight.w800)),
                 Align(

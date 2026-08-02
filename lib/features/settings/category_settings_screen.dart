@@ -91,8 +91,7 @@ class CategorySettingsScreen extends ConsumerWidget {
           children: [
             SoftHeader(
               title: 'カテゴリー設定',
-              onSettings: null,
-              trailing: SoftIconButton(
+              leading: SoftIconButton(
                 icon: Icons.arrow_back_rounded,
                 onTap: () => Navigator.of(context).pop(),
               ),

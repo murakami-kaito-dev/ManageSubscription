@@ -28,7 +28,7 @@ class PausedSubscriptionsScreen extends ConsumerWidget {
           children: [
             SoftHeader(
               title: '停止中のサブスク',
-              trailing: SoftIconButton(
+              leading: SoftIconButton(
                 icon: Icons.arrow_back_rounded,
                 onTap: () => Navigator.of(context).pop(),
               ),
