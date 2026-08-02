@@ -284,10 +284,10 @@ packages:
     dependency: "direct main"
     description:
       name: image_cropper
-      sha256: d104cc1f90b0d38ac309f7ec240b8f55f2c6e76d1bfae05e23917bfea631e725
+      sha256: "266760ed426d7121f0ada02c672bfe5c1b5c714e908328716aee756f045709dc"
       url: "https://pub.dev"
     source: hosted
-    version: "10.0.0+1"
+    version: "8.1.0"
   image_cropper_for_web:
     dependency: transitive
     description:
@@ -297,13 +297,13 @@ packages:
     source: hosted
     version: "6.1.0"
   image_cropper_platform_interface:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: image_cropper_platform_interface
-      sha256: "2d8db8f4b638e448fa89a1e77cd8f053b4547472bd3ae073169e86626d03afef"
+      sha256: e8e9d2ca36360387aee39295ce49029362ae4df3071f23e8e71f2b81e40b7531
       url: "https://pub.dev"
     source: hosted
-    version: "7.2.0"
+    version: "7.0.0"
   image_picker:
     dependency: "direct main"
     description:

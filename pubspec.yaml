@@ -53,7 +53,7 @@ dependencies:
   confetti: ^0.8.0
   timezone: ^0.10.1
   image_picker: ^1.1.2
-  image_cropper: ^10.0.0+1
+  image_cropper: ^8.1.0
 
 dev_dependencies:
   flutter_test:
@@ -65,6 +65,12 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
+
+# image_cropper 8.x pulls image_cropper_platform_interface 7.1+, which calls
+# Color.toARGB32() — a Flutter 3.29+ API not available on this Flutter 3.24.3.
+# Pin the interface to 7.0.0 (uses Color.value) to keep the build green.
+dependency_overrides:
+  image_cropper_platform_interface: 7.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
