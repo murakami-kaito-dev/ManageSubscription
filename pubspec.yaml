@@ -65,6 +65,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.4
 
 # image_cropper 8.x pulls image_cropper_platform_interface 7.1+, which calls
 # Color.toARGB32() — a Flutter 3.29+ API not available on this Flutter 3.24.3.

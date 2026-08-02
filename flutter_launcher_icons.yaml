@@ -1,0 +1,11 @@
+# App icon generation config. Run:  dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/icon/icon.png"
+  android: true
+  ios: true
+  # App Store rejects icons with an alpha channel; flatten it on a warm ivory.
+  remove_alpha_ios: true
+  background_color_ios: "#ECE9E2"
+  # Adaptive icon for modern Android.
+  adaptive_icon_background: "#ECE9E2"
+  adaptive_icon_foreground: "assets/icon/icon.png"
