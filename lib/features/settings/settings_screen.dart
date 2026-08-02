@@ -72,18 +72,15 @@ class SettingsScreen extends ConsumerWidget {
                         _Row(
                           icon: Icons.palette_rounded,
                           label: 'テーマカラーを選択',
-                          premium: true,
                           trailing: Container(
                             width: 22,
                             height: 22,
                             decoration: BoxDecoration(
-                              color: isPremium
-                                  ? settings.accent
-                                  : AppColors.primary,
+                              color: settings.accent,
                               shape: BoxShape.circle,
                             ),
                           ),
-                          onTap: () => _pickAccent(context, ref, isPremium),
+                          onTap: () => _pickAccent(context, ref),
                         ),
                         const _Div(),
                         _Row(
@@ -215,12 +212,7 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _pickAccent(
-      BuildContext context, WidgetRef ref, bool isPremium) async {
-    if (!isPremium) {
-      PremiumScreen.show(context, reason: 'テーマカラーの変更はプレミアム機能です。');
-      return;
-    }
+  Future<void> _pickAccent(BuildContext context, WidgetRef ref) async {
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: AppColors.canvas,

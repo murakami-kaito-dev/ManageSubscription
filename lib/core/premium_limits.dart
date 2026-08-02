@@ -21,9 +21,11 @@ class PremiumLimits {
   // Pure premium-only capabilities.
   static bool canAttachImage(bool isPremium) => isPremium;
   static bool canExportCsv(bool isPremium) => isPremium;
-  static bool canAutoSort(bool isPremium) => isPremium;
-  static bool canChangeTheme(bool isPremium) => isPremium;
   static bool canBreakdownByCategoryOrMethod(bool isPremium) => isPremium;
+
+  // Now free for everyone (per product decision): sorting & theme color.
+  static bool canAutoSort(bool isPremium) => true;
+  static bool canChangeTheme(bool isPremium) => true;
 
   /// Free users may only view the current month/year in calendar & history.
   static bool canViewAllPeriods(bool isPremium) => isPremium;

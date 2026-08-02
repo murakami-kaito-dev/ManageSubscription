@@ -17,7 +17,8 @@ extension SortModeX on SortMode {
         SortMode.dateNear => '支払い日が近い順',
       };
 
-  bool get isPremium => this != SortMode.manual;
+  // Sorting is free for everyone.
+  bool get isPremium => false;
 }
 
 /// Selectable accent colors. Only the first is free; the rest are premium.
@@ -27,13 +28,14 @@ class ThemeAccent {
   final Color color;
   final bool premium;
 
+  // Theme color is free for everyone.
   static const List<ThemeAccent> options = [
     ThemeAccent('セージ', AppColors.primary, premium: false),
-    ThemeAccent('コーラル', AppColors.coral),
-    ThemeAccent('ダスティブルー', Color(0xFF86A9C4)),
-    ThemeAccent('モーヴ', Color(0xFFC39BB4)),
-    ThemeAccent('テラコッタ', Color(0xFFCE8B6A)),
-    ThemeAccent('オリーブ', Color(0xFFA9B583)),
+    ThemeAccent('コーラル', AppColors.coral, premium: false),
+    ThemeAccent('ダスティブルー', Color(0xFF86A9C4), premium: false),
+    ThemeAccent('モーヴ', Color(0xFFC39BB4), premium: false),
+    ThemeAccent('テラコッタ', Color(0xFFCE8B6A), premium: false),
+    ThemeAccent('オリーブ', Color(0xFFA9B583), premium: false),
   ];
 }
 

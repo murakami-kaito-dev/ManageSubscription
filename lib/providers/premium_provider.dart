@@ -1,12 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/dev_config.dart';
 import 'core_providers.dart';
 
 /// Exposes the current premium entitlement as a reactive bool, mirroring the
-/// PurchaseService's ValueNotifier.
+/// PurchaseService's ValueNotifier. Developer builds ([kDevUnlockAll]) always
+/// report premium.
 class PremiumNotifier extends Notifier<bool> {
   @override
   bool build() {
+    if (kDevUnlockAll) return true;
     final service = ref.watch(purchaseServiceProvider);
     void listener() => state = service.isPremium.value;
     service.isPremium.addListener(listener);

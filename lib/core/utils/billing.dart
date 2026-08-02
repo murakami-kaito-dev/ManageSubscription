@@ -116,15 +116,17 @@ class Billing {
     DateTime end,
   ) {
     final result = <DateTime>[];
-    var d = _dateOnly(anchor);
-    // Rewind to at or before the range start.
-    while (d.isAfter(start)) {
+    final anchorDate = _dateOnly(anchor);
+    var d = anchorDate;
+    // Rewind to at or before the range start (but never past the anchor: a
+    // subscription has no payments before its first payment date).
+    while (d.isAfter(start) && d.isAfter(anchorDate)) {
       d = previousPaymentDate(d, cycle, anchor.day);
     }
-    // Advance and collect.
+    // Advance and collect. Skip anything before the range start or the anchor.
     var guard = 0;
     while (d.isBefore(end) || d.isAtSameMomentAs(end)) {
-      if (!d.isBefore(start)) result.add(d);
+      if (!d.isBefore(start) && !d.isBefore(anchorDate)) result.add(d);
       final next = switch (cycle) {
         BillingCycle.weekly => d.add(const Duration(days: 7)),
         BillingCycle.monthly => _addMonths(d, 1, anchor.day),

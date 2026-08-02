@@ -9,9 +9,7 @@ import '../../core/widgets/premium_crown.dart';
 import '../../core/widgets/pressable.dart';
 import '../../core/widgets/section_header.dart';
 import '../../data/models/app_settings.dart';
-import '../../providers/premium_provider.dart';
 import '../../providers/settings_provider.dart';
-import '../premium/premium_screen.dart';
 import '../settings/category_settings_screen.dart';
 import '../settings/payment_method_settings_screen.dart';
 import '../settings/paused_subscriptions_screen.dart';
@@ -31,7 +29,6 @@ class _SubscriptionSettingsSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
-    final isPremium = ref.watch(premiumProvider);
 
     return DraggableScrollableSheet(
       expand: false,
@@ -96,7 +93,7 @@ class _SubscriptionSettingsSheet extends ConsumerWidget {
                 onTap: () => _push(context, const PausedSubscriptionsScreen()),
               ),
             ]),
-            const SectionHeader('並べ替え', premium: true),
+            const SectionHeader('並べ替え'),
             _Card(
               children: [
                 for (var i = 0; i < SortMode.values.length; i++) ...[
@@ -104,16 +101,9 @@ class _SubscriptionSettingsSheet extends ConsumerWidget {
                   _SortRow(
                     mode: SortMode.values[i],
                     selected: settings.sortMode == SortMode.values[i],
-                    onTap: () {
-                      final mode = SortMode.values[i];
-                      if (mode.isPremium && !isPremium) {
-                        Navigator.of(context).pop();
-                        PremiumScreen.show(context,
-                            reason: '自動並べ替えはプレミアム機能です。');
-                        return;
-                      }
-                      ref.read(settingsProvider.notifier).setSortMode(mode);
-                    },
+                    onTap: () => ref
+                        .read(settingsProvider.notifier)
+                        .setSortMode(SortMode.values[i]),
                   ),
                 ],
               ],

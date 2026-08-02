@@ -134,7 +134,13 @@ class _SubscriptionFormScreenState
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('削除しますか？'),
-        content: Text('「${widget.existing!.name}」を削除します。この操作は取り消せません。'),
+        content: Text(
+          '「${widget.existing!.name}」を削除します。\n\n'
+          '・ホーム一覧から消え、今月の合計・分析・カレンダー・支払い履歴の集計対象から外れます。\n'
+          '・設定した支払い日や通知も削除されます。\n'
+          '・カテゴリーや支払い方法そのものは削除されません。\n\n'
+          'データは端末内にのみ保存されているため、削除すると元に戻せません。',
+        ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -158,7 +164,11 @@ class _SubscriptionFormScreenState
     final methods = ref.watch(paymentMethodsProvider).valueOrNull ?? const [];
 
     return Scaffold(
-      body: SafeArea(
+      // Tap anywhere outside a text field to dismiss the keyboard.
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.opaque,
+        child: SafeArea(
         bottom: false,
         child: Column(
           children: [
@@ -403,6 +413,7 @@ class _SubscriptionFormScreenState
             _SaveBar(onSave: _save, label: _isEdit ? '保存する' : '追加する'),
           ],
         ),
+      ),
       ),
     );
   }

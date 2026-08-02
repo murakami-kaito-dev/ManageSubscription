@@ -122,8 +122,13 @@ void main() {
     test('premium-only capabilities are gated', () {
       expect(PremiumLimits.canExportCsv(false), isFalse);
       expect(PremiumLimits.canExportCsv(true), isTrue);
-      expect(PremiumLimits.canAutoSort(false), isFalse);
+      expect(PremiumLimits.canBreakdownByCategoryOrMethod(false), isFalse);
       expect(PremiumLimits.canViewAllPeriods(false), isFalse);
+    });
+
+    test('sorting and theme color are free for everyone', () {
+      expect(PremiumLimits.canAutoSort(false), isTrue);
+      expect(PremiumLimits.canChangeTheme(false), isTrue);
     });
 
     test('notify-rule limit differs by tier', () {
