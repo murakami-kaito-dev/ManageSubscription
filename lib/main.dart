@@ -8,6 +8,7 @@ import 'data/database/app_database.dart';
 import 'data/repositories/subscription_repository.dart';
 import 'providers/core_providers.dart';
 import 'services/ads/ad_service.dart';
+import 'services/currency/rates_service.dart';
 import 'services/notifications/notification_service.dart';
 import 'services/purchases/purchase_service.dart';
 
@@ -19,6 +20,9 @@ Future<void> main() async {
   // repositories can be provided synchronously.
   final db = await AppDatabase.instance.database;
   final prefs = await SharedPreferences.getInstance();
+
+  // Load the day's FX rates (cached; refreshes once per day). Best-effort.
+  await RatesService(prefs).load();
 
   final purchases = PurchaseService(prefs);
   await purchases.init();

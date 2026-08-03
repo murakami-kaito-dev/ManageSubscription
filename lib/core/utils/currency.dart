@@ -30,20 +30,35 @@ extension AppCurrencyX on AppCurrency {
   }
 }
 
-/// Lightweight fixed conversion rates (to JPY). A real app would fetch these;
-/// here they are constants so cross-currency analytics still work offline.
+/// Conversion rates to JPY. Seeded with sane fallbacks so cross-currency
+/// analytics work offline, then overwritten at launch with the day's fetched
+/// rates (see RatesService).
 class CurrencyRates {
   CurrencyRates._();
-  static const Map<String, double> toJpy = {
+
+  static const Map<String, double> _fallback = {
     'JPY': 1,
     'USD': 155.0,
     'EUR': 168.0,
     'GBP': 197.0,
   };
 
+  static Map<String, double> _toJpy = Map.of(_fallback);
+
+  /// The day the live rates were fetched ("yyyy-MM-dd"), or null if fallback.
+  static String? asOf;
+
+  static Map<String, double> get toJpy => _toJpy;
+
+  /// Overwrite with fetched rates (merged onto the fallbacks).
+  static void update(Map<String, double> rates, {String? date}) {
+    _toJpy = {..._fallback, ...rates};
+    if (date != null) asOf = date;
+  }
+
   static double convert(double amount, String from, String to) {
-    final inJpy = amount * (toJpy[from] ?? 1);
-    return inJpy / (toJpy[to] ?? 1);
+    final inJpy = amount * (_toJpy[from] ?? 1);
+    return inJpy / (_toJpy[to] ?? 1);
   }
 }
 
