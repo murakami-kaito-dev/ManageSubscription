@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -17,6 +18,16 @@ class NotificationService {
   Future<void> init() async {
     try {
       tzdata.initializeTimeZones();
+      // CRITICAL: without setting the device's local zone, tz.local is UTC and
+      // every reminder fires at the wrong wall-clock time (e.g. 9:00 JST would
+      // be scheduled as 9:00 UTC = 18:00 JST, or skipped as "in the past").
+      try {
+        final name = await FlutterTimezone.getLocalTimezone();
+        tz.setLocalLocation(tz.getLocation(name));
+      } catch (e) {
+        debugPrint('Local timezone lookup failed, using UTC: $e');
+      }
+
       const android = AndroidInitializationSettings('@mipmap/ic_launcher');
       const ios = DarwinInitializationSettings(
         requestAlertPermission: false,
@@ -39,10 +50,11 @@ class NotificationService {
           .resolvePlatformSpecificImplementation<
               IOSFlutterLocalNotificationsPlugin>()
           ?.requestPermissions(alert: true, badge: true, sound: true);
-      await _plugin
-          .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
-          ?.requestNotificationsPermission();
+      final android = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      await android?.requestNotificationsPermission();
+      // Needed to fire at an exact wall-clock time on Android 12+.
+      await android?.requestExactAlarmsPermission();
     } catch (e) {
       debugPrint('Notification permission skipped: $e');
     }
@@ -61,7 +73,8 @@ class NotificationService {
 
   /// Reschedules reminders for the whole list. Free tier is already capped to a
   /// single reminder rule per subscription by the caller.
-  Future<void> rescheduleAll(List<Subscription> subs, {required bool enabled}) async {
+  Future<void> rescheduleAll(List<Subscription> subs,
+      {required bool enabled}) async {
     if (!_ready) return;
     try {
       await _plugin.cancelAll();
@@ -75,21 +88,48 @@ class NotificationService {
               s.nextPaymentDate.subtract(Duration(days: rule.daysBefore));
           final scheduled = tz.TZDateTime(tz.local, fireDate.year,
               fireDate.month, fireDate.day, rule.hour, rule.minute);
-          if (scheduled.isBefore(now)) continue;
-          await _plugin.zonedSchedule(
+          if (!scheduled.isAfter(now)) continue;
+          await _schedule(
             id++,
             '${s.name} の支払いが近づいています',
             rule.daysBefore == 0
                 ? '本日が支払い日です'
                 : '${rule.daysBefore}日後（${s.nextPaymentDate.month}/${s.nextPaymentDate.day}）に支払いがあります',
             scheduled,
-            _details,
-            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
           );
         }
       }
     } catch (e) {
       debugPrint('reschedule skipped: $e');
     }
+  }
+
+  /// Schedules one reminder, preferring an exact alarm and gracefully falling
+  /// back to an inexact one if exact alarms aren't permitted.
+  Future<void> _schedule(
+      int id, String title, String body, tz.TZDateTime when) async {
+    try {
+      await _plugin.zonedSchedule(
+        id, title, body, when, _details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      );
+    } catch (_) {
+      try {
+        await _plugin.zonedSchedule(
+          id, title, body, when, _details,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        );
+      } catch (e) {
+        debugPrint('schedule failed for $id: $e');
+      }
+    }
+  }
+
+  /// Fires a test notification a few seconds from now (used by the settings
+  /// screen so the user can confirm notifications work).
+  Future<void> sendTestIn(Duration delay) async {
+    if (!_ready) return;
+    final when = tz.TZDateTime.now(tz.local).add(delay);
+    await _schedule(90000, 'テスト通知', 'この通知が届けば設定は正常です。', when);
   }
 }

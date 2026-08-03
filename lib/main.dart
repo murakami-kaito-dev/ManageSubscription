@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
 import 'data/database/app_database.dart';
+import 'data/repositories/subscription_repository.dart';
 import 'providers/core_providers.dart';
 import 'services/ads/ad_service.dart';
 import 'services/notifications/notification_service.dart';
@@ -23,6 +24,19 @@ Future<void> main() async {
   // Ads & notifications init are best-effort and must never block startup.
   await AdService.instance.init();
   await NotificationService.instance.init();
+
+  // Ensure reminders are (re)scheduled on every launch — otherwise seeded or
+  // previously-added subscriptions would never schedule until the user edits
+  // one. Request permission first when notifications are enabled.
+  final notifyEnabled = prefs.getBool('settings_notify') ?? true;
+  if (notifyEnabled) {
+    await NotificationService.instance.requestPermission();
+  }
+  try {
+    final subs = await SubscriptionRepository(db).getAll();
+    await NotificationService.instance
+        .rescheduleAll(subs, enabled: notifyEnabled);
+  } catch (_) {/* best-effort */}
 
   runApp(
     ProviderScope(

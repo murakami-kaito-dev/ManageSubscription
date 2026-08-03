@@ -96,7 +96,9 @@ class SettingsScreen extends ConsumerWidget {
                         _Row(
                           icon: Icons.description_rounded,
                           label: 'データをCSVエクスポート',
-                          premium: true,
+                          // Crown only for non-premium (already-premium users
+                          // shouldn't see the upsell marker).
+                          premium: !isPremium,
                           onTap: () => _exportCsv(context, ref),
                         ),
                         const _Div(),
@@ -124,6 +126,28 @@ class SettingsScreen extends ConsumerWidget {
                             },
                           ),
                         ),
+                        if (settings.notifyEnabled) ...[
+                          const _Div(),
+                          _Row(
+                            icon: Icons.notifications_active_rounded,
+                            label: 'テスト通知を送る（5秒後）',
+                            onTap: () async {
+                              await ref
+                                  .read(notificationServiceProvider)
+                                  .requestPermission();
+                              await ref
+                                  .read(notificationServiceProvider)
+                                  .sendTestIn(const Duration(seconds: 5));
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content:
+                                          Text('5秒後にテスト通知を送ります')),
+                                );
+                              }
+                            },
+                          ),
+                        ],
                       ],
                     ),
                   ),
