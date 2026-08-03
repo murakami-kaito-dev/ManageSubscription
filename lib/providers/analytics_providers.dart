@@ -105,13 +105,15 @@ final analyticsProvider =
         final prev = result[key];
         result[key] = (
           label: m?.name ?? '未設定',
-          color: prev?.color ?? AppColors.chartColor(result.length),
+          color: m?.color ?? AppColors.textMuted,
           amount: (prev?.amount ?? 0) + value,
           native: null,
         );
     }
   }
 
+  // Each slice uses the item's own set color (subscription/category/payment
+  // method color) — adjacent slices may share a color and that's accepted.
   final slices = result.entries
       .map((e) => AnalyticsSlice(
           label: e.value.label,
@@ -122,23 +124,8 @@ final analyticsProvider =
       .toList()
     ..sort((a, b) => b.amount.compareTo(a.amount));
 
-  // Always assign colors from the harmonious palette by (sorted) position, so
-  // adjacent donut slices/legend rows are always distinct — otherwise many
-  // subscriptions that share a default color would render as identical slices.
-  final recolored = <AnalyticsSlice>[];
-  for (var i = 0; i < slices.length; i++) {
-    final s = slices[i];
-    recolored.add(AnalyticsSlice(
-      label: s.label,
-      color: AppColors.chartColor(i),
-      amount: s.amount,
-      groupKey: s.groupKey,
-      nativeLabel: s.nativeLabel,
-    ));
-  }
-
-  final total = recolored.fold<double>(0, (sum, s) => sum + s.amount);
-  return AnalyticsResult(slices: recolored, total: total);
+  final total = slices.fold<double>(0, (sum, s) => sum + s.amount);
+  return AnalyticsResult(slices: slices, total: total);
 });
 
 @immutable

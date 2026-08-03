@@ -3,12 +3,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../../data/models/subscription.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 
 /// The single source of truth for how a subscription is shown as a small
-/// avatar: its custom image if set, otherwise its emoji/character, otherwise
-/// the name's first letter — used on home, calendar, history and analytics so
-/// images appear consistently everywhere.
+/// avatar, identically on every tab (home / analytics / calendar / history):
+/// the custom image / emoji / initial in the centre, with a **theme-colored**
+/// ring, and — when it's text/emoji rather than an image — a theme-colored
+/// background tint.
 class SubscriptionAvatar extends StatelessWidget {
   const SubscriptionAvatar({
     super.key,
@@ -25,7 +27,7 @@ class SubscriptionAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasImage =
         sub.imagePath != null && File(sub.imagePath!).existsSync();
-    final accent = sub.color;
+    final accent = AppAccent.of(context);
 
     return Container(
       width: size,
@@ -33,9 +35,10 @@ class SubscriptionAvatar extends StatelessWidget {
       alignment: Alignment.center,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: hasImage ? null : accent.withOpacity(0.16),
+        color: hasImage ? null : accent.soft,
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: accent.withOpacity(0.28), width: 1.2),
+        // A clear theme-colored ring around every avatar.
+        border: Border.all(color: accent.primary, width: 1.6),
       ),
       child: hasImage
           ? Image.file(File(sub.imagePath!), fit: BoxFit.cover)
@@ -45,7 +48,7 @@ class SubscriptionAvatar extends StatelessWidget {
               : Text(
                   sub.displayGlyph.toUpperCase(),
                   style: AppType.display(size * 0.44,
-                      weight: FontWeight.w800, color: accent),
+                      weight: FontWeight.w800, color: accent.deep),
                 )),
     );
   }

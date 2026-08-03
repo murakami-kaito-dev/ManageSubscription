@@ -99,6 +99,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                         _Legend(
                           slices: result.slices,
                           fmt: fmt,
+                          axis: _axis,
                           onLongPress: (slice) => _openBreakdown(slice),
                         ),
                         if (_axis == AnalyticsAxis.subscription) ...[
@@ -326,14 +327,24 @@ class _AxisSelector extends StatelessWidget {
   }
 }
 
-class _Legend extends StatelessWidget {
-  const _Legend({required this.slices, required this.fmt, this.onLongPress});
+class _Legend extends ConsumerWidget {
+  const _Legend({
+    required this.slices,
+    required this.fmt,
+    required this.axis,
+    this.onLongPress,
+  });
   final List<AnalyticsSlice> slices;
   final CurrencyFormatter fmt;
+  final AnalyticsAxis axis;
   final void Function(AnalyticsSlice)? onLongPress;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final subsById = {
+      for (final s in ref.watch(subscriptionsProvider).valueOrNull ?? const [])
+        s.id: s
+    };
     return SoftCard(
       padding: EdgeInsets.zero,
       child: Column(
@@ -355,14 +366,21 @@ class _Legend extends StatelessWidget {
                     horizontal: AppSpacing.lg, vertical: 14),
                 child: Row(
                   children: [
-                    Container(
-                      width: 16,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: slices[i].color,
-                        borderRadius: BorderRadius.circular(5),
+                    if (axis == AnalyticsAxis.subscription &&
+                        subsById[slices[i].groupKey] != null)
+                      SubscriptionAvatar(
+                          sub: subsById[slices[i].groupKey]!,
+                          size: 30,
+                          radius: 10)
+                    else
+                      Container(
+                        width: 16,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: slices[i].color,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
                       ),
-                    ),
                     const Gap(AppSpacing.md),
                     Expanded(
                       child: Text(slices[i].label,

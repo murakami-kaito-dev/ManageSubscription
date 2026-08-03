@@ -4,6 +4,7 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../core/utils/currency.dart';
 import '../../data/models/subscription.dart';
 
 /// Local reminders before a payment date. Fully on-device; no server.
@@ -91,18 +92,19 @@ class NotificationService {
       final now = tz.TZDateTime.now(tz.local);
       for (final s in subs) {
         if (s.isPaused) continue;
+        final due = s.nextPaymentDate;
+        final amount = CurrencyFormatter(s.currency).format(s.amount);
         for (final rule in s.notifyRules) {
-          final fireDate =
-              s.nextPaymentDate.subtract(Duration(days: rule.daysBefore));
+          final fireDate = due.subtract(Duration(days: rule.daysBefore));
           final scheduled = tz.TZDateTime(tz.local, fireDate.year,
               fireDate.month, fireDate.day, rule.hour, rule.minute);
           if (!scheduled.isAfter(now)) continue;
           await _schedule(
             id++,
-            '${s.name} の支払いが近づいています',
+            '${s.name} の支払い',
             rule.daysBefore == 0
-                ? '本日が支払い日です'
-                : '${rule.daysBefore}日後（${s.nextPaymentDate.month}/${s.nextPaymentDate.day}）に支払いがあります',
+                ? '本日 ${due.month}月${due.day}日に $amount の支払いがあります'
+                : '${due.month}月${due.day}日（${rule.daysBefore}日後）に $amount の支払いがあります',
             scheduled,
           );
         }
