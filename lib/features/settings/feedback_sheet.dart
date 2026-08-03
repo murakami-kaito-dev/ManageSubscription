@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -7,8 +10,17 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/widgets/soft_button.dart';
 
-/// Where feedback is sent. Replace with your real support address.
+/// In-app feedback endpoint. Create a free form (e.g. Formspree) and paste its
+/// URL here to submit feedback WITHOUT leaving the app. While it stays as the
+/// placeholder, the sheet falls back to the mail composer / share sheet.
+const String _feedbackEndpoint = 'https://formspree.io/f/your-form-id';
+
+/// Fallback support address used only when [_feedbackEndpoint] isn't set.
 const String _supportEmail = 'support@example.com';
+
+bool get _endpointConfigured =>
+    _feedbackEndpoint.isNotEmpty &&
+    !_feedbackEndpoint.contains('your-form-id');
 
 Future<void> showFeedbackSheet(BuildContext context) {
   return showModalBottomSheet<void>(
@@ -42,19 +54,31 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
     setState(() => _sending = true);
 
     const subject = 'サブスク管理 ご意見・ご要望';
+
+    // Preferred: submit in-app (no leaving the app) to the form endpoint.
+    if (_endpointConfigured) {
+      final ok = await _postToEndpoint(subject, text);
+      if (!mounted) return;
+      setState(() => _sending = false);
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(ok
+              ? 'ご意見ありがとうございます！送信しました。'
+              : '送信に失敗しました。時間をおいて再度お試しください。')));
+      return;
+    }
+
+    // Fallback (no endpoint configured): mail composer, then share.
+    var launched = false;
     final mailto = Uri.parse(
         'mailto:$_supportEmail?subject=${Uri.encodeComponent(subject)}'
         '&body=${Uri.encodeComponent(text)}');
-
-    var launched = false;
     try {
       if (await canLaunchUrl(mailto)) {
         launched =
             await launchUrl(mailto, mode: LaunchMode.externalApplication);
       }
-    } catch (_) {/* fall through to share */}
-
-    // Fallback: no mail app configured → let the user pick any app.
+    } catch (_) {}
     if (!launched) {
       try {
         await Share.share('$subject\n\n$text', subject: subject);
@@ -73,6 +97,24 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('送信アプリを開けませんでした。')),
       );
+    }
+  }
+
+  Future<bool> _postToEndpoint(String subject, String message) async {
+    try {
+      final res = await http
+          .post(
+            Uri.parse(_feedbackEndpoint),
+            headers: const {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({'subject': subject, 'message': message}),
+          )
+          .timeout(const Duration(seconds: 10));
+      return res.statusCode >= 200 && res.statusCode < 300;
+    } catch (_) {
+      return false;
     }
   }
 
