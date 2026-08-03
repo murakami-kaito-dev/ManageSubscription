@@ -7,6 +7,7 @@ import '../../core/theme/app_typography.dart';
 import '../../core/widgets/section_header.dart';
 import '../../core/widgets/soft_button.dart';
 import '../../core/widgets/soft_card.dart';
+import '../../core/widgets/subscription_avatar.dart';
 import '../../core/widgets/soft_header.dart';
 import '../../core/utils/currency.dart';
 import '../../providers/subscription_providers.dart';
@@ -50,17 +51,7 @@ class PausedSubscriptionsScreen extends ConsumerWidget {
                         return SoftCard(
                           child: Row(
                             children: [
-                              Container(
-                                width: 42,
-                                height: 42,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: s.color.withOpacity(0.16),
-                                  borderRadius: BorderRadius.circular(13),
-                                ),
-                                child: Text(s.displayGlyph,
-                                    style: const TextStyle(fontSize: 20)),
-                              ),
+                              SubscriptionAvatar(sub: s, size: 42),
                               const Gap(AppSpacing.md),
                               Expanded(
                                 child: Column(

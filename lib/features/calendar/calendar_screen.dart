@@ -9,6 +9,7 @@ import '../../core/theme/app_typography.dart';
 import '../../core/utils/billing.dart';
 import '../../core/utils/currency.dart';
 import '../../core/widgets/soft_card.dart';
+import '../../core/widgets/subscription_avatar.dart';
 import '../../core/widgets/soft_header.dart';
 import '../../data/models/subscription.dart';
 import '../../providers/premium_provider.dart';
@@ -231,17 +232,7 @@ class _PaymentRow extends StatelessWidget {
           horizontal: AppSpacing.lg, vertical: AppSpacing.md),
       child: Row(
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: sub.color.withOpacity(0.16),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(sub.displayGlyph,
-                style: const TextStyle(fontSize: 18)),
-          ),
+          SubscriptionAvatar(sub: sub, size: 38, radius: 12),
           const Gap(AppSpacing.md),
           Expanded(child: Text(sub.name, style: AppType.body(15, weight: FontWeight.w700))),
           Text(CurrencyFormatter(sub.currency).format(sub.amount),

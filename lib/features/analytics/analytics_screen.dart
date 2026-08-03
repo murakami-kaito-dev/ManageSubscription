@@ -10,6 +10,7 @@ import '../../core/widgets/pressable.dart';
 import '../../core/widgets/section_header.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/soft_header.dart';
+import '../../core/widgets/subscription_avatar.dart';
 import '../../providers/analytics_providers.dart';
 import '../../providers/premium_provider.dart';
 import '../../providers/settings_provider.dart';
@@ -293,8 +294,7 @@ class _CospaList extends ConsumerWidget {
                   horizontal: AppSpacing.lg, vertical: 14),
               child: Row(
                 children: [
-                  Text(subs[i].emoji ?? '💠',
-                      style: const TextStyle(fontSize: 20)),
+                  SubscriptionAvatar(sub: subs[i], size: 38, radius: 12),
                   const Gap(AppSpacing.md),
                   Expanded(
                     child: Column(
