@@ -48,7 +48,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             SoftHeader(
               title: '支払い履歴',
               onSettings: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                MaterialPageRoute(
+                  fullscreenDialog: true,
+                  builder: (_) => const SettingsScreen()),
               ),
               trailing: _ScopeToggle(
                 scope: _scope,

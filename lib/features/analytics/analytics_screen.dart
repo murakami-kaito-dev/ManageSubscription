@@ -45,7 +45,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
             SoftHeader(
               title: '分析',
               onSettings: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                MaterialPageRoute(
+                  fullscreenDialog: true,
+                  builder: (_) => const SettingsScreen()),
               ),
             ),
             _ScopeTabs(

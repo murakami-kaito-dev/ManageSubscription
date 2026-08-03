@@ -74,7 +74,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             SoftHeader(
               title: 'カレンダー',
               onSettings: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                MaterialPageRoute(
+                  fullscreenDialog: true,
+                  builder: (_) => const SettingsScreen()),
               ),
             ),
             Padding(

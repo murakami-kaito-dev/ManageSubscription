@@ -58,7 +58,9 @@ class HomeScreen extends ConsumerWidget {
             SoftHeader(
               title: 'サブスクリプション',
               onSettings: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                MaterialPageRoute(
+                  fullscreenDialog: true,
+                  builder: (_) => const SettingsScreen()),
               ),
               trailing: SoftIconButton(
                 icon: Icons.more_horiz_rounded,
