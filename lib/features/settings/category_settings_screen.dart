@@ -11,6 +11,7 @@ import '../../core/widgets/pressable.dart';
 import '../../core/widgets/section_header.dart';
 import '../../core/widgets/soft_button.dart';
 import '../../core/widgets/soft_card.dart';
+import '../../core/widgets/delete_dialog.dart';
 import '../../core/widgets/soft_header.dart';
 import '../../core/widgets/swipe_to_delete.dart';
 import '../../data/models/category.dart';
@@ -51,28 +52,13 @@ class CategorySettingsScreen extends ConsumerWidget {
 
   Future<bool> _confirmDelete(
       BuildContext context, WidgetRef ref, Category c) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('カテゴリーを削除しますか？'),
-        content: Text(
-          '「${c.name}」を削除します。\n\n'
-          'このカテゴリーを設定していたサブスクは「未設定」になります'
-          '（サブスク自体は削除されません）。\n'
-          'この操作は取り消せません。',
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('キャンセル')),
-          TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('削除',
-                  style: TextStyle(color: AppColors.danger))),
-        ],
-      ),
+    final ok = await showDeleteDialog(
+      context,
+      lead: Text('「${c.name}」を削除します。'),
+      tailNote: 'このカテゴリーを設定していたサブスクは「未設定」になります'
+          '（サブスク自体は削除されません）。',
     );
-    if (ok == true) {
+    if (ok) {
       await ref.read(categoriesProvider.notifier).delete(c.id);
       return true;
     }

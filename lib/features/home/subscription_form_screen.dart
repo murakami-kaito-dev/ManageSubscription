@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/premium_limits.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/delete_dialog.dart';
 import '../../core/theme/app_shadows.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
@@ -184,11 +185,11 @@ class _SubscriptionFormScreenState
   }
 
   Future<void> _deleteCategory(Category c) async {
-    final ok = await _confirmDeleteDialog(
-      title: 'カテゴリーを削除しますか？',
-      body: '「${c.name}」を削除します。\n\n'
-          'このカテゴリーを設定していたサブスクは「未設定」になります'
-          '（サブスク自体は削除されません）。\nこの操作は取り消せません。',
+    final ok = await showDeleteDialog(
+      context,
+      lead: Text('「${c.name}」を削除します。'),
+      tailNote: 'このカテゴリーを設定していたサブスクは「未設定」になります'
+          '（サブスク自体は削除されません）。',
     );
     if (ok) {
       if (_categoryId == c.id) setState(() => _categoryId = null);
@@ -216,37 +217,16 @@ class _SubscriptionFormScreenState
   }
 
   Future<void> _deletePaymentMethod(PaymentMethod m) async {
-    final ok = await _confirmDeleteDialog(
-      title: '支払い方法を削除しますか？',
-      body: '「${m.name}」を削除します。\n\n'
-          'この支払い方法を設定していたサブスクは「未設定」になります'
-          '（サブスク自体は削除されません）。\nこの操作は取り消せません。',
+    final ok = await showDeleteDialog(
+      context,
+      lead: Text('「${m.name}」を削除します。'),
+      tailNote: 'この支払い方法を設定していたサブスクは「未設定」になります'
+          '（サブスク自体は削除されません）。',
     );
     if (ok) {
       if (_paymentMethodId == m.id) setState(() => _paymentMethodId = null);
       await ref.read(paymentMethodsProvider.notifier).delete(m.id);
     }
-  }
-
-  Future<bool> _confirmDeleteDialog(
-      {required String title, required String body}) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(body),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('キャンセル')),
-          TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child:
-                  const Text('削除', style: TextStyle(color: AppColors.danger))),
-        ],
-      ),
-    );
-    return ok ?? false;
   }
 
   Future<void> _addNotifyRule() async {
@@ -362,29 +342,23 @@ class _SubscriptionFormScreenState
   }
 
   Future<void> _delete() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('削除しますか？'),
-        content: Text(
-          '「${widget.existing!.name}」を削除します。\n\n'
-          '・ホーム一覧から消え、今月の合計・分析・カレンダー・支払い履歴の集計対象から外れます。\n'
-          '・設定した支払い日や通知も削除されます。\n'
-          '・カテゴリーや支払い方法そのものは削除されません。\n\n'
-          'データは端末内にのみ保存されているため、削除すると元に戻せません。',
+    final ok = await showDeleteDialog(
+      context,
+      lead: RichText(
+        text: TextSpan(
+          style: AppType.body(14, height: 1.5),
+          children: [
+            const TextSpan(text: '一度削除すると'),
+            TextSpan(
+                text: '全ての記録',
+                style: AppType.body(14,
+                    weight: FontWeight.w800, height: 1.5)),
+            const TextSpan(text: 'が削除されます。'),
+          ],
         ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('キャンセル')),
-          TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child:
-                  const Text('削除', style: TextStyle(color: AppColors.danger))),
-        ],
       ),
     );
-    if (ok == true) {
+    if (ok) {
       await ref
           .read(subscriptionsProvider.notifier)
           .delete(widget.existing!.id);
