@@ -35,10 +35,16 @@ class SubscriptionsNotifier extends AsyncNotifier<List<Subscription>> {
   }
 
   Future<void> reorder(List<Subscription> ordered) async {
-    // Optimistic: reflect new order immediately.
-    state = AsyncData(ordered);
+    // Renumber sortOrder to match the new positions, so the sorted view stays
+    // stable (otherwise it re-sorts by the stale sortOrder and snaps back →
+    // the confirm-time flicker). No invalidateSelf afterwards: the optimistic
+    // state already equals what we persist, so a re-fetch is pure churn.
+    final renumbered = [
+      for (var i = 0; i < ordered.length; i++)
+        ordered[i].copyWith(sortOrder: i),
+    ];
+    state = AsyncData(renumbered);
     await ref.read(subscriptionRepositoryProvider).saveOrder(ordered);
-    ref.invalidateSelf();
   }
 
   void _reschedule() {

@@ -229,6 +229,15 @@ class _ListBody extends StatelessWidget {
           list.insert(newIndex, list.removeAt(oldIndex));
           onReorder(list);
         },
+        // While dragging, lift ONLY the tile (not the trailing gap) so the
+        // empty margin doesn't travel with the item.
+        proxyDecorator: (child, index, animation) => Material(
+          color: Colors.transparent,
+          child: SubscriptionTile(
+            sub: visible[index],
+            onTap: () {},
+          ),
+        ),
         itemBuilder: (context, i) => Padding(
           key: ValueKey(visible[i].id),
           padding: const EdgeInsets.only(bottom: AppSpacing.md),
