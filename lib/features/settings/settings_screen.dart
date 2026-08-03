@@ -71,20 +71,6 @@ class SettingsScreen extends ConsumerWidget {
                     child: Column(
                       children: [
                         _Row(
-                          icon: Icons.palette_rounded,
-                          label: 'テーマカラーを選択',
-                          trailing: Container(
-                            width: 22,
-                            height: 22,
-                            decoration: BoxDecoration(
-                              color: settings.accent,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          onTap: () => _pickAccent(context, ref),
-                        ),
-                        const _Div(),
-                        _Row(
                           icon: Icons.currency_yen_rounded,
                           label: 'メイン通貨',
                           trailing: Text(settings.mainCurrency.code,
@@ -148,6 +134,21 @@ class SettingsScreen extends ConsumerWidget {
                             },
                           ),
                         ],
+                        const _Div(),
+                        // Theme color is low-priority, so it sits last.
+                        _Row(
+                          icon: Icons.palette_rounded,
+                          label: 'テーマカラーを選択',
+                          trailing: Container(
+                            width: 22,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              color: settings.accent,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          onTap: () => _pickAccent(context, ref),
+                        ),
                       ],
                     ),
                   ),
