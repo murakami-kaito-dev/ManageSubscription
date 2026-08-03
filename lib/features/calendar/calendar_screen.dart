@@ -8,6 +8,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/billing.dart';
 import '../../core/utils/currency.dart';
+import '../../core/utils/dates.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/subscription_avatar.dart';
 import '../../core/widgets/soft_header.dart';
@@ -185,7 +186,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   const Gap(AppSpacing.lg),
                   Row(
                     children: [
-                      Text(DateFormat('M月d日').format(_selected),
+                      Text(JpDate.short(_selected),
                           style: AppType.display(17)),
                       const Spacer(),
                       if (selectedPayments.isNotEmpty)

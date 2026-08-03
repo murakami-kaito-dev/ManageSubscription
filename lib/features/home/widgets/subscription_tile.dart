@@ -1,12 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/currency.dart';
+import '../../../core/utils/dates.dart';
 import '../../../core/widgets/soft_card.dart';
 import '../../../core/widgets/soft_progress_bar.dart';
 import '../../../data/models/subscription.dart';
@@ -28,7 +28,7 @@ class SubscriptionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fmt = CurrencyFormatter(sub.currency);
-    final dateStr = DateFormat('M月d日').format(sub.nextPaymentDate);
+    final dateStr = JpDate.short(sub.nextPaymentDate);
     final accent = sub.color;
 
     return SoftCard(

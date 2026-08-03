@@ -2,12 +2,12 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/currency.dart';
+import '../../core/utils/dates.dart';
 import '../../core/widgets/pressable.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/subscription_avatar.dart';
@@ -166,7 +166,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: _PaymentRow(
                 sub: p.sub,
-                subtitle: DateFormat('yyyy年M月d日').format(p.date),
+                subtitle: JpDate.short(p.date),
                 amount: CurrencyFormatter(p.sub.currency).format(p.sub.amount),
               ),
             ),
