@@ -535,8 +535,8 @@ class _SubscriptionFormScreenState
             children: [
               SoftHeader(
                 title: _isEdit ? '編集' : '新規追加',
-                trailing: SoftIconButton(
-                  icon: Icons.close_rounded,
+                leading: SoftIconButton(
+                  icon: Icons.arrow_back_rounded,
                   onTap: () => Navigator.of(context).pop(),
                 ),
               ),
@@ -872,23 +872,20 @@ class _CustomIntervalRow extends StatefulWidget {
 }
 
 class _CustomIntervalRowState extends State<_CustomIntervalRow> {
-  late final TextEditingController _c =
-      TextEditingController(text: '${widget.count}');
+  void _set(int v) => widget.onCountChanged(v.clamp(1, 999));
 
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  void _set(int v) {
-    final clamped = v.clamp(1, 999);
-    if (_c.text != '$clamped') {
-      _c.text = '$clamped';
-      _c.selection =
-          TextSelection.collapsed(offset: _c.text.length);
-    }
-    widget.onCountChanged(clamped);
+  Future<void> _openWheel() async {
+    final picked = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: AppColors.canvas,
+      builder: (_) => _NumberWheelSheet(
+        initial: widget.count,
+        max: 365,
+        title: '毎いくつごと',
+        suffix: widget.unit.shortLabel,
+      ),
+    );
+    if (picked != null) _set(picked);
   }
 
   @override
@@ -918,33 +915,32 @@ class _CustomIntervalRowState extends State<_CustomIntervalRow> {
           children: [
             Text('毎', style: AppType.body(14)),
             const Gap(AppSpacing.sm),
-            roundBtn(Icons.remove_rounded,
-                () => _set((int.tryParse(_c.text) ?? widget.count) - 1)),
-            SizedBox(
-              width: 48,
-              child: TextField(
-                controller: _c,
-                textAlign: TextAlign.center,
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(3),
-                ],
-                style: AppType.display(20, weight: FontWeight.w800),
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding: EdgeInsets.zero,
+            roundBtn(Icons.remove_rounded, () => _set(widget.count - 1)),
+            // Tappable number → opens a vertical scroll wheel to pick a value.
+            Pressable(
+              onTap: _openWheel,
+              scale: 0.94,
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceSunken,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: accent.withOpacity(0.5), width: 1.5),
                 ),
-                onChanged: (t) {
-                  final v = int.tryParse(t);
-                  if (v != null && v >= 1) widget.onCountChanged(v.clamp(1, 999));
-                },
-                onEditingComplete: () => _set(int.tryParse(_c.text) ?? 1),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('${widget.count}',
+                        style: AppType.display(20, weight: FontWeight.w800)),
+                    const Gap(2),
+                    Icon(Icons.unfold_more_rounded,
+                        size: 16, color: accent),
+                  ],
+                ),
               ),
             ),
-            roundBtn(Icons.add_rounded,
-                () => _set((int.tryParse(_c.text) ?? widget.count) + 1)),
+            roundBtn(Icons.add_rounded, () => _set(widget.count + 1)),
             const Gap(AppSpacing.md),
             Expanded(
               child: _SlidingSegmented(
@@ -957,9 +953,106 @@ class _CustomIntervalRowState extends State<_CustomIntervalRow> {
           ],
         ),
         const Gap(AppSpacing.sm),
-        Text('「${_c.text}${widget.unit.everyLabel}」に支払われます',
+        Text('「${widget.count}${widget.unit.everyLabel}」に支払われます',
             style: AppType.body(12.5, color: AppAccent.of(context).deep)),
       ],
+    );
+  }
+}
+
+/// A bottom sheet with a single vertical number wheel (1..max) — the same
+/// scroll interaction as the notification day picker.
+class _NumberWheelSheet extends StatefulWidget {
+  const _NumberWheelSheet({
+    required this.initial,
+    required this.max,
+    required this.title,
+    required this.suffix,
+  });
+  final int initial;
+  final int max;
+  final String title;
+  final String suffix;
+
+  @override
+  State<_NumberWheelSheet> createState() => _NumberWheelSheetState();
+}
+
+class _NumberWheelSheetState extends State<_NumberWheelSheet> {
+  late final FixedExtentScrollController _ctrl = FixedExtentScrollController(
+      initialItem: (widget.initial - 1).clamp(0, widget.max - 1));
+  late int _value = widget.initial;
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(widget.title, style: AppType.display(18)),
+            const Gap(AppSpacing.md),
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.surfaceSunken,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              child: SizedBox(
+                height: 150,
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Container(
+                        height: 40,
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.xxl),
+                        decoration: BoxDecoration(
+                          color: AppAccent.of(context).primary.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    ListWheelScrollView.useDelegate(
+                      controller: _ctrl,
+                      itemExtent: 40,
+                      perspective: 0.004,
+                      diameterRatio: 1.3,
+                      physics: const FixedExtentScrollPhysics(),
+                      onSelectedItemChanged: (i) =>
+                          setState(() => _value = i + 1),
+                      childDelegate: ListWheelChildBuilderDelegate(
+                        childCount: widget.max,
+                        builder: (context, i) {
+                          final sel = (i + 1) == _value;
+                          return Center(
+                            child: Text('${i + 1}${widget.suffix}',
+                                style: AppType.display(sel ? 20 : 16,
+                                    color: sel
+                                        ? AppAccent.of(context).deep
+                                        : AppColors.textMuted)),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const Gap(AppSpacing.lg),
+            SoftButton(
+                label: '決定',
+                onPressed: () => Navigator.of(context).pop(_value)),
+          ],
+        ),
+      ),
     );
   }
 }
