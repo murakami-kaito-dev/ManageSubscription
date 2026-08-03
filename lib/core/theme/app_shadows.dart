@@ -11,15 +11,15 @@ class AppShadows {
   /// Standard raised card.
   static List<BoxShadow> raised({double intensity = 1}) => [
         BoxShadow(
-          color: AppColors.shadowDark.withOpacity(0.55 * intensity),
-          offset: const Offset(8, 8),
-          blurRadius: 18,
-          spreadRadius: -2,
+          color: AppColors.shadowDark.withOpacity(0.7 * intensity),
+          offset: const Offset(7, 8),
+          blurRadius: 16,
+          spreadRadius: -3,
         ),
         BoxShadow(
-          color: AppColors.shadowLight.withOpacity(0.9 * intensity),
+          color: AppColors.shadowLight.withOpacity(0.95 * intensity),
           offset: const Offset(-7, -7),
-          blurRadius: 16,
+          blurRadius: 14,
           spreadRadius: -3,
         ),
       ];

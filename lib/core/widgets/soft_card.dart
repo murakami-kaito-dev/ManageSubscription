@@ -36,6 +36,8 @@ class SoftCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color ?? AppColors.surface,
         borderRadius: BorderRadius.circular(radius),
+        // A hairline outline gives the card a crisp edge against the canvas.
+        border: Border.all(color: AppColors.cardBorder, width: 1),
         boxShadow: AppShadows.raised(intensity: intensity),
       ),
       child: child,

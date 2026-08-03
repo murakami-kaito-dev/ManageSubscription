@@ -60,17 +60,21 @@ class AppColors {
 
   // ── Canvas & surfaces ────────────────────────────────────────────────
   /// App background — warm pale sand-grey.
-  static const Color canvas = Color(0xFFECE9E2);
+  static const Color canvas = Color(0xFFEAE6DD);
 
-  /// Raised card surface — slightly lighter than the canvas.
-  static const Color surface = Color(0xFFF4F1EB);
+  /// Raised card surface — clearly lighter than the canvas so cards read as
+  /// distinct objects, not blend into the background.
+  static const Color surface = Color(0xFFFBF9F4);
 
   /// Recessed / inset surface (progress tracks, pressed states).
-  static const Color surfaceSunken = Color(0xFFE4E0D7);
+  static const Color surfaceSunken = Color(0xFFE1DCD1);
+
+  /// Hairline border used to crisply outline raised cards.
+  static const Color cardBorder = Color(0x14403A2E);
 
   // ── Neumorphic shadow pair ───────────────────────────────────────────
   static const Color shadowLight = Color(0xFFFFFFFF);
-  static const Color shadowDark = Color(0xFFCBC3B5);
+  static const Color shadowDark = Color(0xFFC3BAAA);
 
   // ── Brand accents ────────────────────────────────────────────────────
   /// Primary — a calm, grounded sage green.
