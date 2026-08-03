@@ -116,17 +116,18 @@ final analyticsProvider =
       .toList()
     ..sort((a, b) => b.amount.compareTo(a.amount));
 
-  // Recolor category/method slices from the palette for visual harmony.
+  // Always assign colors from the harmonious palette by (sorted) position, so
+  // adjacent donut slices/legend rows are always distinct — otherwise many
+  // subscriptions that share a default color would render as identical slices.
   final recolored = <AnalyticsSlice>[];
   for (var i = 0; i < slices.length; i++) {
     final s = slices[i];
-    recolored.add(q.axis == AnalyticsAxis.subscription
-        ? s
-        : AnalyticsSlice(
-            label: s.label,
-            color: AppColors.chartColor(i),
-            amount: s.amount,
-            nativeLabel: s.nativeLabel));
+    recolored.add(AnalyticsSlice(
+      label: s.label,
+      color: AppColors.chartColor(i),
+      amount: s.amount,
+      nativeLabel: s.nativeLabel,
+    ));
   }
 
   final total = recolored.fold<double>(0, (sum, s) => sum + s.amount);
