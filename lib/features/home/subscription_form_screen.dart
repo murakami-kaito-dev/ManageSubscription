@@ -765,53 +765,97 @@ class _CycleSelector extends StatelessWidget {
   final BillingCycle value;
   final ValueChanged<BillingCycle> onChanged;
 
+  static const _cycles = [
+    BillingCycle.monthly,
+    BillingCycle.yearly,
+    BillingCycle.weekly,
+    BillingCycle.custom,
+  ];
+  static const _labels = ['月額', '年額', '週額', 'カスタム'];
+
   @override
   Widget build(BuildContext context) {
-    const cycles = [
-      (BillingCycle.monthly, '月額'),
-      (BillingCycle.yearly, '年額'),
-      (BillingCycle.weekly, '週額'),
-      (BillingCycle.custom, 'カスタム'),
-    ];
+    return _SlidingSegmented(
+      labels: _labels,
+      selected: _cycles.indexOf(value),
+      onChanged: (i) => onChanged(_cycles[i]),
+    );
+  }
+}
+
+/// A segmented control whose highlight *slides* between options (like the
+/// bottom nav) instead of blinking.
+class _SlidingSegmented extends StatelessWidget {
+  const _SlidingSegmented({
+    required this.labels,
+    required this.selected,
+    required this.onChanged,
+  });
+  final List<String> labels;
+  final int selected;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final n = labels.length;
+    final accent = AppAccent.of(context).primary;
     return Container(
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: AppColors.surfaceSunken,
         borderRadius: BorderRadius.circular(18),
       ),
-      child: Row(
-        children: [
-          for (final c in cycles)
-            Expanded(
-              child: Pressable(
-                onTap: () => onChanged(c.$1),
-                scale: 0.96,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(vertical: 11),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color:
-                        value == c.$1 ? AppAccent.of(context).primary : Colors.transparent,
-                    borderRadius: BorderRadius.circular(14),
+      child: SizedBox(
+        height: 40,
+        child: Stack(
+          children: [
+            if (selected >= 0)
+              AnimatedAlign(
+                duration: const Duration(milliseconds: 240),
+                curve: Curves.easeOutCubic,
+                alignment: n <= 1
+                    ? Alignment.center
+                    : Alignment((selected / (n - 1)) * 2 - 1, 0),
+                child: FractionallySizedBox(
+                  widthFactor: 1 / n,
+                  heightFactor: 1,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: accent,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
-                  child: Text(c.$2,
-                      style: AppType.body(13.5,
-                          weight: FontWeight.w700,
-                          color: value == c.$1
-                              ? AppColors.onPrimary
-                              : AppColors.textSecondary)),
                 ),
               ),
+            Row(
+              children: [
+                for (var i = 0; i < n; i++)
+                  Expanded(
+                    child: Pressable(
+                      onTap: () => onChanged(i),
+                      scale: 0.96,
+                      child: Center(
+                        child: Text(labels[i],
+                            style: AppType.body(13.5,
+                                weight: FontWeight.w700,
+                                color: i == selected
+                                    ? AppColors.onPrimary
+                                    : AppColors.textSecondary)),
+                      ),
+                    ),
+                  ),
+              ],
             ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Custom interval controls: "毎 [N] [日/週/ヶ月] ごと" with a live preview.
-class _CustomIntervalRow extends StatelessWidget {
+/// Custom interval controls: "毎 [N] [日/週/ヶ月] ごと" with an editable number,
+/// round +/- buttons and a sliding unit selector.
+class _CustomIntervalRow extends StatefulWidget {
   const _CustomIntervalRow({
     required this.count,
     required this.unit,
@@ -824,7 +868,49 @@ class _CustomIntervalRow extends StatelessWidget {
   final ValueChanged<IntervalUnit> onUnitChanged;
 
   @override
+  State<_CustomIntervalRow> createState() => _CustomIntervalRowState();
+}
+
+class _CustomIntervalRowState extends State<_CustomIntervalRow> {
+  late final TextEditingController _c =
+      TextEditingController(text: '${widget.count}');
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  void _set(int v) {
+    final clamped = v.clamp(1, 999);
+    if (_c.text != '$clamped') {
+      _c.text = '$clamped';
+      _c.selection =
+          TextSelection.collapsed(offset: _c.text.length);
+    }
+    widget.onCountChanged(clamped);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final accent = AppAccent.of(context).primary;
+
+    Widget roundBtn(IconData icon, VoidCallback onTap) => Pressable(
+          onTap: onTap,
+          scale: 0.88,
+          child: Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: accent,
+              shape: BoxShape.circle,
+              boxShadow: AppShadows.accentGlow(accent, intensity: 0.6),
+            ),
+            child: Icon(icon, size: 20, color: AppColors.onPrimary),
+          ),
+        );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -832,77 +918,47 @@ class _CustomIntervalRow extends StatelessWidget {
           children: [
             Text('毎', style: AppType.body(14)),
             const Gap(AppSpacing.sm),
-            _Stepper(value: count, onChanged: onCountChanged),
+            roundBtn(Icons.remove_rounded,
+                () => _set((int.tryParse(_c.text) ?? widget.count) - 1)),
+            SizedBox(
+              width: 48,
+              child: TextField(
+                controller: _c,
+                textAlign: TextAlign.center,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(3),
+                ],
+                style: AppType.display(20, weight: FontWeight.w800),
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                onChanged: (t) {
+                  final v = int.tryParse(t);
+                  if (v != null && v >= 1) widget.onCountChanged(v.clamp(1, 999));
+                },
+                onEditingComplete: () => _set(int.tryParse(_c.text) ?? 1),
+              ),
+            ),
+            roundBtn(Icons.add_rounded,
+                () => _set((int.tryParse(_c.text) ?? widget.count) + 1)),
             const Gap(AppSpacing.md),
             Expanded(
-              child: Wrap(
-                spacing: 8,
-                children: [
-                  for (final u in IntervalUnit.values)
-                    Pressable(
-                      scale: 0.94,
-                      onTap: () => onUnitChanged(u),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 9),
-                        decoration: BoxDecoration(
-                          color:
-                              unit == u ? AppAccent.of(context).primary : AppColors.surface,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(u.shortLabel,
-                            style: AppType.body(13.5,
-                                weight: FontWeight.w700,
-                                color: unit == u
-                                    ? AppColors.onPrimary
-                                    : AppColors.textPrimary)),
-                      ),
-                    ),
-                ],
+              child: _SlidingSegmented(
+                labels: [for (final u in IntervalUnit.values) u.shortLabel],
+                selected: IntervalUnit.values.indexOf(widget.unit),
+                onChanged: (i) =>
+                    widget.onUnitChanged(IntervalUnit.values[i]),
               ),
             ),
           ],
         ),
         const Gap(AppSpacing.sm),
-        Text('「$count${unit.everyLabel}」に支払われます',
+        Text('「${_c.text}${widget.unit.everyLabel}」に支払われます',
             style: AppType.body(12.5, color: AppAccent.of(context).deep)),
-      ],
-    );
-  }
-}
-
-class _Stepper extends StatelessWidget {
-  const _Stepper({required this.value, required this.onChanged});
-  final int value;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    Widget btn(IconData icon, VoidCallback onTap) => Pressable(
-          onTap: onTap,
-          scale: 0.9,
-          child: Container(
-            width: 34,
-            height: 34,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, size: 18, color: AppAccent.of(context).deep),
-          ),
-        );
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        btn(Icons.remove_rounded, () => onChanged(value - 1)),
-        Container(
-          width: 34,
-          alignment: Alignment.center,
-          child: Text('$value',
-              style: AppType.display(18, weight: FontWeight.w800)),
-        ),
-        btn(Icons.add_rounded, () => onChanged(value + 1)),
       ],
     );
   }
