@@ -14,11 +14,15 @@ class DonutChart extends StatefulWidget {
     required this.slices,
     required this.total,
     required this.formatter,
+    this.onLongPressSlice,
   });
 
   final List<AnalyticsSlice> slices;
   final double total;
   final CurrencyFormatter formatter;
+
+  /// Long-pressing a slice drills into its breakdown.
+  final ValueChanged<int>? onLongPressSlice;
 
   @override
   State<DonutChart> createState() => _DonutChartState();
@@ -41,10 +45,14 @@ class _DonutChartState extends State<DonutChart> {
               startDegreeOffset: -90,
               pieTouchData: PieTouchData(
                 touchCallback: (event, response) {
-                  setState(() {
-                    _touched =
-                        response?.touchedSection?.touchedSectionIndex ?? -1;
-                  });
+                  final i =
+                      response?.touchedSection?.touchedSectionIndex ?? -1;
+                  setState(() => _touched = i);
+                  if (event is FlLongPressStart &&
+                      i >= 0 &&
+                      i < widget.slices.length) {
+                    widget.onLongPressSlice?.call(i);
+                  }
                 },
               ),
               sections: [

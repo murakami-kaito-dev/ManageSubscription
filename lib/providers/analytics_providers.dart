@@ -27,11 +27,16 @@ class AnalyticsSlice {
     required this.label,
     required this.color,
     required this.amount,
+    required this.groupKey,
     this.nativeLabel,
   });
   final String label;
   final Color color;
   final double amount;
+
+  /// The grouping key this slice represents: a subscription id, a category id,
+  /// a payment-method id, or '__none'. Used to drill into the breakdown.
+  final String groupKey;
 
   /// e.g. original "$22.00" when the sub isn't in the main currency.
   final String? nativeLabel;
@@ -107,12 +112,13 @@ final analyticsProvider =
     }
   }
 
-  final slices = result.values
+  final slices = result.entries
       .map((e) => AnalyticsSlice(
-          label: e.label,
-          color: e.color,
-          amount: e.amount,
-          nativeLabel: e.native))
+          label: e.value.label,
+          color: e.value.color,
+          amount: e.value.amount,
+          groupKey: e.key,
+          nativeLabel: e.value.native))
       .toList()
     ..sort((a, b) => b.amount.compareTo(a.amount));
 
@@ -126,12 +132,51 @@ final analyticsProvider =
       label: s.label,
       color: AppColors.chartColor(i),
       amount: s.amount,
+      groupKey: s.groupKey,
       nativeLabel: s.nativeLabel,
     ));
   }
 
   final total = recolored.fold<double>(0, (sum, s) => sum + s.amount);
   return AnalyticsResult(slices: recolored, total: total);
+});
+
+@immutable
+class AnalyticsMemberQuery {
+  const AnalyticsMemberQuery(this.axis, this.groupKey);
+  final AnalyticsAxis axis;
+  final String groupKey;
+  @override
+  bool operator ==(Object other) =>
+      other is AnalyticsMemberQuery &&
+      other.axis == axis &&
+      other.groupKey == groupKey;
+  @override
+  int get hashCode => Object.hash(axis, groupKey);
+}
+
+/// The active subscriptions that make up one analytics slice — powers the
+/// long-press breakdown.
+final analyticsMembersProvider =
+    Provider.family<List<Subscription>, AnalyticsMemberQuery>((ref, q) {
+  final subs = (ref.watch(subscriptionsProvider).valueOrNull ?? const [])
+      .where((s) => !s.isPaused);
+  bool matches(Subscription s) {
+    switch (q.axis) {
+      case AnalyticsAxis.subscription:
+        return s.id == q.groupKey;
+      case AnalyticsAxis.category:
+        return (s.categoryId ?? '__none') == q.groupKey;
+      case AnalyticsAxis.paymentMethod:
+        return (s.paymentMethodId ?? '__none') == q.groupKey;
+    }
+  }
+
+  final currency = ref.watch(settingsProvider).mainCurrency;
+  final list = subs.where(matches).toList()
+    ..sort((a, b) =>
+        b.monthlyAmountIn(currency).compareTo(a.monthlyAmountIn(currency)));
+  return list;
 });
 
 class CurrencyLabel {

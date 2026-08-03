@@ -15,6 +15,7 @@ import '../../providers/analytics_providers.dart';
 import '../../providers/premium_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/subscription_providers.dart';
+import '../home/subscription_form_screen.dart';
 import '../premium/premium_screen.dart';
 import '../settings/settings_screen.dart';
 import 'widgets/donut_chart.dart';
@@ -83,9 +84,23 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                           slices: result.slices,
                           total: result.total,
                           formatter: fmt,
+                          onLongPressSlice: (i) =>
+                              _openBreakdown(result.slices[i]),
                         ),
                         const Gap(AppSpacing.lg),
-                        _Legend(slices: result.slices, fmt: fmt),
+                        if (_axis != AnalyticsAxis.subscription)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                                left: AppSpacing.xs, bottom: AppSpacing.sm),
+                            child: Text('項目やグラフを長押しすると内訳を表示します',
+                                style: AppType.body(11.5,
+                                    color: AppColors.textMuted)),
+                          ),
+                        _Legend(
+                          slices: result.slices,
+                          fmt: fmt,
+                          onLongPress: (slice) => _openBreakdown(slice),
+                        ),
                         if (_axis == AnalyticsAxis.subscription) ...[
                           const SectionHeader('コスパチェッカー'),
                           _CospaList(scope: _scope),
@@ -93,6 +108,115 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                       ],
                     ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openBreakdown(AnalyticsSlice slice) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.canvas,
+      isScrollControlled: true,
+      builder: (_) => _BreakdownSheet(axis: _axis, slice: slice),
+    );
+  }
+}
+
+/// The list of subscriptions inside a tapped category/method slice. Tapping a
+/// row opens that subscription's editor.
+class _BreakdownSheet extends ConsumerWidget {
+  const _BreakdownSheet({required this.axis, required this.slice});
+  final AnalyticsAxis axis;
+  final AnalyticsSlice slice;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final members = ref.watch(
+        analyticsMembersProvider(AnalyticsMemberQuery(axis, slice.groupKey)));
+    final fmt = ref.watch(mainCurrencyFormatterProvider);
+
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.5,
+      maxChildSize: 0.9,
+      minChildSize: 0.3,
+      builder: (context, controller) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        child: ListView(
+          controller: controller,
+          children: [
+            const Gap(AppSpacing.md),
+            Center(
+              child: Container(
+                width: 44,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: AppColors.textMuted.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+            const Gap(AppSpacing.lg),
+            Row(
+              children: [
+                Container(
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                      color: slice.color,
+                      borderRadius: BorderRadius.circular(4)),
+                ),
+                const Gap(AppSpacing.sm),
+                Expanded(
+                    child: Text('${slice.label} の内訳',
+                        style: AppType.display(19))),
+                Text('${members.length}件',
+                    style: AppType.body(13, color: AppColors.textSecondary)),
+              ],
+            ),
+            const Gap(AppSpacing.md),
+            for (final s in members)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: SoftCard(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => SubscriptionFormScreen(existing: s),
+                    ));
+                  },
+                  child: Row(
+                    children: [
+                      SubscriptionAvatar(sub: s, size: 40),
+                      const Gap(AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(s.name,
+                                style:
+                                    AppType.body(15, weight: FontWeight.w700)),
+                            Text('${CurrencyFormatter(s.currency).format(s.amount)} /${s.periodLabel}',
+                                style: AppType.body(12,
+                                    color: AppColors.textSecondary)),
+                          ],
+                        ),
+                      ),
+                      Text(fmt.format(s.monthlyAmountIn(
+                          ref.watch(settingsProvider).mainCurrency)),
+                          style: AppType.display(15)),
+                      const Gap(AppSpacing.sm),
+                      const Icon(Icons.chevron_right_rounded,
+                          color: AppColors.textMuted),
+                    ],
+                  ),
+                ),
+              ),
+            const Gap(AppSpacing.xxl),
           ],
         ),
       ),
@@ -203,9 +327,10 @@ class _AxisSelector extends StatelessWidget {
 }
 
 class _Legend extends StatelessWidget {
-  const _Legend({required this.slices, required this.fmt});
+  const _Legend({required this.slices, required this.fmt, this.onLongPress});
   final List<AnalyticsSlice> slices;
   final CurrencyFormatter fmt;
+  final void Function(AnalyticsSlice)? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -220,38 +345,44 @@ class _Legend extends StatelessWidget {
                 child: Divider(
                     height: 1, color: AppColors.textMuted.withOpacity(0.15)),
               ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg, vertical: 14),
-              child: Row(
-                children: [
-                  Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: slices[i].color,
-                      borderRadius: BorderRadius.circular(5),
+            Pressable(
+              onLongPress: onLongPress == null
+                  ? null
+                  : () => onLongPress!(slices[i]),
+              scale: 0.99,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg, vertical: 14),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: slices[i].color,
+                        borderRadius: BorderRadius.circular(5),
+                      ),
                     ),
-                  ),
-                  const Gap(AppSpacing.md),
-                  Expanded(
-                    child: Text(slices[i].label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppType.body(15, weight: FontWeight.w600)),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(fmt.format(slices[i].amount),
-                          style: AppType.display(16)),
-                      if (slices[i].nativeLabel != null)
-                        Text(slices[i].nativeLabel!,
-                            style: AppType.body(11,
-                                color: AppColors.textMuted)),
-                    ],
-                  ),
-                ],
+                    const Gap(AppSpacing.md),
+                    Expanded(
+                      child: Text(slices[i].label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppType.body(15, weight: FontWeight.w600)),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(fmt.format(slices[i].amount),
+                            style: AppType.display(16)),
+                        if (slices[i].nativeLabel != null)
+                          Text(slices[i].nativeLabel!,
+                              style: AppType.body(11,
+                                  color: AppColors.textMuted)),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
