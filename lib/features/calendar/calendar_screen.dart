@@ -99,6 +99,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       lastDay: DateTime.utc(2100, 12, 31),
                       focusedDay: _focused,
                       currentDay: DateTime.now(),
+                      locale: 'ja',
                       selectedDayPredicate: (d) => isSameDay(d, _selected),
                       startingDayOfWeek: StartingDayOfWeek.sunday,
                       headerVisible: false,
