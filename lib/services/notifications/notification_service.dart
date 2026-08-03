@@ -68,7 +68,15 @@ class NotificationService {
       importance: Importance.high,
       priority: Priority.high,
     ),
-    iOS: DarwinNotificationDetails(),
+    // presentAlert/Banner/Sound = show even while the app is in the foreground
+    // (iOS otherwise silently swallows foreground notifications — the reason the
+    // test notification "never arrived" while looking at the app).
+    iOS: DarwinNotificationDetails(
+      presentAlert: true,
+      presentBanner: true,
+      presentSound: true,
+      presentBadge: true,
+    ),
   );
 
   /// Reschedules reminders for the whole list. Free tier is already capped to a

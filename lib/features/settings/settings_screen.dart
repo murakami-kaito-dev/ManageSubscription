@@ -71,24 +71,6 @@ class SettingsScreen extends ConsumerWidget {
                     child: Column(
                       children: [
                         _Row(
-                          icon: Icons.currency_yen_rounded,
-                          label: 'メイン通貨',
-                          trailing: Text(settings.mainCurrency.code,
-                              style: AppType.body(14,
-                                  color: AppColors.textSecondary)),
-                          onTap: () => _pickCurrency(context, ref),
-                        ),
-                        const _Div(),
-                        _Row(
-                          icon: Icons.description_rounded,
-                          label: 'データをCSVエクスポート',
-                          // Crown only for non-premium (already-premium users
-                          // shouldn't see the upsell marker).
-                          premium: !isPremium,
-                          onTap: () => _exportCsv(context, ref),
-                        ),
-                        const _Div(),
-                        _Row(
                           icon: Icons.notifications_rounded,
                           label: '支払い日前に通知でお知らせ',
                           trailing: Switch(
@@ -135,7 +117,15 @@ class SettingsScreen extends ConsumerWidget {
                           ),
                         ],
                         const _Div(),
-                        // Theme color is low-priority, so it sits last.
+                        _Row(
+                          icon: Icons.currency_yen_rounded,
+                          label: 'メイン通貨',
+                          trailing: Text(settings.mainCurrency.code,
+                              style: AppType.body(14,
+                                  color: AppColors.textSecondary)),
+                          onTap: () => _pickCurrency(context, ref),
+                        ),
+                        const _Div(),
                         _Row(
                           icon: Icons.palette_rounded,
                           label: 'テーマカラーを選択',
@@ -148,6 +138,15 @@ class SettingsScreen extends ConsumerWidget {
                             ),
                           ),
                           onTap: () => _pickAccent(context, ref),
+                        ),
+                        const _Div(),
+                        _Row(
+                          icon: Icons.description_rounded,
+                          label: 'データをCSVエクスポート',
+                          // Crown only for non-premium (already-premium users
+                          // shouldn't see the upsell marker).
+                          premium: !isPremium,
+                          onTap: () => _exportCsv(context, ref),
                         ),
                       ],
                     ),

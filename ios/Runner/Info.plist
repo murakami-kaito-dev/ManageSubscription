@@ -4,6 +4,13 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<!-- Declares supported languages so the native camera / crop UI follows the
+	     device language (e.g. Japanese) instead of always showing English. -->
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>ja</string>
+		<string>en</string>
+	</array>
 	<key>CFBundleDisplayName</key>
 	<string>サブスク管理</string>
 	<key>CFBundleExecutable</key>

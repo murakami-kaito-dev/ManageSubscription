@@ -133,12 +133,10 @@ class AppDatabase {
     final now = DateTime.now();
     int day(int d) => DateTime(now.year, now.month, d).millisecondsSinceEpoch;
 
+    // A small, familiar sample so the app isn't empty on first launch.
     final demos = [
       ['Netflix', 1490.0, 'JPY', 'monthly', day(15), 0xFFE5977E, '🎬', 'cat_0', 'pm_1', 8.0, '回'],
       ['Spotify', 980.0, 'JPY', 'monthly', day(3), 0xFF7FA38C, '🎵', 'cat_0', 'pm_0', 45.0, '回'],
-      ['ChatGPT', 20.0, 'USD', 'monthly', day(21), 0xFF86A9C4, '🤖', 'cat_1', 'pm_0', 60.0, '回'],
-      ['Amazon Prime', 5900.0, 'JPY', 'yearly', day(9), 0xFFC39BB4, '📦', 'cat_2', 'pm_0', 12.0, '回'],
-      ['YouTube Premium', 1280.0, 'JPY', 'monthly', day(28), 0xFFE3C27E, '▶️', 'cat_0', 'pm_1', 30.0, '回'],
     ];
     for (var i = 0; i < demos.length; i++) {
       final d = demos[i];
