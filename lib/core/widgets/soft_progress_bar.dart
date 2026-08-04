@@ -43,6 +43,10 @@ class SoftProgressBar extends StatelessWidget {
               builder: (context, t, _) => FractionallySizedBox(
                 alignment: Alignment.centerLeft,
                 widthFactor: t,
+                // heightFactor:1 is REQUIRED — without it the childless
+                // DecoratedBox gets loose vertical constraints and collapses to
+                // height 0, making the fill invisible (correct width, no height).
+                heightFactor: 1,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
