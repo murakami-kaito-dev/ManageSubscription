@@ -2,6 +2,7 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/monetization/iap.dart';
 import '../../core/premium_limits.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_shadows.dart';
@@ -9,6 +10,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/widgets/pressable.dart';
 import '../../core/widgets/soft_button.dart';
+import '../../providers/core_providers.dart';
 import '../../providers/premium_provider.dart';
 
 class PremiumScreen extends ConsumerStatefulWidget {
@@ -31,6 +33,23 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
   late final ConfettiController _confetti =
       ConfettiController(duration: const Duration(seconds: 2));
   bool _busy = false;
+  PlanKind _selected = PlanKind.yearly; // best value pre-selected
+  Map<PlanKind, String> _prices = const {
+    PlanKind.lifetime: Iap.priceLifetime,
+    PlanKind.monthly: Iap.priceMonthly,
+    PlanKind.yearly: Iap.priceYearly,
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrices();
+  }
+
+  Future<void> _loadPrices() async {
+    final p = await ref.read(purchaseServiceProvider).loadPrices();
+    if (mounted) setState(() => _prices = p);
+  }
 
   @override
   void dispose() {
@@ -40,7 +59,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
 
   Future<void> _purchase() async {
     setState(() => _busy = true);
-    final ok = await ref.read(premiumProvider.notifier).purchase();
+    final ok = await ref.read(premiumProvider.notifier).purchase(_selected);
     if (!mounted) return;
     setState(() => _busy = false);
     if (ok) {
@@ -73,6 +92,8 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final ent = ref.watch(entitlementProvider);
+
     return Scaffold(
       body: Stack(
         children: [
@@ -99,16 +120,53 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
                         const Gap(AppSpacing.lg),
                         _ReasonBanner(text: widget.reason!),
                       ],
+                      const Gap(AppSpacing.lg),
+                      _TrialBanner(entitlement: ent),
+                      const Gap(AppSpacing.lg),
+                      _PlanCard(
+                        title: '年額プラン',
+                        price: '${_prices[PlanKind.yearly]} / 年',
+                        note: '2週間の無料体験つき・一番お得',
+                        badge: 'おすすめ',
+                        selected: _selected == PlanKind.yearly,
+                        onTap: () =>
+                            setState(() => _selected = PlanKind.yearly),
+                      ),
+                      const Gap(AppSpacing.sm),
+                      _PlanCard(
+                        title: '月額プラン',
+                        price: '${_prices[PlanKind.monthly]} / 月',
+                        note: '2週間の無料体験つき・いつでも解約可',
+                        selected: _selected == PlanKind.monthly,
+                        onTap: () =>
+                            setState(() => _selected = PlanKind.monthly),
+                      ),
+                      const Gap(AppSpacing.sm),
+                      _PlanCard(
+                        title: '買い切り',
+                        price: _prices[PlanKind.lifetime] ?? '',
+                        note: '一度の購入でずっと使える',
+                        selected: _selected == PlanKind.lifetime,
+                        onTap: () =>
+                            setState(() => _selected = PlanKind.lifetime),
+                      ),
                       const Gap(AppSpacing.xl),
-                      Text('プレミアム機能',
+                      Text('プレミアムでできること',
                           textAlign: TextAlign.center,
-                          style: AppType.display(22)),
+                          style: AppType.display(18)),
                       const Gap(AppSpacing.lg),
                       const _ComparisonTable(),
                     ],
                   ),
                 ),
-                _PurchaseBar(busy: _busy, onPurchase: _purchase, onRestore: _restore),
+                _PurchaseBar(
+                  busy: _busy,
+                  selected: _selected,
+                  prices: _prices,
+                  onPurchase: _purchase,
+                  onRestore: _restore,
+                  onStayFree: () => Navigator.of(context).pop(),
+                ),
               ],
             ),
           ),
@@ -128,40 +186,165 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
   }
 }
 
+class _TrialBanner extends StatelessWidget {
+  const _TrialBanner({required this.entitlement});
+  final Entitlement entitlement;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = AppAccent.of(context);
+    final (IconData icon, String title, String body) =
+        switch (entitlement.kind) {
+      PlanKind.trial => (
+          Icons.hourglass_bottom_rounded,
+          '無料体験中（残り${entitlement.trialDaysLeft}日）',
+          '体験終了後も使い続けるには、下からプランを選んでください。',
+        ),
+      PlanKind.free => (
+          Icons.lock_open_rounded,
+          '無料体験は終了しました',
+          'プランを選ぶと、すべての機能がまた使えます。',
+        ),
+      _ => (
+          Icons.workspace_premium_rounded,
+          '${entitlement.kind.label}をご利用中',
+          'いつもありがとうございます。',
+        ),
+    };
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: accent.soft,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: accent.deep, size: 22),
+          const Gap(AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: AppType.display(15)),
+                const Gap(2),
+                Text(body,
+                    style: AppType.body(12.5,
+                        color: AppColors.textSecondary, height: 1.4)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlanCard extends StatelessWidget {
+  const _PlanCard({
+    required this.title,
+    required this.price,
+    required this.note,
+    required this.selected,
+    required this.onTap,
+    this.badge,
+  });
+  final String title;
+  final String price;
+  final String note;
+  final bool selected;
+  final VoidCallback onTap;
+  final String? badge;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = AppAccent.of(context);
+    return Pressable(
+      onTap: onTap,
+      scale: 0.98,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: selected ? accent.soft : AppColors.surface,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+          border: Border.all(
+            color: selected ? accent.primary : AppColors.cardBorder,
+            width: selected ? 2 : 1,
+          ),
+          boxShadow: selected ? null : AppShadows.soft(),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              selected
+                  ? Icons.radio_button_checked_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              color: selected ? accent.primary : AppColors.textMuted,
+            ),
+            const Gap(AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(title, style: AppType.display(16)),
+                      if (badge != null) ...[
+                        const Gap(AppSpacing.sm),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.gold,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(badge!,
+                              style: AppType.body(10,
+                                  weight: FontWeight.w800,
+                                  color: AppColors.onPrimary)),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const Gap(2),
+                  Text(note,
+                      style: AppType.body(11.5, color: AppColors.textSecondary)),
+                ],
+              ),
+            ),
+            Text(price, style: AppType.display(16)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _Hero extends StatelessWidget {
   const _Hero();
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
+        const Gap(AppSpacing.sm),
+        Text('サブスク家計簿 プレミアム',
+            textAlign: TextAlign.center, style: AppType.display(25)),
+        const Gap(AppSpacing.lg),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-          decoration: BoxDecoration(
-            color: AppColors.gold,
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Text('一生分のお得をあなたに',
-              style: AppType.body(13,
-                  weight: FontWeight.w700, color: AppColors.onPrimary)),
-        ),
-        const Gap(AppSpacing.md),
-        Text('サブスク管理 プレミアム',
-            textAlign: TextAlign.center, style: AppType.display(27)),
-        const Gap(AppSpacing.xl),
-        Container(
-          width: 130,
-          height: 130,
+          width: 110,
+          height: 110,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: AppColors.premiumGradient,
             ),
-            borderRadius: BorderRadius.circular(38),
-            boxShadow: AppShadows.accentGlow(AppAccent.of(context).primary, intensity: 1.4),
+            borderRadius: BorderRadius.circular(34),
+            boxShadow: AppShadows.accentGlow(AppAccent.of(context).primary,
+                intensity: 1.4),
           ),
           child: const Icon(Icons.savings_rounded,
-              size: 64, color: AppColors.onPrimary),
+              size: 56, color: AppColors.onPrimary),
         ),
       ],
     );
@@ -204,7 +387,7 @@ class _ComparisonTable extends StatelessWidget {
     ('支払い日前通知の設定数', '${PremiumLimits.maxNotifyRules}', '∞'),
     ('全広告の非表示', '×', '✓'),
     ('画像の登録', '×', '✓'),
-    ('CSVエクスポート', '×', '✓'),
+    ('CSVエクスポート / インポート', '×', '✓'),
     ('カテゴリ/支払い方法別の分析', '×', '✓'),
     ('全期間の閲覧', '×', '✓'),
   ];
@@ -291,12 +474,25 @@ class _ComparisonTable extends StatelessWidget {
 class _PurchaseBar extends StatelessWidget {
   const _PurchaseBar({
     required this.busy,
+    required this.selected,
+    required this.prices,
     required this.onPurchase,
     required this.onRestore,
+    required this.onStayFree,
   });
   final bool busy;
+  final PlanKind selected;
+  final Map<PlanKind, String> prices;
   final VoidCallback onPurchase;
   final VoidCallback onRestore;
+  final VoidCallback onStayFree;
+
+  String get _cta => switch (selected) {
+        PlanKind.lifetime => '${prices[PlanKind.lifetime]} で購入する',
+        PlanKind.monthly => '2週間無料で始める（その後 ${prices[PlanKind.monthly]}/月）',
+        PlanKind.yearly => '2週間無料で始める（その後 ${prices[PlanKind.yearly]}/年）',
+        _ => '続ける',
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -305,23 +501,28 @@ class _PurchaseBar extends StatelessWidget {
           AppSpacing.md + MediaQuery.of(context).padding.bottom),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius:
-            const BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusSheet)),
+        borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppSpacing.radiusSheet)),
         boxShadow: AppShadows.raised(),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('はじめの7日間無料、その後 ¥2,800 / 年',
-              style: AppType.body(14,
-                  weight: FontWeight.w600, color: AppColors.textSecondary)),
-          const Gap(AppSpacing.md),
           SoftButton(
-            label: busy ? '処理中…' : '無料で試す',
+            label: busy ? '処理中…' : _cta,
             icon: busy ? null : Icons.workspace_premium_rounded,
             onPressed: busy ? null : onPurchase,
           ),
-          const Gap(AppSpacing.sm),
+          const Gap(AppSpacing.xs),
+          Pressable(
+            onTap: onStayFree,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text('無料プランのまま使う',
+                  style: AppType.body(13,
+                      weight: FontWeight.w600, color: AppColors.textSecondary)),
+            ),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [

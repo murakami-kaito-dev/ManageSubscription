@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:in_app_review/in_app_review.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../core/monetization/iap.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_shadows.dart';
 import '../../core/theme/app_spacing.dart';
@@ -75,22 +75,10 @@ class SettingsScreen extends ConsumerWidget {
     ));
   }
 
-  /// Opens the native App Store / Play Store review flow. Falls back to the
-  /// store listing when the in-app review prompt isn't available.
-  Future<void> _requestReview() async {
-    final review = InAppReview.instance;
-    try {
-      if (await review.isAvailable()) {
-        await review.requestReview();
-      } else {
-        await review.openStoreListing();
-      }
-    } catch (_) {/* best-effort; nothing to show if the store is unavailable */}
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isPremium = ref.watch(premiumProvider);
+    final entitlement = ref.watch(entitlementProvider);
     final settings = ref.watch(settingsProvider);
 
     return Scaffold(
@@ -111,7 +99,7 @@ class SettingsScreen extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(
                     AppSpacing.lg, 0, AppSpacing.lg, 40),
                 children: [
-                  _PremiumBanner(isPremium: isPremium),
+                  _PremiumBanner(entitlement: entitlement),
                   const SectionHeader('設定'),
                   SoftCard(
                     padding: EdgeInsets.zero,
@@ -188,12 +176,6 @@ class SettingsScreen extends ConsumerWidget {
                     padding: EdgeInsets.zero,
                     child: Column(
                       children: [
-                        _Row(
-                          icon: Icons.favorite_rounded,
-                          label: 'このアプリを応援する',
-                          onTap: _requestReview,
-                        ),
-                        const _Div(),
                         _Row(
                           icon: Icons.share_rounded,
                           label: 'シェア',
@@ -320,36 +302,54 @@ class SettingsScreen extends ConsumerWidget {
 }
 
 class _PremiumBanner extends StatelessWidget {
-  const _PremiumBanner({required this.isPremium});
-  final bool isPremium;
+  const _PremiumBanner({required this.entitlement});
+  final Entitlement entitlement;
 
   @override
   Widget build(BuildContext context) {
-    if (isPremium) {
-      return Container(
-        margin: const EdgeInsets.only(top: AppSpacing.sm),
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: BoxDecoration(
-          color: AppAccent.of(context).soft,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.workspace_premium_rounded,
-                color: AppColors.gold, size: 28),
-            const Gap(AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('プレミアム会員', style: AppType.display(17)),
-                  Text('すべての機能をご利用いただけます',
-                      style: AppType.body(12,
-                          color: AppColors.textSecondary)),
-                ],
+    // Paid or trialing → an info banner (trial also nudges toward a plan).
+    if (entitlement.isPremium) {
+      final trialing = entitlement.isTrialing;
+      final title = trialing
+          ? '無料体験中（残り${entitlement.trialDaysLeft}日）'
+          : '${entitlement.kind.label}をご利用中';
+      final body = trialing
+          ? '体験終了後も使うにはプランを選択してください'
+          : 'すべての機能をご利用いただけます';
+      return Pressable(
+        onTap: trialing ? () => PremiumScreen.show(context) : null,
+        child: Container(
+          margin: const EdgeInsets.only(top: AppSpacing.sm),
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            color: AppAccent.of(context).soft,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                  trialing
+                      ? Icons.hourglass_bottom_rounded
+                      : Icons.workspace_premium_rounded,
+                  color: AppColors.gold,
+                  size: 28),
+              const Gap(AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: AppType.display(17)),
+                    Text(body,
+                        style: AppType.body(12,
+                            color: AppColors.textSecondary)),
+                  ],
+                ),
               ),
-            ),
-          ],
+              if (trialing)
+                const Icon(Icons.chevron_right_rounded,
+                    color: AppColors.textMuted),
+            ],
+          ),
         ),
       );
     }
