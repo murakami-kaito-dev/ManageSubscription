@@ -41,3 +41,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# App Store Connect API credentials — NEVER commit these.
+/ios/*.p8
+/ios/AuthKey_*.p8
+/ios/AppStoreConnect*.json
+/ios/AppStoreConnectKeyIdIssuerId.json

@@ -27,6 +27,17 @@ Flutter/flutter_export_environment.sh
 ServiceDefinitions.json
 Runner/GeneratedPluginRegistrant.*
 
+# App Store Connect API credentials — NEVER commit these.
+# (Also ignored via the repo-root .gitignore; kept here as defense-in-depth so
+# the keys stay protected even if the exact filename changes.)
+*.p8
+AuthKey_*.p8
+AppStoreConnect*.json
+AppStoreConnectKeyIdIssuerId.json
+
+# Build output from `flutter build ipa`.
+build/
+
 # Exceptions to above rules.
 !default.mode1v3
 !default.mode2v3
