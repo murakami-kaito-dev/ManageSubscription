@@ -105,11 +105,13 @@ class NotificationService {
         largeIcon:
             stablePath != null ? FilePathAndroidBitmap(stablePath) : null,
       ),
-      // presentAlert/Banner/Sound = show even while the app is in the
-      // foreground (iOS otherwise silently swallows foreground notifications).
+      // Foreground: play the SOUND (presentSound) but suppress the OS banner
+      // (presentAlert/Banner = false) — the guaranteed in-app banner
+      // (ForegroundReminderHost) provides the foreground visual, avoiding a
+      // double notification. Background presentation is unaffected by these.
       iOS: DarwinNotificationDetails(
-        presentAlert: true,
-        presentBanner: true,
+        presentAlert: false,
+        presentBanner: false,
         presentSound: true,
         presentBadge: true,
         attachments: iosAttachmentPath != null

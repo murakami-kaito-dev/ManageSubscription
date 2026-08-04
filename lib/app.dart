@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/theme/app_theme.dart';
+import 'features/notifications/foreground_reminder_host.dart';
 import 'features/shell/home_shell.dart';
 import 'providers/settings_provider.dart';
 
@@ -26,6 +27,10 @@ class ManageSubscriptionApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      // Floats the in-app reminder banner above every screen so a due reminder
+      // is always shown while the app is open, regardless of OS foreground rules.
+      builder: (context, child) =>
+          ForegroundReminderHost(child: child ?? const SizedBox.shrink()),
       home: const HomeShell(),
     );
   }
