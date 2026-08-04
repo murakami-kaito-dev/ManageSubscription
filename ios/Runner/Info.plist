@@ -72,5 +72,10 @@
 			<string>cstr6suwn9.skadnetwork</string>
 		</dict>
 	</array>
+	<!-- Export compliance: the app uses only standard TLS/HTTPS (exempt
+	     encryption), so no yearly encryption docs are needed. Setting this
+	     avoids the encryption question on every TestFlight/App Store upload. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
