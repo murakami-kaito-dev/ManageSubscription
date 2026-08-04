@@ -1,7 +1,9 @@
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/legal.dart';
 import '../../core/monetization/iap.dart';
 import '../../core/premium_limits.dart';
 import '../../core/theme/app_colors.dart';
@@ -527,13 +529,22 @@ class _PurchaseBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _link('購入を復元', onRestore),
-              _link('利用規約', () {}),
-              _link('プライバシーポリシー', () {}),
+              _link('利用規約', () => _launch(Legal.terms)),
+              _link('プライバシーポリシー', () => _launch(Legal.privacyPolicy)),
             ],
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _launch(String url) async {
+    final uri = Uri.parse(url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {/* best-effort */}
   }
 
   Widget _link(String label, VoidCallback onTap) => Pressable(
