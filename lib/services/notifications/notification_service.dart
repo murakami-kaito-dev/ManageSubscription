@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -65,9 +69,26 @@ class NotificationService {
   /// Builds the platform details for one reminder. When the subscription has a
   /// custom **image** (not an emoji/letter), it's used as the notification's
   /// icon: an Android large icon and an iOS attachment thumbnail.
-  NotificationDetails _detailsFor(Subscription s) {
+  Future<NotificationDetails> _detailsFor(Subscription s) async {
     final file = ImagePaths.resolve(s.imagePath);
-    final imagePath = (file != null && file.existsSync()) ? file.path : null;
+    final stablePath = (file != null && file.existsSync()) ? file.path : null;
+
+    // iOS UNNotificationAttachment TAKES OWNERSHIP of the file it's given and
+    // MOVES it out of our documents directory — which would delete the icon the
+    // app itself displays. So hand iOS a disposable *copy* in the temp dir and
+    // keep the original for the Android icon and the in-app avatar.
+    String? iosAttachmentPath;
+    if (stablePath != null) {
+      try {
+        final tmp = await getTemporaryDirectory();
+        final dest = p.join(tmp.path,
+            'notif_${s.id}_${DateTime.now().millisecondsSinceEpoch}.png');
+        await File(stablePath).copy(dest);
+        iosAttachmentPath = dest;
+      } catch (e) {
+        debugPrint('notif attachment copy failed: $e');
+      }
+    }
 
     return NotificationDetails(
       android: AndroidNotificationDetails(
@@ -79,8 +100,10 @@ class NotificationService {
         // Explicitly ask for sound + vibration on the channel.
         playSound: true,
         enableVibration: true,
+        // Android only READS the file (doesn't move it) so the stable path is
+        // fine and survives until the alarm fires.
         largeIcon:
-            imagePath != null ? FilePathAndroidBitmap(imagePath) : null,
+            stablePath != null ? FilePathAndroidBitmap(stablePath) : null,
       ),
       // presentAlert/Banner/Sound = show even while the app is in the
       // foreground (iOS otherwise silently swallows foreground notifications).
@@ -89,8 +112,8 @@ class NotificationService {
         presentBanner: true,
         presentSound: true,
         presentBadge: true,
-        attachments: imagePath != null
-            ? [DarwinNotificationAttachment(imagePath)]
+        attachments: iosAttachmentPath != null
+            ? [DarwinNotificationAttachment(iosAttachmentPath)]
             : null,
       ),
     );
@@ -108,8 +131,11 @@ class NotificationService {
       final now = tz.TZDateTime.now(tz.local);
       for (final s in subs) {
         if (s.isPaused) continue;
+        if (s.notifyRules.isEmpty) continue;
         final due = s.nextPaymentDate;
         final amount = CurrencyFormatter(s.currency).format(s.amount);
+        // Build details (incl. the disposable iOS attachment copy) once per sub.
+        final details = await _detailsFor(s);
         for (final rule in s.notifyRules) {
           final fireDate = due.subtract(Duration(days: rule.daysBefore));
           final scheduled = tz.TZDateTime(tz.local, fireDate.year,
@@ -122,7 +148,7 @@ class NotificationService {
                 ? '本日 ${due.month}月${due.day}日に $amount の支払いがあります'
                 : '${due.month}月${due.day}日（${rule.daysBefore}日後）に $amount の支払いがあります',
             scheduled,
-            _detailsFor(s),
+            details,
           );
         }
       }
