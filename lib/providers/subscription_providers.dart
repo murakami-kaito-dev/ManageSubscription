@@ -20,6 +20,15 @@ class SubscriptionsNotifier extends AsyncNotifier<List<Subscription>> {
     _reschedule();
   }
 
+  /// Additively saves many subscriptions at once (CSV import).
+  Future<void> saveAll(List<Subscription> subs) async {
+    if (subs.isEmpty) return;
+    await ref.read(subscriptionRepositoryProvider).upsertAll(subs);
+    ref.invalidateSelf();
+    await future;
+    _reschedule();
+  }
+
   Future<void> delete(String id) async {
     await ref.read(subscriptionRepositoryProvider).delete(id);
     ref.invalidateSelf();

@@ -21,6 +21,18 @@ class SubscriptionRepository {
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  /// Batch-insert many subscriptions (used by CSV import). Additive: fresh IDs
+  /// mean existing rows are never overwritten.
+  Future<void> upsertAll(List<Subscription> subs) async {
+    if (subs.isEmpty) return;
+    final batch = _db.batch();
+    for (final s in subs) {
+      batch.insert('subscriptions', s.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+    await batch.commit(noResult: true);
+  }
+
   Future<void> delete(String id) async {
     await _db.delete('subscriptions', where: 'id = ?', whereArgs: [id]);
   }

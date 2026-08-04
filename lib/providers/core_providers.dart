@@ -7,6 +7,7 @@ import '../data/repositories/payment_method_repository.dart';
 import '../data/repositories/subscription_repository.dart';
 import '../services/ads/ad_service.dart';
 import '../services/csv/csv_export_service.dart';
+import '../services/csv/csv_import_service.dart';
 import '../services/image/image_picker_service.dart';
 import '../services/notifications/notification_service.dart';
 import '../services/purchases/purchase_service.dart';
@@ -31,6 +32,8 @@ final notificationServiceProvider =
     Provider<NotificationService>((ref) => NotificationService.instance);
 final csvExportServiceProvider =
     Provider<CsvExportService>((ref) => const CsvExportService());
+final csvImportServiceProvider =
+    Provider<CsvImportService>((ref) => const CsvImportService());
 final imagePickerServiceProvider =
     Provider<ImagePickerService>((ref) => ImagePickerService());
 

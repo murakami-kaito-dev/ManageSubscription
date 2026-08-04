@@ -20,6 +20,7 @@ import '../../providers/premium_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/subscription_providers.dart';
 import '../premium/premium_screen.dart';
+import 'csv_import_screen.dart';
 import 'feedback_sheet.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -41,6 +42,37 @@ class SettingsScreen extends ConsumerWidget {
           ref.read(categoriesMapProvider),
           ref.read(paymentMethodsMapProvider),
         );
+  }
+
+  Future<void> _importCsv(BuildContext context, WidgetRef ref) async {
+    if (!ref.read(premiumProvider)) {
+      PremiumScreen.show(context, reason: 'CSVインポートはプレミアム機能です。');
+      return;
+    }
+    final service = ref.read(csvImportServiceProvider);
+    String? text;
+    try {
+      text = await service.pickCsvText();
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('ファイルを開けませんでした')));
+      }
+      return;
+    }
+    if (text == null) return; // cancelled
+    final cats = ref.read(categoriesProvider).valueOrNull ?? const [];
+    final methods = ref.read(paymentMethodsProvider).valueOrNull ?? const [];
+    final result = service.parse(
+      text,
+      categoryNameToId: {for (final c in cats) c.name: c.id},
+      methodNameToId: {for (final m in methods) m.name: m.id},
+      startSortOrder: ref.read(subscriptionCountProvider),
+    );
+    if (!context.mounted) return;
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => CsvImportPreviewScreen(result: result),
+    ));
   }
 
   /// Opens the native App Store / Play Store review flow. Falls back to the
@@ -140,6 +172,13 @@ class SettingsScreen extends ConsumerWidget {
                           // shouldn't see the upsell marker).
                           premium: !isPremium,
                           onTap: () => _exportCsv(context, ref),
+                        ),
+                        const _Div(),
+                        _Row(
+                          icon: Icons.file_upload_rounded,
+                          label: 'CSVから読み込み',
+                          premium: !isPremium,
+                          onTap: () => _importCsv(context, ref),
                         ),
                       ],
                     ),
