@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/image_paths.dart';
 
 /// Picks an image, lets the user crop/zoom it to a square, and copies the
 /// result into the app's documents directory so it survives temp-file cleanup.
@@ -48,12 +48,12 @@ class ImagePickerService {
     );
     if (cropped == null) return null;
 
-    final dir = await getApplicationDocumentsDirectory();
-    final imagesDir = Directory(p.join(dir.path, 'sub_images'));
-    if (!imagesDir.existsSync()) imagesDir.createSync(recursive: true);
-    final dest = p.join(imagesDir.path,
-        'icon_${DateTime.now().millisecondsSinceEpoch}.png');
-    final saved = await File(cropped.path).copy(dest);
-    return saved.path;
+    final imagesDir = await ImagePaths.ensureDir();
+    final fileName = 'icon_${DateTime.now().millisecondsSinceEpoch}.png';
+    await File(cropped.path).copy(p.join(imagesDir, fileName));
+    // Store only the file name; it's resolved against the *current* documents
+    // directory at read time so it survives reinstalls / dev builds where the
+    // absolute container path changes.
+    return fileName;
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:in_app_review/in_app_review.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -42,6 +43,19 @@ class SettingsScreen extends ConsumerWidget {
         );
   }
 
+  /// Opens the native App Store / Play Store review flow. Falls back to the
+  /// store listing when the in-app review prompt isn't available.
+  Future<void> _requestReview() async {
+    final review = InAppReview.instance;
+    try {
+      if (await review.isAvailable()) {
+        await review.requestReview();
+      } else {
+        await review.openStoreListing();
+      }
+    } catch (_) {/* best-effort; nothing to show if the store is unavailable */}
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isPremium = ref.watch(premiumProvider);
@@ -54,7 +68,8 @@ class SettingsScreen extends ConsumerWidget {
           children: [
             SoftHeader(
               title: '設定',
-              trailing: SoftIconButton(
+              // Close button on the LEFT so it's near the gear that opened it.
+              leading: SoftIconButton(
                 icon: Icons.close_rounded,
                 onTap: () => Navigator.of(context).pop(),
               ),
@@ -136,8 +151,8 @@ class SettingsScreen extends ConsumerWidget {
                       children: [
                         _Row(
                           icon: Icons.favorite_rounded,
-                          label: 'サブスク管理を応援する',
-                          onTap: () => PremiumScreen.show(context),
+                          label: 'このアプリを応援する',
+                          onTap: _requestReview,
                         ),
                         const _Div(),
                         _Row(

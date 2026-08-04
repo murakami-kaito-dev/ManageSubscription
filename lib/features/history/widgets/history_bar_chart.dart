@@ -15,18 +15,27 @@ class HistoryBarChart extends StatelessWidget {
     required this.selectedIndex,
     required this.onSelect,
     this.accent = AppColors.primary,
+    this.paidValues,
   });
 
   final List<String> labels;
+
+  /// The full scheduled amount per period (the gray bar height).
   final List<double> values;
   final int selectedIndex;
   final ValueChanged<int> onSelect;
   final Color accent;
 
+  /// When provided, each bar is drawn as the gray [values] amount with the
+  /// [paidValues] portion stacked on top in [accent] (already-paid spend).
+  final List<double>? paidValues;
+
   @override
   Widget build(BuildContext context) {
+    final stacked = paidValues != null;
     final maxY = values.fold<double>(0, (m, v) => v > m ? v : m);
     final safeMax = maxY <= 0 ? 1.0 : maxY * 1.25;
+    final track = AppColors.shadowDark.withOpacity(0.18);
 
     return AspectRatio(
       aspectRatio: 1.5,
@@ -85,20 +94,37 @@ class HistoryBarChart extends StatelessWidget {
               BarChartGroupData(
                 x: i,
                 barRods: [
-                  BarChartRodData(
-                    toY: values[i],
-                    width: 14,
-                    color: i == selectedIndex
-                        ? accent
-                        : accent.withOpacity(0.4),
-                    borderRadius: BorderRadius.circular(6),
-                    backDrawRodData: BackgroundBarChartRodData(
-                      show: true,
-                      toY: safeMax,
-                      // A very light track so empty periods stay subtle.
-                      color: AppColors.shadowDark.withOpacity(0.18),
+                  if (stacked)
+                    // Gray bar = the month's scheduled total; the paid portion
+                    // is stacked on top in the accent color.
+                    BarChartRodData(
+                      toY: values[i],
+                      width: 14,
+                      color: track,
+                      borderRadius: BorderRadius.circular(6),
+                      rodStackItems: [
+                        BarChartRodStackItem(
+                          0,
+                          (paidValues![i]).clamp(0, values[i]).toDouble(),
+                          i == selectedIndex ? accent : accent.withOpacity(0.55),
+                        ),
+                      ],
+                    )
+                  else
+                    BarChartRodData(
+                      toY: values[i],
+                      width: 14,
+                      color: i == selectedIndex
+                          ? accent
+                          : accent.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(6),
+                      backDrawRodData: BackgroundBarChartRodData(
+                        show: true,
+                        toY: safeMax,
+                        // A very light track so empty periods stay subtle.
+                        color: track,
+                      ),
                     ),
-                  ),
                 ],
               ),
           ],

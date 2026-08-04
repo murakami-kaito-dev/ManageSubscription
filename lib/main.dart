@@ -4,6 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
+import 'core/utils/image_paths.dart';
 import 'data/database/app_database.dart';
 import 'data/repositories/subscription_repository.dart';
 import 'providers/core_providers.dart';
@@ -20,6 +21,9 @@ Future<void> main() async {
   // repositories can be provided synchronously.
   final db = await AppDatabase.instance.database;
   final prefs = await SharedPreferences.getInstance();
+
+  // Cache the images directory so avatars can resolve icon files synchronously.
+  await ImagePaths.init();
 
   // Load the day's FX rates (cached; refreshes once per day). Best-effort.
   await RatesService(prefs).load();

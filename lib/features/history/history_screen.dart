@@ -16,6 +16,7 @@ import '../../data/models/subscription.dart';
 import '../../providers/analytics_providers.dart';
 import '../../providers/premium_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../home/subscription_form_screen.dart';
 import '../premium/premium_screen.dart';
 import '../settings/settings_screen.dart';
 import 'widgets/history_bar_chart.dart';
@@ -79,7 +80,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     final fmt = ref.watch(mainCurrencyFormatterProvider);
     final data = ref.watch(monthlyHistoryProvider(_year));
     final payments = ref.watch(monthPaymentsProvider(DateTime(_year, _month)));
-    final monthTotal = data[_month - 1].amount;
+    // The headline total is what's actually been paid this month, matching the
+    // (future-filtered) list below.
+    final monthTotal = data[_month - 1].paid;
 
     void guardYearChange() {
       if (!isPremium) {
@@ -133,6 +136,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           child: HistoryBarChart(
             labels: [for (var m = 1; m <= 12; m++) '$m'],
             values: [for (final d in data) d.amount],
+            paidValues: [for (final d in data) d.paid],
             selectedIndex: _month - 1,
             onSelect: (i) => setState(() => _month = i + 1),
             accent: AppAccent.of(context).primary,
@@ -386,6 +390,10 @@ class _PaymentRow extends StatelessWidget {
     return SoftCard(
       padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+      // Long-press jumps straight to the subscription's editor.
+      onLongPress: () => Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => SubscriptionFormScreen(existing: sub),
+      )),
       child: Row(
         children: [
           SubscriptionAvatar(sub: sub, size: 38, radius: 12),

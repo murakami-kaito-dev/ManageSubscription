@@ -31,6 +31,10 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   AnalyticsScope _scope = AnalyticsScope.month;
   AnalyticsAxis _axis = AnalyticsAxis.subscription;
 
+  /// Currently selected donut slice (-1 = none). Drives the center label and
+  /// the highlighted legend row.
+  int _selected = -1;
+
   @override
   Widget build(BuildContext context) {
     final isPremium = ref.watch(premiumProvider);
@@ -53,7 +57,10 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
             ),
             _ScopeTabs(
               scope: _scope,
-              onChanged: (s) => setState(() => _scope = s),
+              onChanged: (s) => setState(() {
+                _scope = s;
+                _selected = -1;
+              }),
             ),
             Expanded(
               child: result.slices.isEmpty
@@ -76,7 +83,10 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                                       'カテゴリー別・支払い方法別の分析はプレミアム機能です。');
                               return;
                             }
-                            setState(() => _axis = a);
+                            setState(() {
+                              _axis = a;
+                              _selected = -1;
+                            });
                           },
                         ),
                         const Gap(AppSpacing.lg),
@@ -84,23 +94,31 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                           slices: result.slices,
                           total: result.total,
                           formatter: fmt,
+                          selectedIndex: _selected,
+                          onTapSlice: (i) => setState(
+                              () => _selected = _selected == i ? -1 : i),
                           onLongPressSlice: (i) =>
-                              _openBreakdown(result.slices[i]),
+                              _onLongPress(result.slices[i]),
                         ),
                         const Gap(AppSpacing.lg),
-                        if (_axis != AnalyticsAxis.subscription)
-                          Padding(
-                            padding: const EdgeInsets.only(
-                                left: AppSpacing.xs, bottom: AppSpacing.sm),
-                            child: Text('項目やグラフを長押しすると内訳を表示します',
-                                style: AppType.body(11.5,
-                                    color: AppColors.textMuted)),
-                          ),
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              left: AppSpacing.xs, bottom: AppSpacing.sm),
+                          child: Text(
+                              _axis == AnalyticsAxis.subscription
+                                  ? '項目をタップで選択、長押しで編集できます'
+                                  : '項目をタップで選択、長押しで内訳を表示します',
+                              style: AppType.body(11.5,
+                                  color: AppColors.textMuted)),
+                        ),
                         _Legend(
                           slices: result.slices,
                           fmt: fmt,
                           axis: _axis,
-                          onLongPress: (slice) => _openBreakdown(slice),
+                          selectedIndex: _selected,
+                          onTap: (i) => setState(
+                              () => _selected = _selected == i ? -1 : i),
+                          onLongPress: (slice) => _onLongPress(slice),
                         ),
                         if (_axis == AnalyticsAxis.subscription) ...[
                           const SectionHeader('コスパチェッカー'),
@@ -113,6 +131,23 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
         ),
       ),
     );
+  }
+
+  /// Long-press behaviour differs by axis: on サブスク別 it jumps straight to
+  /// that subscription's editor (the old 1-item "breakdown" was pointless); on
+  /// category / payment-method it still opens the multi-item breakdown.
+  void _onLongPress(AnalyticsSlice slice) {
+    if (_axis == AnalyticsAxis.subscription) {
+      final subs = ref.read(subscriptionsProvider).valueOrNull ?? const [];
+      final match = subs.where((s) => s.id == slice.groupKey);
+      if (match.isNotEmpty) {
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => SubscriptionFormScreen(existing: match.first),
+        ));
+      }
+      return;
+    }
+    _openBreakdown(slice);
   }
 
   void _openBreakdown(AnalyticsSlice slice) {
@@ -332,11 +367,15 @@ class _Legend extends ConsumerWidget {
     required this.slices,
     required this.fmt,
     required this.axis,
+    required this.selectedIndex,
+    required this.onTap,
     this.onLongPress,
   });
   final List<AnalyticsSlice> slices;
   final CurrencyFormatter fmt;
   final AnalyticsAxis axis;
+  final int selectedIndex;
+  final ValueChanged<int> onTap;
   final void Function(AnalyticsSlice)? onLongPress;
 
   @override
@@ -347,7 +386,10 @@ class _Legend extends ConsumerWidget {
     };
     return SoftCard(
       padding: EdgeInsets.zero,
-      child: Column(
+      // Clip so the selected-row color wash respects the card's rounded corners.
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        child: Column(
         children: [
           for (var i = 0; i < slices.length; i++) ...[
             if (i > 0)
@@ -357,11 +399,18 @@ class _Legend extends ConsumerWidget {
                     height: 1, color: AppColors.textMuted.withOpacity(0.15)),
               ),
             Pressable(
+              onTap: () => onTap(i),
               onLongPress: onLongPress == null
                   ? null
                   : () => onLongPress!(slices[i]),
               scale: 0.99,
-              child: Padding(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                // Highlight the selected row with a faint wash of the item's
+                // own color.
+                color: i == selectedIndex
+                    ? slices[i].color.withOpacity(0.16)
+                    : Colors.transparent,
                 padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.lg, vertical: 14),
                 child: Row(
@@ -386,7 +435,10 @@ class _Legend extends ConsumerWidget {
                       child: Text(slices[i].label,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppType.body(15, weight: FontWeight.w600)),
+                          style: AppType.body(15,
+                              weight: i == selectedIndex
+                                  ? FontWeight.w800
+                                  : FontWeight.w600)),
                     ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -405,6 +457,7 @@ class _Legend extends ConsumerWidget {
             ),
           ],
         ],
+        ),
       ),
     );
   }

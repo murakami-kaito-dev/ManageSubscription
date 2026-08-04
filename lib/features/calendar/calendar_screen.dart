@@ -16,6 +16,7 @@ import '../../data/models/subscription.dart';
 import '../../providers/premium_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/subscription_providers.dart';
+import '../home/subscription_form_screen.dart';
 import '../premium/premium_screen.dart';
 import '../settings/settings_screen.dart';
 
@@ -234,6 +235,10 @@ class _PaymentRow extends StatelessWidget {
     return SoftCard(
       padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+      // Long-press jumps straight to the subscription's editor.
+      onLongPress: () => Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => SubscriptionFormScreen(existing: sub),
+      )),
       child: Row(
         children: [
           SubscriptionAvatar(sub: sub, size: 38, radius: 12),

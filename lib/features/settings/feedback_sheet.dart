@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/utils/text_input.dart';
 import '../../core/widgets/soft_button.dart';
 
 /// In-app feedback endpoint. Create a free form (e.g. Formspree) and paste its
@@ -15,8 +16,9 @@ import '../../core/widgets/soft_button.dart';
 /// placeholder, the sheet falls back to the mail composer / share sheet.
 const String _feedbackEndpoint = 'https://formspree.io/f/your-form-id';
 
-/// Fallback support address used only when [_feedbackEndpoint] isn't set.
-const String _supportEmail = 'support@example.com';
+/// Contact address shown to the user and used for the mailto fallback when
+/// [_feedbackEndpoint] isn't configured.
+const String _supportEmail = 'subsc.management@gmail.com';
 
 bool get _endpointConfigured =>
     _feedbackEndpoint.isNotEmpty &&
@@ -139,12 +141,28 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
             ),
           ),
           const Gap(AppSpacing.lg),
-          Text('アプリのフィードバック', style: AppType.display(20)),
+          Text('ご意見・ご要望', style: AppType.display(20)),
           const Gap(AppSpacing.sm),
-          Text('アプリの不満点や、欲しい機能を自由にお書きください。改善の参考にいたします。',
+          Text('要望・不具合をお気軽にご連絡ください。改善の参考にいたします。',
               style: AppType.body(13,
                   color: AppColors.textSecondary, height: 1.5)),
           const Gap(AppSpacing.lg),
+          Text('連絡先メールアドレス',
+              style: AppType.body(12, color: AppColors.textSecondary)),
+          const Gap(AppSpacing.xs),
+          Row(
+            children: [
+              const Icon(Icons.mail_outline_rounded,
+                  size: 16, color: AppColors.textMuted),
+              const Gap(6),
+              Text(_supportEmail,
+                  style: AppType.body(13.5, weight: FontWeight.w600)),
+            ],
+          ),
+          const Gap(AppSpacing.lg),
+          Text('お問い合わせ内容',
+              style: AppType.body(12, color: AppColors.textSecondary)),
+          const Gap(AppSpacing.xs),
           Container(
             decoration: BoxDecoration(
               color: AppColors.surfaceSunken,
@@ -156,6 +174,7 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
               controller: _controller,
               maxLines: 5,
               minLines: 4,
+              contextMenuBuilder: noCameraScanContextMenu,
               textInputAction: TextInputAction.newline,
               onChanged: (_) => setState(() {}),
               decoration: const InputDecoration(

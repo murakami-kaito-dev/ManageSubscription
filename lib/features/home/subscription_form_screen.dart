@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +6,8 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/premium_limits.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/image_paths.dart';
+import '../../core/utils/text_input.dart';
 import '../../core/widgets/delete_dialog.dart';
 import '../../core/theme/app_shadows.dart';
 import '../../core/theme/app_spacing.dart';
@@ -436,6 +436,7 @@ class _SubscriptionFormScreenState
             child: TextFormField(
               controller: _emoji,
               enabled: _imagePath == null,
+              contextMenuBuilder: noCameraScanContextMenu,
               onChanged: (_) => setState(() {}),
               decoration: _dec('表示する文字（1字）', hint: '例：N / 🎬'),
               maxLength: 2,
@@ -495,6 +496,7 @@ class _SubscriptionFormScreenState
                 child: TextFormField(
                   controller: _usage,
                   decoration: _dec('月の推定利用回数', hint: '例：8'),
+                  contextMenuBuilder: noCameraScanContextMenu,
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [
@@ -508,6 +510,7 @@ class _SubscriptionFormScreenState
                 child: TextFormField(
                   controller: _usageUnit,
                   decoration: _dec('単位'),
+                  contextMenuBuilder: noCameraScanContextMenu,
                   onChanged: (_) => setState(() {}),
                 ),
               ),
@@ -568,6 +571,7 @@ class _SubscriptionFormScreenState
                         child: TextFormField(
                           controller: _memo,
                           decoration: _dec('メモ', hint: '任意'),
+                          contextMenuBuilder: noCameraScanContextMenu,
                           maxLines: 3,
                         ),
                       ),
@@ -661,6 +665,7 @@ class _SubscriptionFormScreenState
             TextFormField(
               controller: _name,
               decoration: _dec('サービス名', hint: '例：Netflix'),
+              contextMenuBuilder: noCameraScanContextMenu,
               textInputAction: TextInputAction.next,
               validator: (v) =>
                   (v == null || v.trim().isEmpty) ? '名前を入力してください' : null,
@@ -673,7 +678,8 @@ class _SubscriptionFormScreenState
                   flex: 2,
                   child: TextFormField(
                     controller: _amount,
-                    decoration: _dec('金額'),
+                    decoration: _dec('金額', hint: '1000'),
+                    contextMenuBuilder: noCameraScanContextMenu,
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
                     inputFormatters: [
@@ -881,7 +887,7 @@ class _CustomIntervalRowState extends State<_CustomIntervalRow> {
       builder: (_) => _NumberWheelSheet(
         initial: widget.count,
         max: 365,
-        title: '毎いくつごと',
+        title: '支払い周期',
         suffix: widget.unit.shortLabel,
       ),
     );
@@ -1710,15 +1716,16 @@ class _IconPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = Color(colorValue);
-    final bool isSet = imagePath != null || emoji.isNotEmpty;
+    final imageFile = ImagePaths.resolve(imagePath);
+    final bool isSet = imageFile != null || emoji.isNotEmpty;
 
     Widget content;
     if (busy) {
       content = const Center(child: CircularProgressIndicator(strokeWidth: 2));
-    } else if (imagePath != null) {
+    } else if (imageFile != null) {
       content = ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: Image.file(File(imagePath!), fit: BoxFit.cover),
+        child: Image.file(imageFile, fit: BoxFit.cover),
       );
     } else if (emoji.isNotEmpty) {
       content =
@@ -1739,7 +1746,7 @@ class _IconPreview extends StatelessWidget {
         width: 72,
         height: 72,
         decoration: BoxDecoration(
-          color: imagePath != null ? null : color.withOpacity(0.16),
+          color: imageFile != null ? null : color.withOpacity(0.16),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSet ? color.withOpacity(0.5) : AppColors.textMuted,

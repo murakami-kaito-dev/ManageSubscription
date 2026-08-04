@@ -177,46 +177,61 @@ class CurrencyLabel {
 // ── History (bar chart) ─────────────────────────────────────────────────────
 @immutable
 class MonthlySpend {
-  const MonthlySpend(this.month, this.amount);
+  const MonthlySpend(this.month, this.amount, this.paid);
   final int month; // 1..12
+
+  /// Full amount scheduled to be billed that month (the gray bar height).
   final double amount;
+
+  /// Amount already billed (payment date on or before today) — the colored,
+  /// stacked portion within the gray bar.
+  final double paid;
 }
 
-/// Total actually-billed spend per month for [year], in the main currency —
-/// drives the history bar chart.
+/// Scheduled ("amount") and already-paid ("paid") spend per month for [year],
+/// in the main currency — drives the stacked history bar chart.
 final monthlyHistoryProvider =
     Provider.family<List<MonthlySpend>, int>((ref, year) {
   final subs = ref.watch(subscriptionsProvider).valueOrNull ?? const [];
   final currency = ref.watch(settingsProvider).mainCurrency;
+  final today = DateTime.now();
 
-  final totals = List<double>.filled(12, 0);
+  final planned = List<double>.filled(12, 0);
+  final paid = List<double>.filled(12, 0);
   for (final s in subs) {
     if (s.isPaused) continue;
+    final amount = s.amountIn(currency);
     for (var m = 1; m <= 12; m++) {
       final start = DateTime(year, m, 1);
       final end = DateTime(year, m + 1, 0);
       final payments =
           Billing.paymentsInRange(s.firstPaymentDate, s.recurrence, start, end);
-      if (payments.isNotEmpty) {
-        totals[m - 1] += payments.length * s.amountIn(currency);
+      for (final d in payments) {
+        planned[m - 1] += amount;
+        // "Paid" = the payment date has already passed (or is today).
+        if (!d.isAfter(today)) paid[m - 1] += amount;
       }
     }
   }
-  return [for (var m = 1; m <= 12; m++) MonthlySpend(m, totals[m - 1])];
+  return [for (var m = 1; m <= 12; m++) MonthlySpend(m, planned[m - 1], paid[m - 1])];
 });
 
-/// Subscriptions billed within a specific month (for the history detail list).
+/// Subscriptions already billed within a specific month (for the history detail
+/// list). Future-dated payments are excluded — only payments whose date has
+/// already arrived are shown.
 final monthPaymentsProvider =
     Provider.family<List<({Subscription sub, DateTime date})>, DateTime>(
         (ref, month) {
   final subs = ref.watch(subscriptionsProvider).valueOrNull ?? const [];
   final start = DateTime(month.year, month.month, 1);
   final end = DateTime(month.year, month.month + 1, 0);
+  final today = DateTime.now();
   final rows = <({Subscription sub, DateTime date})>[];
   for (final s in subs) {
     if (s.isPaused) continue;
     for (final d
         in Billing.paymentsInRange(s.firstPaymentDate, s.recurrence, start, end)) {
+      if (d.isAfter(today)) continue; // hide not-yet-billed payments
       rows.add((sub: s, date: d));
     }
   }

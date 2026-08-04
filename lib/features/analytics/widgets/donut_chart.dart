@@ -7,13 +7,17 @@ import '../../../core/utils/currency.dart';
 import '../../../core/widgets/animated_counter.dart';
 import '../../../providers/analytics_providers.dart';
 
-/// Donut breakdown with a soft center label showing the grand total.
-class DonutChart extends StatefulWidget {
+/// Donut breakdown. Tapping a slice selects it (the center then shows that
+/// item's name + share %, and the caller highlights its list row); tapping it
+/// again clears the selection. Long-pressing a slice drills in.
+class DonutChart extends StatelessWidget {
   const DonutChart({
     super.key,
     required this.slices,
     required this.total,
     required this.formatter,
+    required this.selectedIndex,
+    required this.onTapSlice,
     this.onLongPressSlice,
   });
 
@@ -21,18 +25,24 @@ class DonutChart extends StatefulWidget {
   final double total;
   final CurrencyFormatter formatter;
 
+  /// Currently selected slice, or -1 for none.
+  final int selectedIndex;
+
+  /// Tap toggles selection; the caller decides how to fold it in.
+  final ValueChanged<int> onTapSlice;
+
   /// Long-pressing a slice drills into its breakdown.
   final ValueChanged<int>? onLongPressSlice;
 
   @override
-  State<DonutChart> createState() => _DonutChartState();
-}
-
-class _DonutChartState extends State<DonutChart> {
-  int _touched = -1;
-
-  @override
   Widget build(BuildContext context) {
+    final hasSelection =
+        selectedIndex >= 0 && selectedIndex < slices.length;
+    final selected = hasSelection ? slices[selectedIndex] : null;
+    final pct = (selected != null && total > 0)
+        ? (selected.amount / total * 100)
+        : 0.0;
+
     return AspectRatio(
       aspectRatio: 1.15,
       child: Stack(
@@ -47,33 +57,50 @@ class _DonutChartState extends State<DonutChart> {
                 touchCallback: (event, response) {
                   final i =
                       response?.touchedSection?.touchedSectionIndex ?? -1;
-                  setState(() => _touched = i);
-                  if (event is FlLongPressStart &&
-                      i >= 0 &&
-                      i < widget.slices.length) {
-                    widget.onLongPressSlice?.call(i);
+                  if (i < 0 || i >= slices.length) return;
+                  if (event is FlTapUpEvent) {
+                    onTapSlice(i);
+                  } else if (event is FlLongPressStart) {
+                    onLongPressSlice?.call(i);
                   }
                 },
               ),
               sections: [
-                for (var i = 0; i < widget.slices.length; i++)
-                  _section(widget.slices[i], i == _touched),
+                for (var i = 0; i < slices.length; i++)
+                  _section(slices[i], i == selectedIndex),
               ],
             ),
-            duration: const Duration(milliseconds: 600),
+            duration: const Duration(milliseconds: 400),
             curve: Curves.easeOutCubic,
           ),
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('合計',
-                  style: AppType.body(13, color: AppColors.textSecondary)),
-              const SizedBox(height: 2),
-              AnimatedCounter(
-                value: widget.total,
-                formatter: (v) => widget.formatter.format(v),
-                style: AppType.display(26),
-              ),
+              if (selected != null) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(selected.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style:
+                          AppType.body(14, weight: FontWeight.w700)),
+                ),
+                const SizedBox(height: 2),
+                Text(formatter.format(selected.amount),
+                    style: AppType.display(24)),
+                Text('(${pct.toStringAsFixed(1)}%)',
+                    style: AppType.body(13, color: AppColors.textSecondary)),
+              ] else ...[
+                Text('合計',
+                    style: AppType.body(13, color: AppColors.textSecondary)),
+                const SizedBox(height: 2),
+                AnimatedCounter(
+                  value: total,
+                  formatter: (v) => formatter.format(v),
+                  style: AppType.display(26),
+                ),
+              ],
             ],
           ),
         ],
@@ -81,15 +108,16 @@ class _DonutChartState extends State<DonutChart> {
     );
   }
 
-  PieChartSectionData _section(AnalyticsSlice s, bool touched) {
-    final pct = widget.total <= 0 ? 0 : (s.amount / widget.total * 100);
+  PieChartSectionData _section(AnalyticsSlice s, bool selected) {
+    final pct = total <= 0 ? 0 : (s.amount / total * 100);
     return PieChartSectionData(
       value: s.amount <= 0 ? 0.0001 : s.amount,
       color: s.color,
-      radius: touched ? 62 : 54,
+      radius: selected ? 62 : 54,
       title: pct >= 7 ? s.label : '',
+      // Fixed black label for legibility on any slice color.
       titleStyle: AppType.body(11,
-          weight: FontWeight.w700, color: Colors.white.withOpacity(0.95)),
+          weight: FontWeight.w700, color: Colors.black87),
       titlePositionPercentageOffset: 0.62,
     );
   }

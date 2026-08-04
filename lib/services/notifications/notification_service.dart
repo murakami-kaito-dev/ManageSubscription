@@ -5,6 +5,7 @@ import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../core/utils/currency.dart';
+import '../../core/utils/image_paths.dart';
 import '../../data/models/subscription.dart';
 
 /// Local reminders before a payment date. Fully on-device; no server.
@@ -61,24 +62,39 @@ class NotificationService {
     }
   }
 
-  static const _details = NotificationDetails(
-    android: AndroidNotificationDetails(
-      'payment_reminders',
-      '支払いリマインダー',
-      channelDescription: '支払い日が近づいたらお知らせします',
-      importance: Importance.high,
-      priority: Priority.high,
-    ),
-    // presentAlert/Banner/Sound = show even while the app is in the foreground
-    // (iOS otherwise silently swallows foreground notifications — the reason the
-    // test notification "never arrived" while looking at the app).
-    iOS: DarwinNotificationDetails(
-      presentAlert: true,
-      presentBanner: true,
-      presentSound: true,
-      presentBadge: true,
-    ),
-  );
+  /// Builds the platform details for one reminder. When the subscription has a
+  /// custom **image** (not an emoji/letter), it's used as the notification's
+  /// icon: an Android large icon and an iOS attachment thumbnail.
+  NotificationDetails _detailsFor(Subscription s) {
+    final file = ImagePaths.resolve(s.imagePath);
+    final imagePath = (file != null && file.existsSync()) ? file.path : null;
+
+    return NotificationDetails(
+      android: AndroidNotificationDetails(
+        'payment_reminders',
+        '支払いリマインダー',
+        channelDescription: '支払い日が近づいたらお知らせします',
+        importance: Importance.high,
+        priority: Priority.high,
+        // Explicitly ask for sound + vibration on the channel.
+        playSound: true,
+        enableVibration: true,
+        largeIcon:
+            imagePath != null ? FilePathAndroidBitmap(imagePath) : null,
+      ),
+      // presentAlert/Banner/Sound = show even while the app is in the
+      // foreground (iOS otherwise silently swallows foreground notifications).
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBanner: true,
+        presentSound: true,
+        presentBadge: true,
+        attachments: imagePath != null
+            ? [DarwinNotificationAttachment(imagePath)]
+            : null,
+      ),
+    );
+  }
 
   /// Reschedules reminders for the whole list. Free tier is already capped to a
   /// single reminder rule per subscription by the caller.
@@ -106,6 +122,7 @@ class NotificationService {
                 ? '本日 ${due.month}月${due.day}日に $amount の支払いがあります'
                 : '${due.month}月${due.day}日（${rule.daysBefore}日後）に $amount の支払いがあります',
             scheduled,
+            _detailsFor(s),
           );
         }
       }
@@ -116,30 +133,22 @@ class NotificationService {
 
   /// Schedules one reminder, preferring an exact alarm and gracefully falling
   /// back to an inexact one if exact alarms aren't permitted.
-  Future<void> _schedule(
-      int id, String title, String body, tz.TZDateTime when) async {
+  Future<void> _schedule(int id, String title, String body,
+      tz.TZDateTime when, NotificationDetails details) async {
     try {
       await _plugin.zonedSchedule(
-        id, title, body, when, _details,
+        id, title, body, when, details,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
     } catch (_) {
       try {
         await _plugin.zonedSchedule(
-          id, title, body, when, _details,
+          id, title, body, when, details,
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         );
       } catch (e) {
         debugPrint('schedule failed for $id: $e');
       }
     }
-  }
-
-  /// Fires a test notification a few seconds from now (used by the settings
-  /// screen so the user can confirm notifications work).
-  Future<void> sendTestIn(Duration delay) async {
-    if (!_ready) return;
-    final when = tz.TZDateTime.now(tz.local).add(delay);
-    await _schedule(90000, 'テスト通知', 'この通知が届けば設定は正常です。', when);
   }
 }
