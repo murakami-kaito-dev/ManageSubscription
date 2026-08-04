@@ -189,8 +189,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     final rows = ref.watch(yearSubscriptionTotalsProvider(_selectedYear));
     final selectedIndex =
         data.indexWhere((e) => e.year == _selectedYear).clamp(0, count - 1);
-    final selectedTotal =
-        data.firstWhere((e) => e.year == _selectedYear, orElse: () => YearSpend(_selectedYear, 0)).amount;
+    // Headline = what's actually been paid this year, matching the list below.
+    final selectedTotal = data
+        .firstWhere((e) => e.year == _selectedYear,
+            orElse: () => YearSpend(_selectedYear, 0, 0))
+        .paid;
 
     return ListView(
       padding:
@@ -202,6 +205,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           child: HistoryBarChart(
             labels: [for (final e in data) "'${e.year % 100}"],
             values: [for (final e in data) e.amount],
+            paidValues: [for (final e in data) e.paid],
             selectedIndex: selectedIndex,
             onSelect: (i) => setState(() => _selectedYear = data[i].year),
             accent: AppAccent.of(context).primary,

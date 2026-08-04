@@ -37,19 +37,27 @@ class SubscriptionAvatar extends StatelessWidget {
         .withLightness((hsl.lightness + 0.32).clamp(0.0, 0.94))
         .toColor();
 
+    final ring = (size * 0.05).clamp(1.6, 3.0);
+
     return Container(
       width: size,
       height: size,
       alignment: Alignment.center,
+      // Clip the CONTENT (image/tint) to the rounded rect so a square image's
+      // corners can never poke outside the frame.
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: hasImage ? null : soft,
         borderRadius: BorderRadius.circular(radius),
-        // A ring in the item's own color.
-        border: Border.all(color: base, width: 1.6),
+      ),
+      // The colored ring is painted ON TOP of the (already-clipped) content, so
+      // it frames the image edge-to-edge on every side including the corners.
+      foregroundDecoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: base, width: ring.toDouble()),
       ),
       child: hasImage
-          ? Image.file(file, fit: BoxFit.cover)
+          ? Image.file(file, fit: BoxFit.cover, width: size, height: size)
           : (sub.emoji != null && sub.emoji!.trim().isNotEmpty
               ? Text(sub.emoji!.trim(),
                   style: TextStyle(fontSize: size * 0.48))

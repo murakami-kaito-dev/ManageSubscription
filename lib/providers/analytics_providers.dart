@@ -241,42 +241,58 @@ final monthPaymentsProvider =
 
 @immutable
 class YearSpend {
-  const YearSpend(this.year, this.amount);
+  const YearSpend(this.year, this.amount, this.paid);
   final int year;
+
+  /// Full amount scheduled for the year (gray bar height).
   final double amount;
+
+  /// Amount already billed (payment date on or before today) — colored stack.
+  final double paid;
 }
 
-/// Total billed spend per year for a window ending at [q.endYear] and spanning
-/// [q.count] years — drives the yearly history bar chart.
+/// Scheduled ("amount") and already-paid ("paid") spend per year for a window
+/// ending at [q.endYear] and spanning [q.count] years — drives the stacked
+/// yearly history bar chart.
 final yearlyHistoryProvider =
     Provider.family<List<YearSpend>, ({int endYear, int count})>((ref, q) {
   final subs = ref.watch(subscriptionsProvider).valueOrNull ?? const [];
   final currency = ref.watch(settingsProvider).mainCurrency;
+  final today = DateTime.now();
   final result = <YearSpend>[];
   for (var y = q.endYear - q.count + 1; y <= q.endYear; y++) {
-    double total = 0;
+    double planned = 0;
+    double paid = 0;
     for (final s in subs) {
       if (s.isPaused) continue;
+      final amount = s.amountIn(currency);
       final payments = Billing.paymentsInRange(
           s.firstPaymentDate, s.recurrence, DateTime(y, 1, 1), DateTime(y, 12, 31));
-      total += payments.length * s.amountIn(currency);
+      for (final d in payments) {
+        planned += amount;
+        if (!d.isAfter(today)) paid += amount; // only already-billed
+      }
     }
-    result.add(YearSpend(y, total));
+    result.add(YearSpend(y, planned, paid));
   }
   return result;
 });
 
-/// Per-subscription total for a whole [year] (for the yearly detail list).
+/// Per-subscription **already-paid** total for a whole [year] (for the yearly
+/// detail list). Future-dated payments are excluded, mirroring the monthly view.
 final yearSubscriptionTotalsProvider =
     Provider.family<List<({Subscription sub, int count, double total})>, int>(
         (ref, year) {
   final subs = ref.watch(subscriptionsProvider).valueOrNull ?? const [];
   final currency = ref.watch(settingsProvider).mainCurrency;
+  final today = DateTime.now();
   final rows = <({Subscription sub, int count, double total})>[];
   for (final s in subs) {
     if (s.isPaused) continue;
     final payments = Billing.paymentsInRange(
-        s.firstPaymentDate, s.recurrence, DateTime(year, 1, 1), DateTime(year, 12, 31));
+            s.firstPaymentDate, s.recurrence, DateTime(year, 1, 1), DateTime(year, 12, 31))
+        .where((d) => !d.isAfter(today))
+        .toList();
     if (payments.isEmpty) continue;
     rows.add((
       sub: s,
