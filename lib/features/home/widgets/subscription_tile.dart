@@ -105,6 +105,9 @@ class SubscriptionTile extends StatelessWidget {
             SoftProgressBar(
               value: sub.isPaused ? 0 : sub.periodProgress,
               color: accent,
+              // A just-started cycle (a few % elapsed) still shows a small nub
+              // rather than rendering as an empty bar.
+              minVisible: 0.05,
             ),
           ],
         ),

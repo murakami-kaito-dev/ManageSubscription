@@ -11,6 +11,7 @@ class SoftProgressBar extends StatelessWidget {
     this.height = 8,
     this.color,
     this.trackColor,
+    this.minVisible = 0,
   });
 
   /// 0..1
@@ -19,10 +20,15 @@ class SoftProgressBar extends StatelessWidget {
   final Color? color;
   final Color? trackColor;
 
+  /// A floor (0..1) applied only when [value] is strictly greater than 0, so a
+  /// just-started cycle still shows a visible nub instead of rendering blank.
+  final double minVisible;
+
   @override
   Widget build(BuildContext context) {
     final fill = color ?? AppAccent.of(context).primary;
-    final clamped = value.clamp(0.0, 1.0);
+    var clamped = value.clamp(0.0, 1.0);
+    if (clamped > 0 && clamped < minVisible) clamped = minVisible;
     return ClipRRect(
       borderRadius: BorderRadius.circular(height),
       child: SizedBox(
