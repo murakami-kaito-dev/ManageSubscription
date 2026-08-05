@@ -3,6 +3,16 @@
 アプリ側の実装は完了しています。ここでは**あなたが行う必要がある設定**（App Store
 Connect と RevenueCat）と、**私が仕上げる部分**を整理します。
 
+## 進捗（現在地）
+- ✅ **アプリ側の実装**：3プラン＋2週間無料体験＋ペイウォール＋復元（完了）
+- ✅ **利用規約・プライバシーポリシーの公開**：GitHub Pages を有効化し、公開URLを**私が用意・稼働確認済み**。アプリのペイウォールにも接続済み
+  - 利用規約：https://murakami-kaito-dev.github.io/ManageSubscription/terms.html
+  - プライバシーポリシー：https://murakami-kaito-dev.github.io/ManageSubscription/privacy.html
+- ⏳ **残り（あなたのアカウント操作が必須）**：App Store Connect の契約・商品登録、RevenueCat のアカウント作成・設定（下記）
+- ⏳ **その後、私が仕上げる**：RevenueCat の iOSキーを設定して `useRevenueCat=true` 化
+
+> なぜ「あなたの操作が必須」か：Apple/RevenueCat の**アカウント作成・法的契約への同意・2段階認証ログイン**は本人しかできず、私（Claude）は代行できません。コードで済む部分は完了済みです。
+
 ## 全体像（採用したモデル）
 
 | プラン | 商品タイプ | 価格 | 商品ID（Product ID） |
@@ -47,10 +57,11 @@ Connect と RevenueCat）と、**私が仕上げる部分**を整理します。
 5. **Offering（例 `default`）** に3つの Package（lifetime / monthly / yearly）を追加。
 6. **iOS 用 API キー（`appl_...`）** を控える → 私に渡してください（下記C）。
 
-### C. 公開URLを2つ用意（サブスク審査に必須）
-Apple は自動更新サブスクのペイウォールに **利用規約(EULA)** と **プライバシー
-ポリシー** のリンクを要求します。
-- どちらも公開URLが必要（GitHub Pages 等で可）。**文面は私がドラフトします**。
+### C. 公開URL（利用規約・プライバシーポリシー）— ✅ 完了（私が対応済み）
+GitHub Pages を有効化し、下記URLが稼働中・アプリに接続済みです。あなたの作業は
+ありません（文面を直したい場合のみ言ってください）。
+- 利用規約：https://murakami-kaito-dev.github.io/ManageSubscription/terms.html
+- プライバシーポリシー：https://murakami-kaito-dev.github.io/ManageSubscription/privacy.html
 
 ---
 
