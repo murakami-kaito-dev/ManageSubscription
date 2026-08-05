@@ -57,14 +57,15 @@ class HomeScreen extends ConsumerWidget {
           children: [
             SoftHeader(
               title: 'サブスクリプション',
+              // Menu (three dots) on the LEFT, settings gear on the RIGHT.
+              leading: SoftIconButton(
+                icon: Icons.more_horiz_rounded,
+                onTap: () => showSubscriptionSettingsSheet(context),
+              ),
               onSettings: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   fullscreenDialog: true,
                   builder: (_) => const SettingsScreen()),
-              ),
-              trailing: SoftIconButton(
-                icon: Icons.more_horiz_rounded,
-                onTap: () => showSubscriptionSettingsSheet(context),
               ),
             ),
             Expanded(

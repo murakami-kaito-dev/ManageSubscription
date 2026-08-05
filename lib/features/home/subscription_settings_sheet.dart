@@ -52,16 +52,24 @@ class _SubscriptionSettingsSheet extends ConsumerWidget {
               ),
             ),
             const Gap(AppSpacing.lg),
-            Row(
-              children: [
-                Text('サブスクリプション設定', style: AppType.display(21)),
-                const Spacer(),
-                Pressable(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: const Icon(Icons.close_rounded,
-                      color: AppColors.textSecondary),
-                ),
-              ],
+            // Close on the LEFT (mirrors the three-dots icon that opened this),
+            // with the title centered.
+            SizedBox(
+              height: 40,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Pressable(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: const Icon(Icons.close_rounded,
+                          color: AppColors.textSecondary),
+                    ),
+                  ),
+                  Text('サブスクリプション設定', style: AppType.display(21)),
+                ],
+              ),
             ),
             const SectionHeader('表示'),
             _Card(children: [

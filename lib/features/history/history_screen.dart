@@ -53,10 +53,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                   fullscreenDialog: true,
                   builder: (_) => const SettingsScreen()),
               ),
-              trailing: _ScopeToggle(
-                scope: _scope,
-                onChanged: (s) => setState(() => _scope = s),
-              ),
+            ),
+            // 月間 / 年間 shown as tabs (same position & style as the 分析 tab).
+            _ScopeTabs(
+              scope: _scope,
+              onChanged: (s) => setState(() => _scope = s),
             ),
             Expanded(
               child: _scope == HistoryScope.month
@@ -275,46 +276,50 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
       );
 }
 
-class _ScopeToggle extends StatelessWidget {
-  const _ScopeToggle({required this.scope, required this.onChanged});
+/// 月間 / 年間 tabs, matching the 分析 (analytics) tab's look and position.
+class _ScopeTabs extends StatelessWidget {
+  const _ScopeTabs({required this.scope, required this.onChanged});
   final HistoryScope scope;
   final ValueChanged<HistoryScope> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    Widget seg(String label, HistoryScope s) {
+    Widget tab(String label, HistoryScope s) {
       final sel = scope == s;
-      return Pressable(
-        onTap: () => onChanged(s),
-        scale: 0.95,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: sel ? AppAccent.of(context).primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(999),
+      return Expanded(
+        child: Pressable(
+          onTap: () => onChanged(s),
+          scale: 0.97,
+          child: Column(
+            children: [
+              Text(label,
+                  style: AppType.body(16,
+                      weight: sel ? FontWeight.w800 : FontWeight.w500,
+                      color:
+                          sel ? AppColors.textPrimary : AppColors.textMuted)),
+              const Gap(AppSpacing.sm),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                height: 3,
+                width: sel ? 56 : 0,
+                decoration: BoxDecoration(
+                  color: AppAccent.of(context).primary,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ],
           ),
-          child: Text(label,
-              style: AppType.body(12.5,
-                  weight: FontWeight.w700,
-                  color: sel ? AppColors.onPrimary : AppColors.textSecondary)),
         ),
       );
     }
 
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceSunken,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          seg('月間', HistoryScope.month),
-          seg('年間', HistoryScope.year),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xxl, AppSpacing.sm, AppSpacing.xxl, 0),
+      child: Row(children: [
+        tab('月間', HistoryScope.month),
+        tab('年間', HistoryScope.year),
+      ]),
     );
   }
 }

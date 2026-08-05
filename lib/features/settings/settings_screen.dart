@@ -88,8 +88,8 @@ class SettingsScreen extends ConsumerWidget {
           children: [
             SoftHeader(
               title: '設定',
-              // Close button on the LEFT so it's near the gear that opened it.
-              leading: SoftIconButton(
+              // Close on the RIGHT — same position as the gear that opened it.
+              trailing: SoftIconButton(
                 icon: Icons.close_rounded,
                 onTap: () => Navigator.of(context).pop(),
               ),

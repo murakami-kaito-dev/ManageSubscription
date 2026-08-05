@@ -4,8 +4,10 @@ import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import 'soft_button.dart';
 
-/// The screen header used across Home / Analytics / Calendar / History: a soft
-/// round gear on the left, a centered title, and an optional trailing action.
+/// The screen header used across Home / Analytics / Calendar / History: a
+/// centered title, an optional left action ([leading]), and the settings gear
+/// on the RIGHT ([onSettings]). When [onSettings] is null the right slot shows
+/// [trailing] instead (e.g. a close button).
 class SoftHeader extends StatelessWidget {
   const SoftHeader({
     super.key,
@@ -17,10 +19,14 @@ class SoftHeader extends StatelessWidget {
   });
 
   final String title;
+
+  /// Renders the settings gear in the RIGHT slot.
   final VoidCallback? onSettings;
 
-  /// Custom left-slot widget (e.g. a back button). Overrides [onSettings].
+  /// Custom left-slot widget (e.g. a back button or a menu action).
   final Widget? leading;
+
+  /// Custom right-slot widget. Ignored when [onSettings] is provided.
   final Widget? trailing;
   final Widget? subtitle;
 
@@ -38,17 +44,15 @@ class SoftHeader extends StatelessWidget {
               children: [
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: leading ??
-                      (onSettings == null
-                          ? const SizedBox(width: 44)
-                          : SoftIconButton(
-                              icon: Icons.settings_rounded,
-                              onTap: onSettings)),
+                  child: leading ?? const SizedBox(width: 44),
                 ),
                 Text(title, style: AppType.display(20, weight: FontWeight.w800)),
                 Align(
                   alignment: Alignment.centerRight,
-                  child: trailing ?? const SizedBox(width: 44),
+                  child: onSettings != null
+                      ? SoftIconButton(
+                          icon: Icons.settings_rounded, onTap: onSettings)
+                      : (trailing ?? const SizedBox(width: 44)),
                 ),
               ],
             ),
