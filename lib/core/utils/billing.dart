@@ -76,6 +76,20 @@ class Billing {
     };
   }
 
+  /// Fast-forwards [from] toward [target] by whole day/week periods so callers
+  /// don't loop over huge spans (e.g. a daily cycle anchored years ago). No-op
+  /// for month recurrences (calendar-month counts are always small). Returns a
+  /// date at or before [target], at most one period earlier.
+  static DateTime _skipTo(DateTime from, DateTime target, Recurrence r) {
+    if (!from.isBefore(target) || r.unit == IntervalUnit.month) return from;
+    final c = r.count <= 0 ? 1 : r.count;
+    final periodDays = r.unit == IntervalUnit.week ? c * 7 : c;
+    if (periodDays <= 0) return from;
+    final diff = target.difference(from).inDays;
+    if (diff <= 0) return from;
+    return from.add(Duration(days: (diff ~/ periodDays) * periodDays));
+  }
+
   /// Next occurrence of the billing date on or after [from], starting from the
   /// [anchor] (first payment date) and advancing by the recurrence.
   static DateTime nextPaymentDate(
@@ -84,7 +98,7 @@ class Billing {
     DateTime? from,
   }) {
     final today = _dateOnly(from ?? DateTime.now());
-    var next = _dateOnly(anchor);
+    var next = _skipTo(_dateOnly(anchor), today, recurrence);
     var guard = 0;
     while (next.isBefore(today) && ++guard < 5000) {
       next = _advance(next, recurrence, anchor.day);
@@ -140,7 +154,9 @@ class Billing {
   ) {
     final result = <DateTime>[];
     final anchorDate = _dateOnly(anchor);
-    var d = anchorDate;
+    // Fast-forward toward the range start (day/week) to avoid long loops when
+    // the anchor is far in the past.
+    var d = _skipTo(anchorDate, _dateOnly(start), recurrence);
     // Rewind to at or before the range start (but never past the anchor: a
     // subscription has no payments before its first payment date).
     var guard = 0;
