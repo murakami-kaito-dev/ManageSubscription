@@ -5,9 +5,10 @@ Connect と RevenueCat）と、**私が仕上げる部分**を整理します。
 
 ## 進捗（現在地）
 - ✅ **アプリ側の実装**：3プラン＋2週間無料体験＋ペイウォール＋復元（完了）
-- ✅ **利用規約・プライバシーポリシーの公開**：GitHub Pages を有効化し、公開URLを**私が用意・稼働確認済み**。アプリのペイウォールにも接続済み
-  - 利用規約：https://murakami-kaito-dev.github.io/ManageSubscription/terms.html
-  - プライバシーポリシー：https://murakami-kaito-dev.github.io/ManageSubscription/privacy.html
+- ✅ **利用規約・プライバシーポリシーの公開**：法務ページ専用の別Publicリポジトリ
+  `murakami-kaito-dev/submana-legal` を作成し GitHub Pages で公開（アプリ本体のリポジトリからは分離）。アプリのペイウォールにも接続済み
+  - 利用規約：https://murakami-kaito-dev.github.io/submana-legal/terms.html
+  - プライバシーポリシー：https://murakami-kaito-dev.github.io/submana-legal/privacy.html
 - ⏳ **残り（あなたのアカウント操作が必須）**：App Store Connect の契約・商品登録、RevenueCat のアカウント作成・設定（下記）
 - ⏳ **その後、私が仕上げる**：RevenueCat の iOSキーを設定して `useRevenueCat=true` 化
 
@@ -60,8 +61,8 @@ Connect と RevenueCat）と、**私が仕上げる部分**を整理します。
 ### C. 公開URL（利用規約・プライバシーポリシー）— ✅ 完了（私が対応済み）
 GitHub Pages を有効化し、下記URLが稼働中・アプリに接続済みです。あなたの作業は
 ありません（文面を直したい場合のみ言ってください）。
-- 利用規約：https://murakami-kaito-dev.github.io/ManageSubscription/terms.html
-- プライバシーポリシー：https://murakami-kaito-dev.github.io/ManageSubscription/privacy.html
+- 利用規約：https://murakami-kaito-dev.github.io/submana-legal/terms.html
+- プライバシーポリシー：https://murakami-kaito-dev.github.io/submana-legal/privacy.html
 
 ---
 
