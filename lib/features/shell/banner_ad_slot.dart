@@ -5,6 +5,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/core_providers.dart';
 import '../../providers/premium_provider.dart';
+import '../../services/ads/ad_service.dart';
 
 /// The fixed bottom banner. Free tier only — premium removes it entirely.
 /// The slot only takes up space once a real ad has actually loaded; while
@@ -28,6 +29,7 @@ class _BannerAdSlotState extends ConsumerState<BannerAdSlot> {
   }
 
   void _load() {
+    if (!kAdsEnabled) return; // no ads in v1 — never create/load a banner
     if (ref.read(premiumProvider)) return;
     final service = ref.read(adServiceProvider);
     if (!service.isReady) return;

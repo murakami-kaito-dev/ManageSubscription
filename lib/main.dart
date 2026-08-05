@@ -31,8 +31,10 @@ Future<void> main() async {
   final purchases = PurchaseService(prefs);
   await purchases.init();
 
-  // Ads & notifications init are best-effort and must never block startup.
-  await AdService.instance.init();
+  // Notifications init is best-effort and must never block startup.
+  // Ads are disabled in v1 (kAdsEnabled = false) so AdService.init() is not
+  // called and the AdMob SDK never starts.
+  if (kAdsEnabled) await AdService.instance.init();
   await NotificationService.instance.init();
 
   // Ensure reminders are (re)scheduled on every launch — otherwise seeded or

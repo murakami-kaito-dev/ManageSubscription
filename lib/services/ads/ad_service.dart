@@ -3,6 +3,13 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+/// Master switch for advertising. v1 ships **without ads** (free / all-open,
+/// and the privacy policy states no data is collected — AdMob would collect
+/// identifiers). While this is false, the AdMob SDK is never initialized and no
+/// banner is built, so nothing ad-related runs. Flip to true (and use real ad
+/// unit IDs) to re-enable ads in a future version.
+const bool kAdsEnabled = false;
+
 /// Banner-ad helper. Uses Google's official *test* ad unit IDs so ads render in
 /// development without a real AdMob account; swap in production unit IDs before
 /// release. Premium hides all ads (the banner slot simply isn't built).
@@ -22,6 +29,9 @@ class AdService {
       Platform.isIOS ? _iosTestBanner : _androidTestBanner;
 
   Future<void> init() async {
+    // No ads in v1 → never initialize the AdMob SDK (avoids its startup and any
+    // identifier collection). Defensive: even if called, this no-ops.
+    if (!kAdsEnabled) return;
     if (_initialized) return;
     try {
       await MobileAds.instance.initialize();
