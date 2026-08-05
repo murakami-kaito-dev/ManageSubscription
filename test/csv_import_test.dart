@@ -106,6 +106,41 @@ void main() {
       expect(r.valid.single.firstPaymentDate, DateTime(2026, 8, 15));
     });
 
+    test('rejects huge / non-finite amounts (no Infinity ever imported)', () {
+      final csv = _csv([
+        'Huge,${'9' * 100},JPY,月,2026/08/15,,,,,,,利用中,', // 100 digits → Infinity
+        'OverCap,200000000,JPY,月,2026/08/15,,,,,,,利用中,', // 2億 > 1億 cap
+        'AtCap,100000000,JPY,月,2026/08/15,,,,,,,利用中,', // exactly 1億 → ok
+      ]);
+      final r = _service.parse(csv);
+      expect(r.validCount, 1);
+      expect(r.errorCount, 2);
+      expect(r.valid.single.name, 'AtCap');
+      expect(r.valid.single.amount, 100000000);
+      // Every imported amount is finite and within the cap.
+      for (final s in r.valid) {
+        expect(s.amount.isFinite, isTrue);
+        expect(s.amount <= 100000000, isTrue);
+      }
+    });
+
+    test('clamps a large custom-cycle count to the form max (no throw)', () {
+      final r = _service.parse(_csv([
+        'Big,100,JPY,5000日,2026/08/15,,,,,,,利用中,',
+      ]));
+      expect(r.validCount, 1);
+      expect(r.valid.single.intervalCount, 999); // clamped to 1..999
+    });
+
+    test('an overflowing custom-cycle count does not throw (clamps safely)', () {
+      final r = _service.parse(_csv([
+        'Huge,100,JPY,${'9' * 30}日,2026/08/15,,,,,,,利用中,',
+      ]));
+      // int overflow → 0 → clamped up to the minimum 1; the row still imports.
+      expect(r.validCount, 1);
+      expect(r.valid.single.intervalCount, 1);
+    });
+
     test('assigns fresh unique IDs so import can never overwrite existing data',
         () {
       final csv = _csv([

@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/amount_input.dart';
 import '../../core/utils/billing.dart';
 import '../../core/utils/currency.dart';
 import '../../data/models/notify_rule.dart';
@@ -216,7 +217,11 @@ class CsvImportService {
     final cleaned = raw.replaceAll(RegExp(r'[^\d.\-]'), '');
     final v = double.tryParse(cleaned);
     if (v == null) throw _RowError('金額「$raw」を数値として読み取れません。');
-    if (v < 0) throw _RowError('金額「$raw」が負の値です。');
+    // Reject non-finite (a 100-digit value overflows to Infinity) and enforce
+    // the same ¥100,000,000 ceiling as the input form, so a huge CSV value can
+    // never be imported and break formatting / charts / notifications.
+    if (!v.isFinite || v < 0) throw _RowError('金額「$raw」が正しくありません。');
+    if (v > kMaxAmount) throw _RowError('金額「$raw」が上限（1億）を超えています。');
     return v;
   }
 
@@ -241,15 +246,15 @@ class CsvImportService {
     // Custom: "<n>日" / "<n>週" / "<n>ヶ月".
     final m = RegExp(r'^(\d+)\s*(日|週|ヶ月)$').firstMatch(raw);
     if (m != null) {
-      final n = int.parse(m.group(1)!);
-      if (n >= 1) {
-        final unit = switch (m.group(2)) {
-          '日' => IntervalUnit.day,
-          '週' => IntervalUnit.week,
-          _ => IntervalUnit.month,
-        };
-        return (BillingCycle.custom, n, unit);
-      }
+      // int.tryParse returns null on 64-bit overflow (a 20+ digit count); clamp
+      // to the same 1..999 range the input form allows so it never throws.
+      final n = (int.tryParse(m.group(1)!) ?? 0).clamp(1, 999);
+      final unit = switch (m.group(2)) {
+        '日' => IntervalUnit.day,
+        '週' => IntervalUnit.week,
+        _ => IntervalUnit.month,
+      };
+      return (BillingCycle.custom, n, unit);
     }
     throw _RowError('周期「$raw」を読み取れません（月 / 年 / 週 / 3ヶ月 / 2週 / 5日 など）。');
   }
@@ -275,10 +280,12 @@ class CsvImportService {
     return dt;
   }
 
-  /// Usage is optional; blank/garbage defaults to 0 rather than failing the row.
+  /// Usage is optional; blank/garbage/out-of-range defaults to 0 rather than
+  /// failing the row.
   double _parseUsage(String raw) {
     if (raw.isEmpty) return 0;
-    return double.tryParse(raw.replaceAll(RegExp(r'[^\d.\-]'), '')) ?? 0;
+    final v = double.tryParse(raw.replaceAll(RegExp(r'[^\d.\-]'), '')) ?? 0;
+    return (v.isFinite && v >= 0) ? v : 0;
   }
 }
 
