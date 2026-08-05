@@ -117,11 +117,18 @@ class _SubscriptionFormScreenState
       };
 
   Future<void> _pickDate() async {
+    final first = DateTime(2000);
+    final last = DateTime(2100);
+    // Clamp so showDatePicker never asserts on an out-of-range initial date
+    // (e.g. odd data imported from CSV).
+    final initial = _firstPayment.isBefore(first)
+        ? first
+        : (_firstPayment.isAfter(last) ? last : _firstPayment);
     final picked = await showDatePicker(
       context: context,
-      initialDate: _firstPayment,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      initialDate: initial,
+      firstDate: first,
+      lastDate: last,
     );
     if (picked != null) setState(() => _firstPayment = picked);
   }
@@ -352,8 +359,7 @@ class _SubscriptionFormScreenState
             const TextSpan(text: '一度削除すると'),
             TextSpan(
                 text: '全ての記録',
-                style: AppType.body(14,
-                    weight: FontWeight.w800, height: 1.5)),
+                style: AppType.body(14, weight: FontWeight.w800, height: 1.5)),
             const TextSpan(text: 'が削除されます。'),
           ],
         ),
@@ -676,6 +682,20 @@ class _SubscriptionFormScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
+                  child: DropdownButtonFormField<AppCurrency>(
+                    value: _currency,
+                    decoration: _dec('通貨'),
+                    items: [
+                      for (final c in AppCurrency.values)
+                        DropdownMenuItem(
+                            value: c, child: Text('${c.symbol} ${c.code}')),
+                    ],
+                    onChanged: (v) =>
+                        setState(() => _currency = v ?? _currency),
+                  ),
+                ),
+                const Gap(AppSpacing.md),
+                Expanded(
                   flex: 2,
                   child: TextFormField(
                     controller: _amount,
@@ -695,20 +715,6 @@ class _SubscriptionFormScreenState
                       if (a > kMaxAmount) return '金額が大きすぎます';
                       return null;
                     },
-                  ),
-                ),
-                const Gap(AppSpacing.md),
-                Expanded(
-                  child: DropdownButtonFormField<AppCurrency>(
-                    value: _currency,
-                    decoration: _dec('通貨'),
-                    items: [
-                      for (final c in AppCurrency.values)
-                        DropdownMenuItem(
-                            value: c, child: Text('${c.symbol} ${c.code}')),
-                    ],
-                    onChanged: (v) =>
-                        setState(() => _currency = v ?? _currency),
                   ),
                 ),
               ],
@@ -935,11 +941,13 @@ class _CustomIntervalRowState extends State<_CustomIntervalRow> {
               scale: 0.94,
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceSunken,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: accent.withOpacity(0.5), width: 1.5),
+                  border:
+                      Border.all(color: accent.withOpacity(0.5), width: 1.5),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -947,8 +955,7 @@ class _CustomIntervalRowState extends State<_CustomIntervalRow> {
                     Text('${widget.count}',
                         style: AppType.display(20, weight: FontWeight.w800)),
                     const Gap(2),
-                    Icon(Icons.unfold_more_rounded,
-                        size: 16, color: accent),
+                    Icon(Icons.unfold_more_rounded, size: 16, color: accent),
                   ],
                 ),
               ),
@@ -959,8 +966,7 @@ class _CustomIntervalRowState extends State<_CustomIntervalRow> {
               child: _SlidingSegmented(
                 labels: [for (final u in IntervalUnit.values) u.shortLabel],
                 selected: IntervalUnit.values.indexOf(widget.unit),
-                onChanged: (i) =>
-                    widget.onUnitChanged(IntervalUnit.values[i]),
+                onChanged: (i) => widget.onUnitChanged(IntervalUnit.values[i]),
               ),
             ),
           ],
@@ -1028,7 +1034,8 @@ class _NumberWheelSheetState extends State<_NumberWheelSheet> {
                         margin: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.xxl),
                         decoration: BoxDecoration(
-                          color: AppAccent.of(context).primary.withOpacity(0.12),
+                          color:
+                              AppAccent.of(context).primary.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
@@ -1244,8 +1251,8 @@ class _ChipPicker extends StatelessWidget {
             ),
             if (onEdit != null)
               ListTile(
-                leading: Icon(Icons.edit_rounded,
-                    color: AppAccent.of(context).deep),
+                leading:
+                    Icon(Icons.edit_rounded, color: AppAccent.of(context).deep),
                 title: const Text('編集する'),
                 onTap: () {
                   Navigator.pop(context);
@@ -1693,7 +1700,8 @@ class _WheelTimePickerState extends State<_WheelTimePicker> {
             child: Text(
               '${i.toString().padLeft(2, '0')}$suffix',
               style: AppType.display(isSel ? 22 : 18,
-                  color: isSel ? AppAccent.of(context).deep : AppColors.textMuted),
+                  color:
+                      isSel ? AppAccent.of(context).deep : AppColors.textMuted),
             ),
           );
         },

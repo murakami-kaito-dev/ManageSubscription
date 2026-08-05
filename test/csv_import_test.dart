@@ -141,6 +141,17 @@ void main() {
       expect(r.valid.single.intervalCount, 1);
     });
 
+    test('rejects dates outside the supported 2000..2100 range', () {
+      final r = _service.parse(_csv([
+        'Old,100,JPY,月,1999/12/31,,,,,,,利用中,',
+        'Far,100,JPY,月,3000/01/01,,,,,,,利用中,',
+        'Ok,100,JPY,月,2026/08/15,,,,,,,利用中,',
+      ]));
+      expect(r.validCount, 1);
+      expect(r.errorCount, 2);
+      expect(r.valid.single.name, 'Ok');
+    });
+
     test('assigns fresh unique IDs so import can never overwrite existing data',
         () {
       final csv = _csv([

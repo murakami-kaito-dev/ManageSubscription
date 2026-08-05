@@ -269,6 +269,11 @@ class CsvImportService {
     final y = int.parse(m.group(1)!);
     final mo = int.parse(m.group(2)!);
     final d = int.parse(m.group(3)!);
+    // Keep within the app's supported range (the date picker uses 2000..2100);
+    // an out-of-range date would later break editing.
+    if (y < 2000 || y > 2100) {
+      throw _RowError('初回支払日「$raw」は対応範囲（2000〜2100年）外です。');
+    }
     if (mo < 1 || mo > 12 || d < 1 || d > 31) {
       throw _RowError('初回支払日「$raw」に無効な月日が含まれます。');
     }
