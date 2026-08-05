@@ -679,6 +679,10 @@ class _SubscriptionFormScreenState
                   flex: 2,
                   child: TextFormField(
                     controller: _amount,
+                    // Right-aligned so the number grows leftward from a fixed
+                    // right edge — the caret and comma positions don't shift
+                    // around under the cursor as you type.
+                    textAlign: TextAlign.right,
                     decoration: _dec('金額', hint: '1,000'),
                     contextMenuBuilder: noCameraScanContextMenu,
                     keyboardType:
