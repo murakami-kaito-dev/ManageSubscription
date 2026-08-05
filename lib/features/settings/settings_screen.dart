@@ -261,9 +261,15 @@ class SettingsScreen extends ConsumerWidget {
             children: [
               Text('テーマカラー', style: AppType.display(18)),
               const Gap(AppSpacing.xl),
-              Wrap(
-                spacing: 16,
-                runSpacing: 16,
+              // Fixed 3-column grid so every circle sits on the same vertical
+              // and horizontal line regardless of label length.
+              GridView.count(
+                crossAxisCount: 3,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: AppSpacing.lg,
+                crossAxisSpacing: AppSpacing.lg,
+                childAspectRatio: 0.82,
                 children: [
                   for (final a in ThemeAccent.options)
                     Pressable(
@@ -275,6 +281,7 @@ class SettingsScreen extends ConsumerWidget {
                         Navigator.pop(context);
                       },
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
                             width: 52,
@@ -286,7 +293,10 @@ class SettingsScreen extends ConsumerWidget {
                             ),
                           ),
                           const Gap(6),
-                          Text(a.name, style: AppType.body(11)),
+                          Text(a.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppType.body(11)),
                         ],
                       ),
                     ),

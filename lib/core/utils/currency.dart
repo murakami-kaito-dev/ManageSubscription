@@ -67,11 +67,14 @@ class CurrencyFormatter {
   final AppCurrency currency;
 
   String format(num amount, {bool withSymbol = true}) {
+    // Guard against non-finite values (e.g. legacy data that overflowed to
+    // Infinity) so we never render "¥Infinity" in tiles or notifications.
+    final safe = amount.isFinite ? amount : 0;
     final f = NumberFormat.currency(
       symbol: withSymbol ? currency.symbol : '',
       decimalDigits: currency.decimals,
     );
-    return f.format(amount).trim();
+    return f.format(safe).trim();
   }
 
   /// Compact form for tight spaces (e.g. ¥12.3k).

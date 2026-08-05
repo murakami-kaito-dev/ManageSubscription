@@ -86,8 +86,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 children: [
                   Text(DateFormat('yyyy年M月').format(_focused),
                       style: AppType.display(22)),
-                  const Spacer(),
-                  Text(fmt.format(monthTotal), style: AppType.display(22)),
+                  const Gap(AppSpacing.md),
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child:
+                          Text(fmt.format(monthTotal), style: AppType.display(22)),
+                    ),
+                  ),
                 ],
               ),
             ),

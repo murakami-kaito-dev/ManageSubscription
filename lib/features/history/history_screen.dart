@@ -154,7 +154,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                   Text('$_month月',
                       style: AppType.body(14, color: AppColors.textSecondary)),
                   const Gap(2),
-                  Text(fmt.format(monthTotal), style: AppType.display(26)),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child:
+                        Text(fmt.format(monthTotal), style: AppType.display(26)),
+                  ),
                 ],
               ),
             ),
@@ -229,7 +233,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                   Text('$_selectedYear年の合計',
                       style: AppType.body(14, color: AppColors.textSecondary)),
                   const Gap(2),
-                  Text(fmt.format(selectedTotal), style: AppType.display(26)),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(fmt.format(selectedTotal),
+                        style: AppType.display(26)),
+                  ),
                 ],
               ),
             ),

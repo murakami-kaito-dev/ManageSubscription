@@ -150,10 +150,15 @@ class _SummaryCard extends ConsumerWidget {
                   weight: FontWeight.w600,
                   color: AppColors.onPrimary.withOpacity(0.85))),
           const Gap(AppSpacing.xs),
-          AnimatedCounter(
-            value: total,
-            formatter: (v) => fmt.format(v),
-            style: AppType.display(34, color: AppColors.onPrimary),
+          // Auto-shrink so a very large total never overflows the card.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: AnimatedCounter(
+              value: total,
+              formatter: (v) => fmt.format(v),
+              style: AppType.display(34, color: AppColors.onPrimary),
+            ),
           ),
           const Gap(AppSpacing.md),
           Row(

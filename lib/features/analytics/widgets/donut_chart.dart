@@ -39,7 +39,7 @@ class DonutChart extends StatelessWidget {
     final hasSelection =
         selectedIndex >= 0 && selectedIndex < slices.length;
     final selected = hasSelection ? slices[selectedIndex] : null;
-    final pct = (selected != null && total > 0)
+    final pct = (selected != null && total > 0 && total.isFinite)
         ? (selected.amount / total * 100)
         : 0.0;
 
@@ -87,18 +87,30 @@ class DonutChart extends StatelessWidget {
                           AppType.body(14, weight: FontWeight.w700)),
                 ),
                 const SizedBox(height: 2),
-                Text(formatter.format(selected.amount),
-                    style: AppType.display(24)),
+                SizedBox(
+                  width: 140,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(formatter.format(selected.amount),
+                        style: AppType.display(24)),
+                  ),
+                ),
                 Text('(${pct.toStringAsFixed(1)}%)',
                     style: AppType.body(13, color: AppColors.textSecondary)),
               ] else ...[
                 Text('合計',
                     style: AppType.body(13, color: AppColors.textSecondary)),
                 const SizedBox(height: 2),
-                AnimatedCounter(
-                  value: total,
-                  formatter: (v) => formatter.format(v),
-                  style: AppType.display(26),
+                SizedBox(
+                  width: 140,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: AnimatedCounter(
+                      value: total,
+                      formatter: (v) => formatter.format(v),
+                      style: AppType.display(26),
+                    ),
+                  ),
                 ),
               ],
             ],
@@ -109,9 +121,11 @@ class DonutChart extends StatelessWidget {
   }
 
   PieChartSectionData _section(AnalyticsSlice s, bool selected) {
-    final pct = total <= 0 ? 0 : (s.amount / total * 100);
+    final pct = (total <= 0 || !total.isFinite) ? 0 : (s.amount / total * 100);
+    // Guard against non-finite values so the chart always renders.
+    final safeValue = (s.amount.isFinite && s.amount > 0) ? s.amount : 0.0001;
     return PieChartSectionData(
-      value: s.amount <= 0 ? 0.0001 : s.amount,
+      value: safeValue,
       color: s.color,
       radius: selected ? 62 : 54,
       title: pct >= 7 ? s.label : '',

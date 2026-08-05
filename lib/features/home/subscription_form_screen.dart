@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/premium_limits.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/amount_input.dart';
 import '../../core/utils/image_paths.dart';
 import '../../core/utils/text_input.dart';
 import '../../core/widgets/delete_dialog.dart';
@@ -94,8 +95,7 @@ class _SubscriptionFormScreenState
     _detailsExpanded = ref.read(settingsProvider).alwaysShowDetails;
   }
 
-  String _trimAmount(double v) =>
-      v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+  String _trimAmount(double v) => groupedAmount(v);
 
   @override
   void dispose() {
@@ -105,7 +105,8 @@ class _SubscriptionFormScreenState
     super.dispose();
   }
 
-  double get _amountValue => double.tryParse(_amount.text.trim()) ?? 0;
+  double get _amountValue =>
+      double.tryParse(_amount.text.replaceAll(',', '').trim()) ?? 0;
   double get _usageValue => double.tryParse(_usage.text.trim()) ?? 0;
 
   Recurrence get _recurrence => switch (_cycle) {
@@ -678,16 +679,18 @@ class _SubscriptionFormScreenState
                   flex: 2,
                   child: TextFormField(
                     controller: _amount,
-                    decoration: _dec('金額', hint: '1000'),
+                    decoration: _dec('金額', hint: '1,000'),
                     contextMenuBuilder: noCameraScanContextMenu,
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                    ],
+                    inputFormatters: const [ThousandsSeparatorInputFormatter()],
                     onChanged: (_) => setState(() {}),
-                    validator: (v) =>
-                        _amountValue < 0 ? '正しい金額を入力してください' : null,
+                    validator: (v) {
+                      final a = _amountValue;
+                      if (!a.isFinite || a < 0) return '正しい金額を入力してください';
+                      if (a > kMaxAmount) return '金額が大きすぎます';
+                      return null;
+                    },
                   ),
                 ),
                 const Gap(AppSpacing.md),
