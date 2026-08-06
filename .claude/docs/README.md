@@ -1,10 +1,8 @@
-# サブスク家計簿 — 仕様ドキュメント（内部仕様）
+# サブスク家計簿 — ドキュメント
 
-このフォルダ（`.claude/docs/`）は、ソースコードを読まなくても仕様が把握できることを
-目的とした最新状態の**仕様書**です。実装を変更したら該当ドキュメントも更新してください。
-
-> 用途の違い: **`.claude/docs/`＝アプリの仕様**（ここ）／ **ルート `docs/`＝人間向けの
-> 運用ガイド**（課金セットアップ・テスト計画）。詳細は [`../../docs/README.md`](../../docs/README.md)。
+このフォルダ（`.claude/docs/`）が**唯一のドキュメント置き場**です。アプリの仕様
+（ソースを読まずに把握するための仕様書）と、運用ガイド（課金セットアップ・テスト計画）を
+まとめています。実装を変更したら該当ドキュメントも更新してください。
 
 ## アプリ概要
 - 名称: **サブスク家計簿**（Bundle ID `com.submana.app`）
@@ -21,9 +19,20 @@
 - [notifications.md](notifications.md) — 通知（OS ローカル通知＋アプリ内バナー）
 - [rating-share.md](rating-share.md) — アプリ評価・レビュー誘導・共有
 
+### 運用ガイド
+- [monetization_setup.md](monetization_setup.md) — 課金（App Store Connect / RevenueCat）本番化の手順
+- [testing/README.md](testing/README.md) ＋ [testing/test_cases.xlsx](testing/test_cases.xlsx) — テスト計画・テストケース一覧
+
 ## 開発の要点（すぐ効く前提）
 - 状態管理: **Riverpod**（`NotifierProvider` / `Provider.family` / `ConsumerWidget`）
 - 永続化: **sqflite**（`AppDatabase`、`onUpgrade` マイグレーション）＋ `SharedPreferences`
 - 開発者アンロック: `--dart-define=DEV_UNLOCK=true` で全機能解放（`kDevUnlockAll`）
-- クリーン再インストール: `scripts/fresh_install.sh`
+- **クリーン再インストール**（データを初期化して入れ直す）:
+  ```bash
+  # 端末からアプリを削除してから、まっさらな状態で入れ直す
+  # iOSシミュレータ:  xcrun simctl uninstall booted com.submana.app
+  # Android:          adb uninstall com.example.manage_subscription
+  flutter run --release --dart-define=DEV_UNLOCK=true
+  ```
+  （端末からアプリを一度アンインストールすれば、次の `flutter run` で DB 空＝初期シードのみになります）
 - 金額上限: 1アイテム **¥100,000,000（1億）**（`kMaxAmount`）

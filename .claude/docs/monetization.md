@@ -20,7 +20,7 @@
 ## RevenueCat
 - `purchases_flutter`。3商品を**1エンタイトルメント `premium`** に束ねる → 「どれを買っても全機能」
 - 現在 `useRevenueCat=false`（モック: 購入は即付与）。iOS API キー（`appl_...`）設定＋`true` 化で本番
-- 本番化に必要なユーザー作業は `docs/monetization_setup.md`（App Store Connect 商品登録・契約、RevenueCat 設定）
+- 本番化に必要なユーザー作業は `monetization_setup.md`（App Store Connect 商品登録・契約、RevenueCat 設定）
 
 ## ペイウォール（`features/premium/premium_screen.dart`）
 - 3プランカード（年額に「おすすめ」）＋試用バナー（残日数 / 体験終了 / 現プラン）
