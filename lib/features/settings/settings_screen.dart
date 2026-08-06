@@ -21,6 +21,7 @@ import '../../providers/premium_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/subscription_providers.dart';
 import '../premium/premium_screen.dart';
+import 'csv_import_help_screen.dart';
 import 'csv_import_screen.dart';
 import 'feedback_sheet.dart';
 
@@ -168,6 +169,15 @@ class SettingsScreen extends ConsumerWidget {
                           label: 'CSVから読み込み',
                           premium: !isPremium,
                           onTap: () => _importCsv(context, ref),
+                        ),
+                        const _Div(),
+                        _Row(
+                          icon: Icons.help_outline_rounded,
+                          label: 'CSVの書式・サンプル',
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const CsvImportHelpScreen()),
+                          ),
                         ),
                       ],
                     ),

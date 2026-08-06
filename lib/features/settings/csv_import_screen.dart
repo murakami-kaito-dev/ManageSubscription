@@ -12,6 +12,7 @@ import '../../core/widgets/soft_header.dart';
 import '../../core/widgets/subscription_avatar.dart';
 import '../../providers/subscription_providers.dart';
 import '../../services/csv/csv_import_service.dart';
+import 'csv_import_help_screen.dart';
 
 /// Preview of a parsed CSV. Nothing is written until the user taps 取り込む, and
 /// even then it is purely additive — existing data is never touched.
@@ -61,14 +62,24 @@ class _CsvImportPreviewScreenState
                 padding: const EdgeInsets.fromLTRB(
                     AppSpacing.lg, 0, AppSpacing.lg, 40),
                 children: [
-                  if (r.hasFatal)
+                  if (r.hasFatal) ...[
                     _MessageCard(
                       icon: Icons.error_outline_rounded,
                       color: AppColors.danger,
                       title: '読み込めませんでした',
                       body: r.fatal!,
-                    )
-                  else ...[
+                    ),
+                    const Gap(AppSpacing.lg),
+                    SoftButton(
+                      label: 'CSVの書式を見る',
+                      icon: Icons.help_outline_rounded,
+                      kind: SoftButtonKind.neutral,
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (_) => const CsvImportHelpScreen()),
+                      ),
+                    ),
+                  ] else ...[
                     _SummaryCard(valid: r.validCount, errors: r.errorCount),
                     if (r.validCount > 0) ...[
                       const Gap(AppSpacing.lg),
