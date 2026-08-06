@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/monetization/iap.dart';
+import '../../core/store_links.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_shadows.dart';
 import '../../core/theme/app_spacing.dart';
@@ -177,10 +178,18 @@ class SettingsScreen extends ConsumerWidget {
                     child: Column(
                       children: [
                         _Row(
+                          icon: Icons.favorite_rounded,
+                          label: 'このアプリを応援する',
+                          onTap: () =>
+                              ref.read(ratingServiceProvider).rate(),
+                        ),
+                        const _Div(),
+                        _Row(
                           icon: Icons.share_rounded,
                           label: 'シェア',
                           onTap: () => Share.share(
-                              'サブスク管理アプリで毎月の支払いを見える化しよう！'),
+                              'サブスク家計簿で毎月の固定費を見える化しよう！\n'
+                              '${StoreLinks.shareLinks()}'),
                         ),
                         const _Div(),
                         _Row(

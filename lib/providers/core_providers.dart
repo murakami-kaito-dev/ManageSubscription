@@ -10,6 +10,7 @@ import '../services/csv/csv_export_service.dart';
 import '../services/csv/csv_import_service.dart';
 import '../services/image/image_picker_service.dart';
 import '../services/notifications/notification_service.dart';
+import '../services/rating/rating_service.dart';
 import '../services/purchases/purchase_service.dart';
 
 /// Overridden in main() with the opened database.
@@ -36,6 +37,8 @@ final csvImportServiceProvider =
     Provider<CsvImportService>((ref) => const CsvImportService());
 final imagePickerServiceProvider =
     Provider<ImagePickerService>((ref) => ImagePickerService());
+final ratingServiceProvider =
+    Provider<RatingService>((ref) => RatingService(ref.watch(prefsProvider)));
 
 // ── Repositories ────────────────────────────────────────────────────────
 final subscriptionRepositoryProvider = Provider<SubscriptionRepository>(
