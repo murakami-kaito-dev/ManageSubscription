@@ -115,10 +115,12 @@ class AppDatabase {
       });
     }
 
+    // Colors are chart-palette members so the color picker highlights them
+    // (kept distinct from the seeded category colors).
     final methods = [
-      ('クレジットカード', Icons.credit_card_rounded.codePoint, 0xFF546C60),
-      ('App Store', Icons.apple_rounded.codePoint, 0xFF6E9080),
-      ('PayPay', Icons.account_balance_wallet_rounded.codePoint, 0xFFE1836B),
+      ('クレジットカード', Icons.credit_card_rounded.codePoint, 0xFF7FB3AD), // teal
+      ('App Store', Icons.apple_rounded.codePoint, 0xFFB6A2CB), // lavender
+      ('PayPay', Icons.account_balance_wallet_rounded.codePoint, 0xFFCE8B6A), // terracotta
     ];
     for (var i = 0; i < methods.length; i++) {
       batch.insert('payment_methods', {
