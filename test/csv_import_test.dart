@@ -186,4 +186,47 @@ void main() {
       expect(r.valid[0].id, isNot(r.valid[1].id));
     });
   });
+
+  group('CSV import — 列の順序/余分/重複/長短に強い（名前ベース）', () {
+    test('列の順序が入れ替わっていても、見出し名で正しく対応付く', () {
+      // 順序をシャッフル（必須列は名前としては揃っている）
+      const csv = '金額,周期,サービス名,初回支払日,通貨\n'
+          '1490,月,Netflix,2026/08/15,JPY';
+      final r = _service.parse(csv);
+      expect(r.hasFatal, isFalse);
+      expect(r.validCount, 1);
+      final s = r.valid.single;
+      expect(s.name, 'Netflix');
+      expect(s.amount, 1490);
+      expect(s.currencyCode, 'JPY');
+    });
+
+    test('想定外の余分な列は無視される（エラーにならない）', () {
+      const csv = 'サービス名,金額,通貨,周期,初回支払日,謎の列,タグ\n'
+          'Netflix,1490,JPY,月,2026/08/15,無視される値,foo';
+      final r = _service.parse(csv);
+      expect(r.validCount, 1);
+      expect(r.errorCount, 0);
+      expect(r.valid.single.name, 'Netflix');
+    });
+
+    test('見出しが重複していても最初の列を採用しクラッシュしない', () {
+      const csv = 'サービス名,サービス名,金額,通貨,周期,初回支払日\n'
+          'First,Second,1000,JPY,月,2026/08/15';
+      final r = _service.parse(csv);
+      expect(r.validCount, 1);
+      expect(r.valid.single.name, 'First'); // 最初の一致を採用
+    });
+
+    test('セル数が見出しより少ない/多い行でもクラッシュしない', () {
+      const csv = 'サービス名,金額,通貨,周期,初回支払日\n'
+          'Short,1490,JPY,月\n' // 5列目(初回支払日)が欠落 → 空 → スキップ
+          'Long,980,JPY,月,2026/08/03,extra,extra'; // 余分セルは無視 → 正常
+      final r = _service.parse(csv);
+      expect(r.validCount, 1);
+      expect(r.valid.single.name, 'Long');
+      expect(r.errorCount, 1); // Short 行のみスキップ
+      expect(r.errors.single.name, 'Short');
+    });
+  });
 }
