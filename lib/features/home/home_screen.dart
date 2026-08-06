@@ -18,7 +18,7 @@ import '../../providers/settings_provider.dart';
 import '../../providers/subscription_providers.dart';
 import '../premium/premium_screen.dart';
 import '../settings/settings_screen.dart';
-import 'subscription_form_screen.dart';
+import '../subscription/subscription_form_screen.dart';
 import 'subscription_settings_sheet.dart';
 import 'widgets/subscription_tile.dart';
 

@@ -21,8 +21,8 @@ import '../../providers/premium_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/subscription_providers.dart';
 import '../premium/premium_screen.dart';
-import 'csv_import_help_screen.dart';
-import 'csv_import_screen.dart';
+import '../csv/csv_import_help_screen.dart';
+import '../csv/csv_import_screen.dart';
 import 'feedback_sheet.dart';
 
 class SettingsScreen extends ConsumerWidget {

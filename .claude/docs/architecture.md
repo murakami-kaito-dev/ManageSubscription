@@ -13,7 +13,7 @@
 - `core/` — テーマ（`app_colors`/`AppAccent`/`app_typography`/`app_spacing`/`app_shadows`）、`utils/`（billing・currency・amount_input・image_paths・dates・text_input）、`monetization/iap.dart`、`store_links.dart`、`legal.dart`、`premium_limits.dart`、`dev_config.dart`、共通 `widgets/`
 - `data/` — `database/app_database.dart`（スキーマ+シード）、`models/`、`repositories/`
 - `providers/` — `core_providers`（DB/prefs/サービス）、`subscription_providers`、`analytics_providers`、`settings_provider`、`premium_provider`
-- `features/` — 画面ごと（home / analytics / calendar / history / settings / premium / rating / notifications / shell）
+- `features/` — 画面ごと（home / subscription（編集/追加）/ analytics / calendar / history / csv（取込UI）/ settings / premium / rating / notifications / shell）
 - `services/` — ads / csv / currency / image / notifications / purchases / rating
 
 ## 主要 Provider（この名前で参照される）

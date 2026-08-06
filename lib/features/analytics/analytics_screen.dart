@@ -15,7 +15,7 @@ import '../../providers/analytics_providers.dart';
 import '../../providers/premium_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/subscription_providers.dart';
-import '../home/subscription_form_screen.dart';
+import '../subscription/subscription_form_screen.dart';
 import '../premium/premium_screen.dart';
 import '../settings/settings_screen.dart';
 import 'widgets/donut_chart.dart';

@@ -34,7 +34,7 @@
 - 下部リストは**未来（未到来）の支払いを除外**。合計も支払い済みベース（`FittedBox`）
 - 行は長押しで編集画面へ。年間はプレミアム
 
-## 新規追加/編集（`features/home/subscription_form_screen.dart`）
+## 新規追加/編集（`features/subscription/subscription_form_screen.dart`）
 - ヘッダー左に戻る矢印。保存バー下部固定
 - 基本情報: サービス名 / 金額（**右揃え・3桁カンマ・上限1億・プレースホルダ「1,000」**）/ 通貨
 - 支払いサイクル（月/年/週/カスタム）＋カスタムは数値タップで縦ホイール（1〜999）＋±ボタン。初回支払日（ピッカー 2000〜2100、範囲外はクランプ）
@@ -56,7 +56,7 @@
 - 詳細は [monetization.md](monetization.md)
 
 ## CSVインポート関連
-- プレビュー画面 `csv_import_screen.dart`、書式ヘルプ `csv_import_help_screen.dart`。詳細は [csv-import.md](csv-import.md)
+- プレビュー画面 `csv_import_screen.dart`、書式ヘルプ `features/csv/csv_import_help_screen.dart`。詳細は [csv-import.md](csv-import.md)
 
 ## サブスクリプション設定シート（`subscription_settings_sheet.dart`）
 - ホームの「…」から開くボトムシート。閉じ×は**左上**、タイトル中央
