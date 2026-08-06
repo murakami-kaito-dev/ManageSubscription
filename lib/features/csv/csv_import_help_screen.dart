@@ -33,17 +33,19 @@ class CsvImportHelpScreen extends StatelessWidget {
   ];
 
   static const _columns = <({String name, String required, String allow, String forbid})>[
+    // 「禁止・注意」＝その値だと**その行がスキップ（取り込まれない）**になるもの。
+    // 行がスキップされないものは「なし」と明記する。
     (name: 'サービス名', required: '必須', allow: '任意の文字列（例：Netflix）', forbid: '空欄'),
-    (name: '金額', required: '必須', allow: '0〜100,000,000（1億）の数値。カンマ・¥可', forbid: '空欄・文字・マイナス・1億超'),
-    (name: '通貨', required: '必須', allow: 'JPY / USD / EUR / GBP', forbid: '左記以外のコード'),
-    (name: '周期', required: '必須', allow: '月 / 年 / 週、またはカスタム（例：3ヶ月・2週・5日）', forbid: '左記以外の語'),
-    (name: '初回支払日', required: '必須', allow: 'yyyy/MM/dd（- や . 区切りも可）。2000〜2100年', forbid: '存在しない日付・範囲外の年'),
-    (name: 'カテゴリー', required: '任意', allow: 'アプリに登録済みのカテゴリー名', forbid: '（一致しない名前は「未設定」になります）'),
-    (name: '支払い方法', required: '任意', allow: 'アプリに登録済みの支払い方法名', forbid: '（一致しない名前は「未設定」になります）'),
-    (name: '利用回数/月', required: '任意', allow: '数値（コスパ計算用）', forbid: '（空欄・不正値は0扱い）'),
-    (name: '状態', required: '任意', allow: '「停止中」＝停止／その他＝利用中', forbid: '—'),
-    (name: 'メモ', required: '任意', allow: '任意の文字列', forbid: '—'),
-    (name: '次回支払日 / 月額換算 / 1回あたり単価', required: '無視', allow: 'エクスポート専用（取り込み時は読み込みません）', forbid: '—'),
+    (name: '金額', required: '必須', allow: '0〜100,000,000（1億）の数値。カンマ・¥可', forbid: '空欄 / 数値でない / マイナス / 1億超'),
+    (name: '通貨', required: '必須', allow: 'JPY / USD / EUR / GBP（大文字小文字は不問）', forbid: '空欄 / 左記以外のコード'),
+    (name: '周期', required: '必須', allow: '月 / 年 / 週、またはカスタム（例：3ヶ月・2週・5日）', forbid: '空欄 / 左記以外の語（例：毎月・NEN）'),
+    (name: '初回支払日', required: '必須', allow: 'yyyy/MM/dd（- や . 区切りも可）。2000〜2100年', forbid: '空欄 / 存在しない日付 / 2000〜2100年の範囲外 / 形式不正'),
+    (name: 'カテゴリー', required: '任意', allow: 'アプリに登録済みのカテゴリー名', forbid: 'なし（不一致の名前は「未設定」になるだけで、行はスキップされません）'),
+    (name: '支払い方法', required: '任意', allow: 'アプリに登録済みの支払い方法名', forbid: 'なし（不一致の名前は「未設定」になるだけで、行はスキップされません）'),
+    (name: '利用回数/月', required: '任意', allow: '数値（コスパ計算用）', forbid: 'なし（空欄・不正値は0として扱い、行はスキップされません）'),
+    (name: '状態', required: '任意', allow: '「停止中」＝停止／それ以外＝利用中', forbid: 'なし（どんな値でも行はスキップされません）'),
+    (name: 'メモ', required: '任意', allow: '任意の文字列', forbid: 'なし'),
+    (name: '次回支払日 / 月額換算 / 1回あたり単価', required: '無視', allow: 'エクスポート専用（取り込み時は読み込みません）', forbid: 'なし（値が入っていても無視され、行はスキップされません）'),
   ];
 
   String _sampleCsvString() {
@@ -82,7 +84,10 @@ class CsvImportHelpScreen extends StatelessWidget {
                   SoftCard(
                     child: Text(
                       'アプリでエクスポートしたCSVと同じ見出し行が必要です。文字コードは'
-                      'UTF-8。下の「テンプレートを共有」で正しい形式のひな型を入手できます。',
+                      'UTF-8。下の「テンプレートを共有」で正しい形式のひな型を入手できます。\n\n'
+                      '「禁止・注意」は、その値だと**その行が取り込まれずスキップされる**もの'
+                      'です（該当行以外は正常に取り込まれます）。スキップされない列は「なし」と'
+                      '記載しています。',
                       style: AppType.body(13,
                           color: AppColors.textSecondary, height: 1.6),
                     ),
@@ -150,10 +155,16 @@ class _ColumnCard extends StatelessWidget {
           ),
           const Gap(AppSpacing.sm),
           _kv('許可', column.allow, AppColors.textPrimary),
-          if (column.forbid != '—') ...[
-            const Gap(4),
-            _kv('禁止・注意', column.forbid, AppColors.danger),
-          ],
+          const Gap(4),
+          // Every column shows 禁止・注意; "なし" rows are neutral, real
+          // skip-causing prohibitions are shown in the danger color.
+          _kv(
+            '禁止・注意',
+            column.forbid,
+            column.forbid.startsWith('なし')
+                ? AppColors.textSecondary
+                : AppColors.danger,
+          ),
         ],
       ),
     );
