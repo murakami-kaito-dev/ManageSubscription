@@ -115,41 +115,17 @@ class _CsvImportPreviewScreenState
                     ],
                     if (r.errorCount > 0) ...[
                       const Gap(AppSpacing.lg),
-                      Text('スキップされた行（${r.errorCount}件）',
+                      Text('スキップされた項目（${r.errorCount}件）',
                           style: AppType.body(13,
                               weight: FontWeight.w700,
                               color: AppColors.danger)),
                       const Gap(AppSpacing.sm),
-                      SoftCard(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
-                        child: Column(
-                          children: [
-                            for (final e in r.errors)
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 6),
-                                child: Row(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    Text('${e.line}行目',
-                                        style: AppType.body(12.5,
-                                            weight: FontWeight.w700,
-                                            color: AppColors.danger)),
-                                    const Gap(AppSpacing.sm),
-                                    Expanded(
-                                      child: Text(e.message,
-                                          style: AppType.body(12.5,
-                                              color:
-                                                  AppColors.textSecondary)),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                          ],
+                      // One boxed group per item: its name (◯行目) + every error.
+                      for (final e in r.errors)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                          child: _ErrorGroup(error: e),
                         ),
-                      ),
                     ],
                   ],
                 ],
@@ -214,6 +190,53 @@ class _SummaryCard extends StatelessWidget {
           Text('既存のデータは削除・変更されません。上記の項目が新規追加されます。',
               style: AppType.body(12,
                   color: AppColors.textSecondary, height: 1.5)),
+        ],
+      ),
+    );
+  }
+}
+
+/// A boxed group for one rejected row: "Item（◯行目）" then each problem.
+class _ErrorGroup extends StatelessWidget {
+  const _ErrorGroup({required this.error});
+  final CsvRowError error;
+
+  @override
+  Widget build(BuildContext context) {
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.warning_amber_rounded,
+                  color: AppColors.danger, size: 18),
+              const Gap(AppSpacing.sm),
+              Expanded(
+                child: Text(error.heading,
+                    style: AppType.body(14, weight: FontWeight.w800)),
+              ),
+            ],
+          ),
+          const Gap(AppSpacing.sm),
+          for (final m in error.messages)
+            Padding(
+              padding: const EdgeInsets.only(top: 4, left: 26),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('・',
+                      style: AppType.body(12.5, color: AppColors.textSecondary)),
+                  Expanded(
+                    child: Text(m,
+                        style: AppType.body(12.5,
+                            color: AppColors.textSecondary, height: 1.4)),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

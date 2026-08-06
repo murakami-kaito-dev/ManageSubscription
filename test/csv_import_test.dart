@@ -152,6 +152,29 @@ void main() {
       expect(r.valid.single.name, 'Ok');
     });
 
+    test('groups every problem on a row under the item name（◯行目）', () {
+      final r = _service.parse(_csv([
+        'Amazon,abc,ZZZ,NEN,2026/13/40,,,,,,,利用中,', // 4 bad fields
+      ]));
+      expect(r.validCount, 0);
+      expect(r.errorCount, 1);
+      final e = r.errors.single;
+      expect(e.name, 'Amazon');
+      expect(e.line, 2);
+      expect(e.heading, 'Amazon（2行目）');
+      expect(e.messages.length, greaterThanOrEqualTo(3)); // amount+currency+cycle(+date)
+    });
+
+    test('a nameless bad row shows just （◯行目）', () {
+      final r = _service.parse(_csv([
+        ',100,ZZZ,月,2026/08/15,,,,,,,利用中,',
+      ]));
+      final e = r.errors.single;
+      expect(e.name, isNull);
+      expect(e.heading, '（2行目）');
+      expect(e.messages, isNotEmpty);
+    });
+
     test('assigns fresh unique IDs so import can never overwrite existing data',
         () {
       final csv = _csv([

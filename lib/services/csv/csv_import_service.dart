@@ -12,13 +12,23 @@ import '../../core/utils/currency.dart';
 import '../../data/models/notify_rule.dart';
 import '../../data/models/subscription.dart';
 
-/// One row that could not be imported, with a human-readable reason.
+/// One row that could not be imported, grouped by item: its name (when the
+/// サービス名 cell is present) and **all** the problems found on that row.
 class CsvRowError {
-  const CsvRowError(this.line, this.message);
+  const CsvRowError({required this.line, required this.name, required this.messages});
 
   /// 1-based row number as it appears in the file (header = line 1).
   final int line;
-  final String message;
+
+  /// The item's name, or null when the サービス名 cell was empty/missing.
+  final String? name;
+
+  /// Every problem detected on this row.
+  final List<String> messages;
+
+  /// "AmazonMusic（3行目）" — or "（3行目）" when the name is unknown.
+  String get heading =>
+      name == null || name!.isEmpty ? '（$line行目）' : '$name（$line行目）';
 }
 
 /// Outcome of parsing a CSV. Either [fatal] is set (the whole file was rejected
@@ -32,6 +42,8 @@ class CsvImportResult {
 
   /// Ready-to-save subscriptions (fresh IDs — importing never overwrites).
   final List<Subscription> valid;
+
+  /// One entry per rejected row (grouped by item).
   final List<CsvRowError> errors;
 
   /// Non-null when the file's shape is unusable (bad header, empty, etc.).
@@ -148,63 +160,85 @@ class CsvImportService {
       // A fully blank line is silently skipped, not treated as an error.
       if (row.every((c) => c.toString().trim().isEmpty)) continue;
 
-      try {
-        final sub = _parseRow(
-          row: row,
-          cell: (col) => cell(row, col),
-          categoryNameToId: categoryNameToId,
-          methodNameToId: methodNameToId,
-          sortOrder: startSortOrder + valid.length,
-        );
+      final name = cell(row, _colName);
+      final messages = <String>[];
+      final sub = _parseRow(
+        cell: (col) => cell(row, col),
+        categoryNameToId: categoryNameToId,
+        methodNameToId: methodNameToId,
+        sortOrder: startSortOrder + valid.length,
+        messages: messages,
+      );
+      if (sub != null && messages.isEmpty) {
         valid.add(sub);
-      } on _RowError catch (e) {
-        errors.add(CsvRowError(fileLine, e.message));
-      } catch (e) {
-        // Absolutely never let one row take down the import.
-        errors.add(CsvRowError(fileLine, '読み取れませんでした：$e'));
+      } else {
+        errors.add(CsvRowError(
+          line: fileLine,
+          name: name.isEmpty ? null : name,
+          messages: messages.isEmpty ? const ['読み取れませんでした。'] : messages,
+        ));
       }
     }
 
     return CsvImportResult(valid: valid, errors: errors);
   }
 
-  Subscription _parseRow({
-    required List<dynamic> row,
+  /// Runs a parse step, recording its message into [messages] on failure and
+  /// returning null. Lets a row collect *all* its problems instead of stopping
+  /// at the first.
+  T? _tryField<T>(List<String> messages, T Function() parse) {
+    try {
+      return parse();
+    } on _RowError catch (e) {
+      messages.add(e.message);
+    } catch (e) {
+      messages.add('読み取れませんでした：$e');
+    }
+    return null;
+  }
+
+  /// Validates every field, accumulating problems into [messages]. Returns a
+  /// Subscription only when the row is fully valid.
+  Subscription? _parseRow({
     required String Function(String col) cell,
     required Map<String, String> categoryNameToId,
     required Map<String, String> methodNameToId,
     required int sortOrder,
+    required List<String> messages,
   }) {
     final name = cell(_colName);
-    if (name.isEmpty) throw const _RowError('サービス名が空です。');
+    if (name.isEmpty) messages.add('サービス名が空です。');
 
-    final amount = _parseAmount(cell(_colAmount));
-    final currencyCode = _parseCurrency(cell(_colCurrency));
-    final (cycle, count, unit) = _parseCycle(cell(_colCycle));
-    final first = _parseDate(cell(_colFirst));
+    final amount = _tryField(messages, () => _parseAmount(cell(_colAmount)));
+    final currencyCode =
+        _tryField(messages, () => _parseCurrency(cell(_colCurrency)));
+    final cycle = _tryField(messages, () => _parseCycle(cell(_colCycle)));
+    final first = _tryField(messages, () => _parseDate(cell(_colFirst)));
 
-    final usage = _parseUsage(cell(_colUsage));
-    final paused = cell(_colState) == '停止中';
-    final memo = cell(_colMemo);
-    final catId = categoryNameToId[cell(_colCategory)];
-    final pmId = methodNameToId[cell(_colMethod)];
+    if (messages.isNotEmpty ||
+        amount == null ||
+        currencyCode == null ||
+        cycle == null ||
+        first == null) {
+      return null;
+    }
 
     return Subscription(
       id: _uuid.v4(),
       name: name,
       amount: amount,
       currencyCode: currencyCode,
-      cycle: cycle,
-      intervalCount: count,
-      intervalUnit: unit,
+      cycle: cycle.$1,
+      intervalCount: cycle.$2,
+      intervalUnit: cycle.$3,
       firstPaymentDate: first,
       colorValue: AppColors.chartPalette[sortOrder % AppColors.chartPalette.length].value,
-      categoryId: catId,
-      paymentMethodId: pmId,
-      memo: memo.isEmpty ? null : memo,
-      usageCount: usage,
+      categoryId: categoryNameToId[cell(_colCategory)],
+      paymentMethodId: methodNameToId[cell(_colMethod)],
+      memo: cell(_colMemo).isEmpty ? null : cell(_colMemo),
+      usageCount: _parseUsage(cell(_colUsage)),
       usageUnit: '回',
-      isPaused: paused,
+      isPaused: cell(_colState) == '停止中',
       notifyRules: const [NotifyRule(daysBefore: 1)],
       sortOrder: sortOrder,
       createdAt: DateTime.now(),
