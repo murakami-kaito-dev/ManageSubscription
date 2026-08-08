@@ -38,18 +38,21 @@ Connect と RevenueCat）と、**私が仕上げる部分**を整理します。
 
 ---
 
-## 🧑 あなたの作業
+## App Store Connect の役割分担（重要）
+ASC API キー（`ios/AuthKey_*.p8` ＋ keyID/issuerID）は**有効**で、Claude 側から ASC API を叩ける
+（read 確認済み）。ただし **API では出来ないこと**があり、そこは人間の UI 操作が必須：
 
-### A. App Store Connect
-1. **Paid Applications 契約に同意**：Business → 契約/税金/口座（Agreements）で
-   「Paid Apps」契約に同意し、銀行・税情報を登録（これが未完だと課金は一切動きません）。
-2. **アプリ内課金の商品を3つ作成**（上表の Product ID を**正確に**使用）：
-   - `subsc_pro_lifetime`：非消耗型、¥980
-   - サブスク2つは**1つのサブスクリプショングループ**にまとめる（ユーザーが月↔年を移行可能に）：
-     - `subsc_pro_monthly`：自動更新、¥300 / 月
-     - `subsc_pro_yearly`：自動更新、¥1,800 / 年
-   - 各商品に**表示名・説明**（日本語）を設定。
-3. サブスクの審査用に**レビューメモ／スクリーンショット**を添付。
+- 🧑 **あなた（UI 必須・API 不可）**
+  1. **アプリレコードの新規作成**（マイApp → ＋）。ASC API に「アプリ新規作成」エンドポイントは無い。
+     - 現状 `com.submana.app` は**アプリ未作成・Bundle ID も未登録**（2026-08 時点、API で確認）。
+  2. **Paid Applications 契約への同意**＋**銀行・税務情報**の登録（法的同意なので API 不可。未完だと課金は一切動かない）。
+- 🤖 **Claude（ASC API キーで自動化できる）**
+  - 上記1・2が済み、アプリレコードが存在すれば、**アプリ内課金の商品3つを API で作成**できる：
+    `subsc_pro_lifetime`（非消耗型 ¥980）／サブスクグループ＋`subsc_pro_monthly`（¥300月）
+    `subsc_pro_yearly`（¥1,800年）、価格・日本語ローカライズまで。※ライブ口座への書き込みなので事前に確認を取る。
+  - 審査用スクショ等の素材が要るものは別途相談。
+
+（従来ここは「全部あなたの作業」と書いていたが、正確には**アプリ作成と契約同意だけが人間必須**で、商品作成は Claude が API で代行可能。）
 4. **App-Specific Shared Secret**（または In-App Purchase Key）を発行 → RevenueCat に登録。
 
 ### B. RevenueCat ダッシュボード（無料枠でOK）
