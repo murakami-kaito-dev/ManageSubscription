@@ -18,16 +18,17 @@
 ## 共有（設定「シェア」）
 `Share.share('…\n${StoreLinks.shareUrl()}')`。
 
-**なぜ受信者OSで出し分けできないか**: プレーンなテキスト/URL共有は送信時に文字列が固定され、受信者が
-どのOSで開くかは分からない（判別できるのは“送信者”のOSのみ）。相手のOSに合わせて正しいストアを開くには、
-**1本のスマートリンク（OS判定リダイレクトページ）**を共有し、受信者が開いた瞬間に User-Agent で振り分けるしかない。
+### 現状：iOS(App Store) のみ
+Google Play はまだ配布予定がないため、**共有は App Store の URL だけ**を出す（`StoreLinks.androidDistribution = false`）。
+`shareUrl()` は `iosUrl`（＝`appStoreId` 設定後に有効）を返す。`appStoreId` 未設定の間は URL 無し。
 
-- `StoreLinks.shareUrl()`:
-  - `smartLink` が設定済み → **その1本のURL**を共有（受信者の端末がストアを選ぶ＝要望どおり）。
-  - 未設定 → `shareLinks()`（既知のストアURLを両方併記）にフォールバック。App Store 行は `appStoreId` 設定後に出る。
-- **スマートリンクの用意（`smartLink` を有効化する手順）**:
-  1. リダイレクトHTML（`download.html`。User-Agent で iOS→App Store / Android→Google Play、その他→Play）を
-     `submana-legal`（GitHub Pages）に配置。HTMLひな型はセッションのスクラッチパッドに生成済み。
+### いずれ（Android 配布を始めるとき）＝ TODO メモ
+`StoreLinks.androidDistribution` を `true` にすると Google Play も対象になる。ただし
+**プレーンなテキスト/URL共有は受信者OSで出し分けできない**（送信時に文字列が固定される。判別できるのは送信者OSのみ）。
+相手のOSに合わせて正しいストアを開くには **1本のスマートリンク（OS判定リダイレクトページ）** を共有し、
+受信者が開いた瞬間に User-Agent で振り分ける。準備手順:
+  1. リダイレクトHTML（`download.html`。iOS→App Store / Android→Google Play / その他→Play）を
+     `submana-legal`（GitHub Pages）に配置（HTMLひな型はスクラッチパッドに生成済み）。
   2. `APPLE_APP_ID`（公開後の数値ID）と `ANDROID_PACKAGE`（実 applicationId。現状 `com.example.…` は要変更）を差し替え。
-  3. `StoreLinks.smartLink` に公開URL（例: `https://murakami-kaito-dev.github.io/submana-legal/download.html`）を設定。
-  - 併せて `appStoreId` も設定すると、フォールバック時の併記にも App Store が載る。
+  3. `StoreLinks.smartLink` に公開URLを設定し、`androidDistribution = true` にする。
+  - 併せて `appStoreId` も設定する。
