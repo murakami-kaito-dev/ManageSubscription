@@ -21,8 +21,8 @@
 
 ## 事前チェック（最初に1回）
 - [ ] **Apple Developer Program** に加入済み（有料・年額）。
-- [ ] App Store Connect に **アプリのレコードが作成済み**（Bundle ID `com.submana.app`）。無ければ
-      「マイApp → ＋ → 新規App」で作成（プラットフォーム iOS、Bundle ID を選択）。
+- [x] **Bundle ID `com.submana.app` は登録済み**（2026-08、Claude が ASC API で登録。name: Submana / id: `Y3NRAJ84RM`）。
+- [ ] App Store Connect に **アプリのレコードを作成**（マイApp → ＋ → 新規App）。Bundle ID は上記を選ぶだけ。
 
 ---
 
