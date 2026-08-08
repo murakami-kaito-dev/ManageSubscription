@@ -37,7 +37,6 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
   late final ConfettiController _confetti =
       ConfettiController(duration: const Duration(seconds: 2));
   bool _busy = false;
-  bool _introEligible = true; // still eligible for the 2-week free trial?
   PlanKind _selected = PlanKind.yearly; // best value pre-selected
   Map<PlanKind, String> _prices = const {
     PlanKind.lifetime: Iap.priceLifetime,
@@ -49,17 +48,11 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
   void initState() {
     super.initState();
     _loadPrices();
-    _loadEligibility();
   }
 
   Future<void> _loadPrices() async {
     final p = await ref.read(purchaseServiceProvider).loadPrices();
     if (mounted) setState(() => _prices = p);
-  }
-
-  Future<void> _loadEligibility() async {
-    final ok = await ref.read(purchaseServiceProvider).introTrialEligible();
-    if (mounted) setState(() => _introEligible = ok);
   }
 
   @override
@@ -175,7 +168,6 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
                   busy: _busy,
                   selected: _selected,
                   prices: _prices,
-                  introEligible: _introEligible,
                   onPurchase: _purchase,
                   onRestore: _restore,
                   onStayFree: () => Navigator.of(context).pop(),
@@ -389,8 +381,6 @@ class _ComparisonTable extends StatelessWidget {
     ('サブスクの登録数', '${PremiumLimits.maxSubscriptions}件', '100件'),
     ('カテゴリーの登録数', '${PremiumLimits.maxCategories}件', '無制限'),
     ('支払い方法の登録数', '${PremiumLimits.maxPaymentMethods}件', '無制限'),
-    ('支払い前の通知ルール数', '無制限', '無制限'),
-    ('アイコン画像の登録', '✓', '✓'),
     ('CSVエクスポート', '×', '✓'),
     ('CSVインポート', '×', '✓'),
     ('分析：カテゴリー別／支払い方法別', '✓', '✓'),
@@ -487,7 +477,6 @@ class _PurchaseBar extends StatelessWidget {
     required this.busy,
     required this.selected,
     required this.prices,
-    required this.introEligible,
     required this.onPurchase,
     required this.onRestore,
     required this.onStayFree,
@@ -495,7 +484,6 @@ class _PurchaseBar extends StatelessWidget {
   final bool busy;
   final PlanKind selected;
   final Map<PlanKind, String> prices;
-  final bool introEligible;
   final VoidCallback onPurchase;
   final VoidCallback onRestore;
   final VoidCallback onStayFree;
@@ -503,21 +491,16 @@ class _PurchaseBar extends StatelessWidget {
   // Main button label — short so it never truncates.
   String get _ctaMain => switch (selected) {
         PlanKind.lifetime => '${prices[PlanKind.lifetime]} で購入する',
-        PlanKind.monthly =>
-          introEligible ? '2週間無料で始める' : '${prices[PlanKind.monthly]}/月 で始める',
-        PlanKind.yearly =>
-          introEligible ? '2週間無料で始める' : '${prices[PlanKind.yearly]}/年 で始める',
+        PlanKind.monthly || PlanKind.yearly => '2週間の無料体験で始める',
         _ => '続ける',
       };
 
   // Caption under the button (full pricing detail, wraps freely).
   String? get _ctaSub => switch (selected) {
-        PlanKind.monthly => introEligible
-            ? 'その後 ${prices[PlanKind.monthly]} / 月・いつでも解約できます'
-            : 'いつでも解約できます',
-        PlanKind.yearly => introEligible
-            ? 'その後 ${prices[PlanKind.yearly]} / 年・いつでも解約できます'
-            : 'いつでも解約できます',
+        PlanKind.monthly =>
+          'その後 ${prices[PlanKind.monthly]} / 月・いつでも解約できます',
+        PlanKind.yearly =>
+          'その後 ${prices[PlanKind.yearly]} / 年・いつでも解約できます',
         _ => null,
       };
 
