@@ -103,7 +103,8 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
             child: Column(
               children: [
                 Align(
-                  alignment: Alignment.centerLeft,
+                  // Close on the RIGHT, matching the settings screen's ✗.
+                  alignment: Alignment.centerRight,
                   child: Padding(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     child: SoftIconButton(
@@ -332,21 +333,17 @@ class _Hero extends StatelessWidget {
         Text('サブスク家計簿 プレミアム',
             textAlign: TextAlign.center, style: AppType.display(25)),
         const Gap(AppSpacing.lg),
+        // The real app icon (same image the launcher uses).
         Container(
           width: 110,
           height: 110,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: AppColors.premiumGradient,
-            ),
             borderRadius: BorderRadius.circular(34),
             boxShadow: AppShadows.accentGlow(AppAccent.of(context).primary,
                 intensity: 1.4),
           ),
-          child: const Icon(Icons.savings_rounded,
-              size: 56, color: AppColors.onPrimary),
+          clipBehavior: Clip.antiAlias,
+          child: Image.asset('assets/icon/icon.png', fit: BoxFit.cover),
         ),
       ],
     );
