@@ -11,6 +11,7 @@ import '../../core/widgets/soft_button.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/soft_header.dart';
 import '../../core/widgets/subscription_avatar.dart';
+import '../../data/models/subscription.dart';
 import '../../providers/subscription_providers.dart';
 import '../../services/csv/csv_import_service.dart';
 import 'csv_import_help_screen.dart';
@@ -30,13 +31,49 @@ class _CsvImportPreviewScreenState
     extends ConsumerState<CsvImportPreviewScreen> {
   bool _saving = false;
 
+  /// Ids the user has picked to import. Only used when the CSV would push the
+  /// total over the 100-item cap (otherwise everything is imported as-is).
+  final Set<String> _selectedIds = {};
+
+  /// Free slots left before hitting the hard cap.
+  int _remainingSlots() =>
+      PremiumLimits.hardMaxSubscriptions - ref.read(subscriptionCountProvider);
+
+  /// True when the valid rows don't all fit → the user must choose which to keep.
+  bool _needsSelection(int remaining) =>
+      remaining > 0 && widget.result.validCount > remaining;
+
+  void _toggle(String id, int remaining) {
+    if (_selectedIds.contains(id)) {
+      setState(() => _selectedIds.remove(id));
+      return;
+    }
+    if (_selectedIds.length >= remaining) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('選択できるのは最大$remaining件です')),
+      );
+      return;
+    }
+    setState(() => _selectedIds.add(id));
+  }
+
+  /// Select as many as allowed (the first `remaining` rows). "全解除" clears.
+  void _selectAll(int remaining) {
+    setState(() {
+      _selectedIds
+        ..clear()
+        ..addAll(widget.result.valid.take(remaining).map((s) => s.id));
+    });
+  }
+
+  void _clearAll() => setState(() => _selectedIds.clear());
+
   Future<void> _import() async {
     final valid = widget.result.valid;
     if (valid.isEmpty || _saving) return;
 
-    // Respect the 100-item hard cap: import only up to the remaining slots.
-    final current = ref.read(subscriptionCountProvider);
-    final remaining = PremiumLimits.hardMaxSubscriptions - current;
+    // Respect the 100-item hard cap.
+    final remaining = _remainingSlots();
     if (remaining <= 0) {
       await showDialog<void>(
         context: context,
@@ -54,26 +91,34 @@ class _CsvImportPreviewScreenState
       );
       return;
     }
-    final toSave =
-        valid.length > remaining ? valid.sublist(0, remaining) : valid;
-    final skipped = valid.length - toSave.length;
+
+    // If everything fits, import all. Otherwise import only the user's picks.
+    final List<Subscription> toSave;
+    if (_needsSelection(remaining)) {
+      if (_selectedIds.isEmpty) return;
+      toSave = valid.where((s) => _selectedIds.contains(s.id)).toList();
+    } else {
+      toSave = valid;
+    }
 
     setState(() => _saving = true);
     await ref.read(subscriptionsProvider.notifier).saveAll(toSave);
     if (!mounted) return;
     Navigator.of(context).pop();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(skipped > 0
-            ? '${toSave.length}件を追加しました（上限${PremiumLimits.hardMaxSubscriptions}件のため$skipped件は取り込めませんでした）'
-            : '${toSave.length}件を追加しました'),
-      ),
+      SnackBar(content: Text('${toSave.length}件を追加しました')),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final r = widget.result;
+    final int remaining = PremiumLimits.hardMaxSubscriptions -
+        ref.watch(subscriptionCountProvider);
+    final selecting = _needsSelection(remaining);
+    final full = remaining <= 0;
+    final importCount = selecting ? _selectedIds.length : r.validCount;
+    final canImport = !full && !_saving && importCount > 0;
 
     return Scaffold(
       body: SafeArea(
@@ -113,44 +158,31 @@ class _CsvImportPreviewScreenState
                     _SummaryCard(valid: r.validCount, errors: r.errorCount),
                     if (r.validCount > 0) ...[
                       const Gap(AppSpacing.lg),
-                      Text('追加される項目（${r.validCount}件）',
-                          style: AppType.body(13,
-                              weight: FontWeight.w700,
-                              color: AppColors.textSecondary)),
+                      // Over the cap → let the user pick which rows to import
+                      // (with 全選択/全解除); otherwise just list them all.
+                      if (selecting)
+                        _SelectionBar(
+                          remaining: remaining,
+                          selected: _selectedIds.length,
+                          onSelectAll: () => _selectAll(remaining),
+                          onClear: _clearAll,
+                        )
+                      else
+                        Text('追加される項目（${r.validCount}件）',
+                            style: AppType.body(13,
+                                weight: FontWeight.w700,
+                                color: AppColors.textSecondary)),
                       const Gap(AppSpacing.sm),
                       for (final s in r.valid)
                         Padding(
                           padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                          child: SoftCard(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.lg,
-                                vertical: AppSpacing.md),
-                            child: Row(
-                              children: [
-                                SubscriptionAvatar(sub: s, size: 38, radius: 12),
-                                const Gap(AppSpacing.md),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(s.name,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: AppType.body(15,
-                                              weight: FontWeight.w700)),
-                                      Text(JpDate.short(s.firstPaymentDate),
-                                          style: AppType.body(11.5,
-                                              color: AppColors.textMuted)),
-                                    ],
-                                  ),
-                                ),
-                                Text(
-                                  '${CurrencyFormatter(s.currency).format(s.amount)} /${s.periodLabel}',
-                                  style: AppType.display(15),
-                                ),
-                              ],
-                            ),
+                          child: _validRow(
+                            s,
+                            selecting: selecting,
+                            selected: _selectedIds.contains(s.id),
+                            onTap: selecting
+                                ? () => _toggle(s.id, remaining)
+                                : null,
                           ),
                         ),
                     ],
@@ -183,15 +215,118 @@ class _CsvImportPreviewScreenState
                 child: SoftButton(
                   label: _saving
                       ? '追加中…'
-                      : (r.validCount > 0
-                          ? '${r.validCount}件を取り込む'
-                          : '取り込める項目がありません'),
-                  icon: _saving ? null : Icons.download_rounded,
-                  onPressed: (r.validCount == 0 || _saving) ? null : _import,
+                      : full
+                          ? 'これ以上追加できません（上限${PremiumLimits.hardMaxSubscriptions}件）'
+                          : selecting
+                              ? (importCount > 0
+                                  ? '$importCount件を取り込む'
+                                  : '取り込む項目を選択してください')
+                              : (r.validCount > 0
+                                  ? '${r.validCount}件を取り込む'
+                                  : '取り込める項目がありません'),
+                  icon: canImport ? Icons.download_rounded : null,
+                  onPressed: canImport ? _import : null,
                 ),
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// A valid CSV row. In selection mode it gets a leading check and the whole
+  /// card becomes tappable to toggle.
+  Widget _validRow(
+    Subscription s, {
+    required bool selecting,
+    required bool selected,
+    required VoidCallback? onTap,
+  }) {
+    final card = SoftCard(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+      child: Row(
+        children: [
+          if (selecting) ...[
+            Icon(
+              selected
+                  ? Icons.check_circle_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              color: selected ? AppColors.primary : AppColors.textMuted,
+              size: 24,
+            ),
+            const Gap(AppSpacing.md),
+          ],
+          SubscriptionAvatar(sub: s, size: 38, radius: 12),
+          const Gap(AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(s.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppType.body(15, weight: FontWeight.w700)),
+                Text(JpDate.short(s.firstPaymentDate),
+                    style: AppType.body(11.5, color: AppColors.textMuted)),
+              ],
+            ),
+          ),
+          Text(
+            '${CurrencyFormatter(s.currency).format(s.amount)} /${s.periodLabel}',
+            style: AppType.display(15),
+          ),
+        ],
+      ),
+    );
+    if (onTap == null) return card;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: card,
+    );
+  }
+}
+
+/// Header shown when the CSV has more valid rows than free slots: explains the
+/// cap and offers 全選択（上限まで）/ 全解除.
+class _SelectionBar extends StatelessWidget {
+  const _SelectionBar({
+    required this.remaining,
+    required this.selected,
+    required this.onSelectAll,
+    required this.onClear,
+  });
+  final int remaining;
+  final int selected;
+  final VoidCallback onSelectAll;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return SoftCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('取り込む項目を選択', style: AppType.display(15)),
+          const Gap(AppSpacing.xs),
+          Text(
+            '登録できるのは合計${PremiumLimits.hardMaxSubscriptions}件までです。'
+            'あと$remaining件まで選べます。',
+            style:
+                AppType.body(12, color: AppColors.textSecondary, height: 1.5),
+          ),
+          const Gap(AppSpacing.sm),
+          Row(
+            children: [
+              TextButton(onPressed: onSelectAll, child: const Text('全選択')),
+              TextButton(onPressed: onClear, child: const Text('全解除')),
+              const Spacer(),
+              Text('$selected / $remaining',
+                  style: AppType.body(13, weight: FontWeight.w700)),
+            ],
+          ),
+        ],
       ),
     );
   }

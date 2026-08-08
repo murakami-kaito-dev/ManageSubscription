@@ -29,7 +29,6 @@ import '../../providers/premium_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/subscription_providers.dart';
 import '../premium/premium_screen.dart';
-import '../rating/rating_prompt.dart';
 import '../settings/category_settings_screen.dart';
 import '../settings/payment_method_settings_screen.dart';
 import 'widgets/cospa_preview.dart';
@@ -347,13 +346,14 @@ class _SubscriptionFormScreenState
       createdAt: widget.existing?.createdAt ?? DateTime.now(),
     );
     await ref.read(subscriptionsProvider.notifier).save(sub);
-    // The one-time review prompt fires after the user adds their first item
-    // themselves (never for seed data; only on a new create).
+    // One-time review ask after the user adds their first item themselves
+    // (never for seed data; only on a new create). We call the OS review prompt
+    // (SKStoreReviewController / Play In-App Review) directly — no custom sheet.
     if (mounted && !_isEdit) {
       final rating = ref.read(ratingServiceProvider);
       if (!rating.firstAddPromptShown) {
         await rating.markFirstAddPromptShown();
-        if (mounted) await showRatingPrompt(context, ref);
+        await rating.rate();
       }
     }
     if (mounted) Navigator.of(context).pop();

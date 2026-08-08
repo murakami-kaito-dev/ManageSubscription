@@ -13,10 +13,17 @@
 2. `parse(content, {categoryNameToId, methodNameToId, startSortOrder})` → `CsvImportResult`
 3. `CsvImportPreviewScreen` で確認 → `subscriptionsProvider.saveAll(valid)`
 
-### 100件上限との整合
-確定時に現在件数と合わせて **100件（`PremiumLimits.hardMaxSubscriptions`）** を超えないよう制御。
-残り枠が0なら取り込み不可のダイアログ、残りが正なら先頭から残り枠ぶんだけ保存し、あふれた分は
-スキップ件数を SnackBar で通知する（部分取り込み）。
+### 100件上限との整合（ユーザーが選ぶ方式）
+現在件数と合わせて **100件（`PremiumLimits.hardMaxSubscriptions`）** を超えないよう制御する。
+`remaining = 100 - 現在件数` を残り枠とし、プレビュー画面（`CsvImportPreviewScreen`）で分岐:
+- **全部が収まる**（`validCount <= remaining`）: 従来どおり全件をそのまま取り込む（チェックボックスなし）。
+- **収まらない**（`validCount > remaining`）: 各行に**チェックボックス**を出し、**ユーザーが取り込む行を選ぶ**。
+  勝手に先頭 N 件へ切り詰める旧仕様は廃止（どれが選ばれたか不透明だったため）。
+  - ヘッダーに `_SelectionBar`：「あと◯件まで選べます」＋ **全選択 / 全解除**。
+  - **全選択**は上限（`remaining`）まで（先頭から）選ぶ。**全解除**は選択をすべて外す。
+  - 個別タップで `remaining` を超えて選ぼうとすると SnackBar で拒否（選択は常に上限以内）。
+  - 取り込みボタンは「◯件を取り込む」。1件以上選択で活性。
+- **残り枠が0**（`remaining <= 0`）: 取り込み不可。ボタンは「これ以上追加できません（上限100件）」で無効。
 
 ### 必須列
 `サービス名 / 金額 / 通貨 / 周期 / 初回支払日`。欠けると**ファイル全体を拒否**（`fatal`）。

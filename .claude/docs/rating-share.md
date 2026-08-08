@@ -9,10 +9,11 @@
 - 設定「アプリ」セクションの **「このアプリを応援する」** → `RatingService.rate()`
 - `rate()`: ネイティブ In-App Review（`in_app_review`）を優先、不可なら store listing。best-effort（例外を握る）
 
-## レビュー誘導ポップアップ（`features/rating/rating_prompt.dart`）
-- **表示条件**: ユーザーが**初めて自分でサブスクを新規追加した直後の1回のみ**（シードは対象外）。`rating_first_add_prompt_shown` フラグで一度きり
-- トリガ: `SubscriptionFormScreen._save()` の新規作成成功後
-- UI（ネイティブ風）: アプリ風アイコン、「「サブスク家計簿」はいかがですか？」、星タップで評価（`rate()`）、「コメントを書く」→フィードバックフォーム、「今はしない」→閉じる（スキップ可）
+## レビュー誘導（初回追加時）
+- **タイミング**: ユーザーが**初めて自分でサブスクを新規追加した直後の1回のみ**（シードは対象外）。`rating_first_add_prompt_shown` フラグで一度きり
+- トリガ: `SubscriptionFormScreen._save()` の新規作成成功後、**`RatingService.rate()` を直接呼ぶ**
+- **自前のポップアップは廃止**（旧 `features/rating/rating_prompt.dart` は削除）。星や「コメントを書く」等の中間UIは挟まず、**OS標準のレビュー画面**（iOS: SKStoreReviewController / Android: Play In-App Review）をそのまま出す
+- ⚠️ OS標準画面の「送信」ボタンは、**App Store から入れた本番ビルドでのみ**機能する。Debug/Simulator/TestFlight では Apple 側の仕様で送信が無効（グレー）＝これは不具合ではない。表示回数も Apple により年数回に制限され、出ないこともある
 
 ## 共有（設定「シェア」）
 `Share.share('…\n${StoreLinks.shareLinks()}')` — 受信側OS不明のため既知のストアURLを併記（App Store は `appStoreId` 設定後に含まれる）。

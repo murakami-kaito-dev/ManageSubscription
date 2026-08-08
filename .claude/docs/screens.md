@@ -44,7 +44,7 @@
 - メモ、状態（停止中トグル・編集時）、削除
 - 詳細設定（折りたたみ）: アイコン（画像/文字＋背景色）、カテゴリ、支払い方法、コスパ
 - 入力欄は Live Text（カメラ文字認識）を無効化
-- **保存時**: 新規作成かつレビュー未表示なら初回追加レビュー誘導ポップアップ（[rating-share.md](rating-share.md)）
+- **保存時**: 新規作成かつレビュー未表示なら **OS標準のレビュー画面を直接表示**（自前ポップアップは廃止。[rating-share.md](rating-share.md)）
 
 ## 設定（`features/settings/settings_screen.dart`）
 - フルスクリーンダイアログ。閉じる×は**右上**（開く歯車と同じ側）
@@ -59,6 +59,7 @@
 
 ## CSVインポート関連
 - プレビュー画面 `csv_import_screen.dart`、書式ヘルプ `features/csv/csv_import_help_screen.dart`。詳細は [csv-import.md](csv-import.md)
+- 取り込みで100件を超える場合は**行ごとにチェックボックス**を出し、ユーザーが取り込む行を選ぶ（全選択＝上限まで／全解除）。収まる場合は全件そのまま取り込み
 
 ## サブスクリプション設定シート（`subscription_settings_sheet.dart`）
 - ホームの「…」から開くボトムシート。閉じ×は**左上**、タイトル中央
