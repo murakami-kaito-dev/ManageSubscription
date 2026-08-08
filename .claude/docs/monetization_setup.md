@@ -38,9 +38,19 @@ Connect と RevenueCat）と、**私が仕上げる部分**を整理します。
 
 ---
 
-## App Store Connect の役割分担（重要）
-ASC API キー（`ios/AuthKey_*.p8` ＋ keyID/issuerID）は**有効**で、Claude 側から ASC API を叩ける
-（read 確認済み）。ただし **API では出来ないこと**があり、そこは人間の UI 操作が必須：
+## App Store Connect の役割分担（重要・API実測で確認）
+ASC API キー（`ios/AuthKey_*.p8` ＋ keyID/issuerID）は**有効**。2026-08 に**実アカウントへ非破壊プローブ**して確認した結果：
+
+| 操作 | 実測 | 可否 |
+|---|---|---|
+| アプリ新規作成 `POST /v1/apps` | **403 FORBIDDEN「操作は許可されていない」** | ❌ API 不可 |
+| Bundle ID 登録 `POST /v1/bundleIds` | 409（必須項目不足） | ✅ API 可 |
+| 課金 `POST /v2/inAppPurchases` | 409 | ✅ API 可 |
+| サブスクグループ `POST /v1/subscriptionGroups` | 409 | ✅ API 可 |
+| サブスク商品 `POST /v1/subscriptions` | 409 | ✅ API 可 |
+
+→ **アプリレコードの新規作成だけが API 不可**。fastlane の `produce` なら自動作成できるが、それは
+`.p8` API キーではなく **Apple ID ログイン（Spaceship・2FA）** が必要＝本人操作。よって役割は：
 
 - 🧑 **あなた（UI 必須・API 不可）**
   1. **アプリレコードの新規作成**（マイApp → ＋）。ASC API に「アプリ新規作成」エンドポイントは無い。
