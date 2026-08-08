@@ -146,18 +146,27 @@ void main() {
     test('premium-only capabilities are gated', () {
       expect(PremiumLimits.canExportCsv(false), isFalse);
       expect(PremiumLimits.canExportCsv(true), isTrue);
-      expect(PremiumLimits.canBreakdownByCategoryOrMethod(false), isFalse);
+      expect(PremiumLimits.canAttachImage(false), isFalse);
       expect(PremiumLimits.canViewAllPeriods(false), isFalse);
     });
 
-    test('sorting and theme color are free for everyone', () {
-      expect(PremiumLimits.canAutoSort(false), isTrue);
-      expect(PremiumLimits.canChangeTheme(false), isTrue);
+    test('free tier: 5 categories / 5 payment methods', () {
+      expect(PremiumLimits.canAddCategory(false, 4), isTrue);
+      expect(PremiumLimits.canAddCategory(false, 5), isFalse);
+      expect(PremiumLimits.canAddPaymentMethod(false, 4), isTrue);
+      expect(PremiumLimits.canAddPaymentMethod(false, 5), isFalse);
     });
 
-    test('notify-rule limit differs by tier', () {
-      expect(PremiumLimits.notifyRuleLimit(false), 1);
-      expect(PremiumLimits.notifyRuleLimit(true), greaterThan(1));
+    test('sorting, theme, and category/method breakdown are free', () {
+      expect(PremiumLimits.canAutoSort(false), isTrue);
+      expect(PremiumLimits.canChangeTheme(false), isTrue);
+      expect(PremiumLimits.canBreakdownByCategoryOrMethod(false), isTrue);
+    });
+
+    test('notify-rule limit is unlimited for everyone', () {
+      expect(PremiumLimits.notifyRuleLimit(false),
+          PremiumLimits.notifyRuleLimit(true));
+      expect(PremiumLimits.notifyRuleLimit(false), greaterThan(1));
     });
   });
 }

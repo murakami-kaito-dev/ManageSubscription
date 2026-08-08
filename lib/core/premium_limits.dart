@@ -4,9 +4,10 @@ class PremiumLimits {
   PremiumLimits._();
 
   static const int maxSubscriptions = 8;
-  static const int maxCategories = 3;
-  static const int maxPaymentMethods = 3;
-  static const int maxNotifyRules = 1;
+  static const int maxCategories = 5;
+  static const int maxPaymentMethods = 5;
+  // Notification rules are free & unlimited for everyone now.
+  static const int maxNotifyRules = 99;
 
   /// Hard ceiling on total subscriptions for EVERYONE (incl. premium/trial).
   /// A large number of items makes startup notification rescheduling and list
@@ -24,17 +25,18 @@ class PremiumLimits {
       isPremium || current < maxCategories;
   static bool canAddPaymentMethod(bool isPremium, int current) =>
       isPremium || current < maxPaymentMethods;
-  static int notifyRuleLimit(bool isPremium) =>
-      isPremium ? 99 : maxNotifyRules;
+  // Notification rules: free & unlimited for everyone.
+  static int notifyRuleLimit(bool isPremium) => maxNotifyRules;
 
   // Pure premium-only capabilities.
   static bool canAttachImage(bool isPremium) => isPremium;
   static bool canExportCsv(bool isPremium) => isPremium;
-  static bool canBreakdownByCategoryOrMethod(bool isPremium) => isPremium;
 
-  // Now free for everyone (per product decision): sorting & theme color.
+  // Now free for everyone (per product decision): sorting, theme color, and
+  // category/payment-method breakdown analytics.
   static bool canAutoSort(bool isPremium) => true;
   static bool canChangeTheme(bool isPremium) => true;
+  static bool canBreakdownByCategoryOrMethod(bool isPremium) => true;
 
   /// Free users may only view the current month/year in calendar & history.
   static bool canViewAllPeriods(bool isPremium) => isPremium;

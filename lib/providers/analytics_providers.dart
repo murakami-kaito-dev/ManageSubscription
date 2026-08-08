@@ -18,7 +18,8 @@ extension AnalyticsAxisX on AnalyticsAxis {
         AnalyticsAxis.category => 'カテゴリー別',
         AnalyticsAxis.paymentMethod => '支払い方法別',
       };
-  bool get isPremium => this != AnalyticsAxis.subscription;
+  // Category/payment-method breakdown is free for everyone now.
+  bool get isPremium => false;
 }
 
 @immutable

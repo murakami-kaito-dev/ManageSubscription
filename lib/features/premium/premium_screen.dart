@@ -379,16 +379,20 @@ class _ReasonBanner extends StatelessWidget {
 class _ComparisonTable extends StatelessWidget {
   const _ComparisonTable();
 
+  // (feature, free, premium)
   static const _rows = [
-    ('サブスクリプション登録数', '${PremiumLimits.maxSubscriptions}', '∞'),
-    ('カテゴリー登録数', '${PremiumLimits.maxCategories}', '∞'),
-    ('支払い方法登録数', '${PremiumLimits.maxPaymentMethods}', '∞'),
-    ('支払い日前通知の設定数', '${PremiumLimits.maxNotifyRules}', '∞'),
-    ('全広告の非表示', '×', '✓'),
-    ('画像の登録', '×', '✓'),
-    ('CSVエクスポート / インポート', '×', '✓'),
-    ('カテゴリ/支払い方法別の分析', '×', '✓'),
-    ('全期間の閲覧', '×', '✓'),
+    ('サブスクの登録数', '${PremiumLimits.maxSubscriptions}件', '100件'),
+    ('カテゴリーの登録数', '${PremiumLimits.maxCategories}件', '無制限'),
+    ('支払い方法の登録数', '${PremiumLimits.maxPaymentMethods}件', '無制限'),
+    ('支払い前の通知ルール数', '無制限', '無制限'),
+    ('アイコン画像の登録', '×', '✓'),
+    ('CSVエクスポート', '×', '✓'),
+    ('CSVインポート', '×', '✓'),
+    ('分析：カテゴリー別／支払い方法別', '✓', '✓'),
+    ('カレンダー／履歴の閲覧範囲', '当月', '全期間'),
+    ('サブスク別の分析・ホーム・合計', '✓', '✓'),
+    ('並べ替え（自動ソート）', '✓', '✓'),
+    ('テーマカラー変更', '✓', '✓'),
   ];
 
   @override
@@ -442,31 +446,37 @@ class _ComparisonTable extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                      child: Text(_rows[i].$1, style: AppType.body(13.5))),
+                      child: Text(_rows[i].$1, style: AppType.body(13))),
                   SizedBox(
-                    width: 54,
-                    child: Text(_rows[i].$2,
-                        textAlign: TextAlign.center,
-                        style: AppType.body(14,
-                            weight: FontWeight.w700,
-                            color: AppColors.textMuted)),
-                  ),
+                      width: 56, child: _cell(context, _rows[i].$2, false)),
                   SizedBox(
-                    width: 84,
-                    child: Center(
-                      child: _rows[i].$3 == '∞'
-                          ? Icon(Icons.all_inclusive_rounded,
-                              color: AppAccent.of(context).primary, size: 22)
-                          : Icon(Icons.check_circle_rounded,
-                              color: AppAccent.of(context).primary, size: 22),
-                    ),
-                  ),
+                      width: 84, child: _cell(context, _rows[i].$3, true)),
                 ],
               ),
             ),
         ],
       ),
     );
+  }
+
+  /// A single value cell: ✓/× render as icons, everything else as text.
+  Widget _cell(BuildContext context, String v, bool premium) {
+    final accent = AppAccent.of(context);
+    if (v == '✓') {
+      return Center(
+          child: Icon(Icons.check_circle_rounded,
+              color: premium ? accent.primary : AppColors.textSecondary,
+              size: 20));
+    }
+    if (v == '×') {
+      return const Center(
+          child: Icon(Icons.remove_rounded, color: AppColors.textMuted, size: 18));
+    }
+    return Text(v,
+        textAlign: TextAlign.center,
+        style: AppType.body(12.5,
+            weight: FontWeight.w700,
+            color: premium ? accent.deep : AppColors.textMuted));
   }
 }
 

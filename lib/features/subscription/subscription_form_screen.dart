@@ -579,9 +579,10 @@ class _SubscriptionFormScreenState
                         onEdit: _editNotifyRule,
                         onRemove: (i) =>
                             setState(() => _notifyRules.removeAt(i)),
-                        onNeedPremium: () => PremiumScreen.show(context,
-                            reason:
-                                '無料版で設定できる通知は${PremiumLimits.maxNotifyRules}件までです。'),
+                        onNeedPremium: () => ScaffoldMessenger.of(context)
+                            .showSnackBar(const SnackBar(
+                                content: Text(
+                                    '通知は${PremiumLimits.maxNotifyRules}件までです。'))),
                       ),
                       const SectionHeader('メモ'),
                       _fieldCard(
