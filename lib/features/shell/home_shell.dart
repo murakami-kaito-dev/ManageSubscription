@@ -9,6 +9,7 @@ import '../analytics/analytics_screen.dart';
 import '../calendar/calendar_screen.dart';
 import '../history/history_screen.dart';
 import '../home/home_screen.dart';
+import '../premium/limit_gate.dart';
 import 'banner_ad_slot.dart';
 
 class HomeShell extends ConsumerStatefulWidget {
@@ -30,26 +31,29 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _index,
-        children: const [
-          HomeScreen(),
-          AnalyticsScreen(),
-          CalendarScreen(),
-          HistoryScreen(),
-        ],
-      ),
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const BannerAdSlot(),
-          _SoftNavBar(
-            index: _index,
-            tabs: _tabs,
-            onTap: (i) => setState(() => _index = i),
-          ),
-        ],
+    // LimitGate replaces the whole shell when a free user is over the limits.
+    return LimitGate(
+      child: Scaffold(
+        body: IndexedStack(
+          index: _index,
+          children: const [
+            HomeScreen(),
+            AnalyticsScreen(),
+            CalendarScreen(),
+            HistoryScreen(),
+          ],
+        ),
+        bottomNavigationBar: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const BannerAdSlot(),
+            _SoftNavBar(
+              index: _index,
+              tabs: _tabs,
+              onTap: (i) => setState(() => _index = i),
+            ),
+          ],
+        ),
       ),
     );
   }
