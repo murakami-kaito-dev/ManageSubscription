@@ -9,23 +9,18 @@ class Entitlement {
   const Entitlement({
     required this.isPremium,
     required this.kind,
-    required this.trialDaysLeft,
     required this.devUnlocked,
   });
 
-  /// True when every premium feature is unlocked (paid OR in trial OR dev).
+  /// True when every premium feature is unlocked (paid entitlement OR dev).
   final bool isPremium;
   final PlanKind kind;
-
-  /// Days remaining in the free trial (0 when not trialing).
-  final int trialDaysLeft;
   final bool devUnlocked;
-
-  bool get isTrialing => kind == PlanKind.trial;
 }
 
 /// Exposes premium access as a reactive bool used by every feature gate.
-/// Full access = a paid entitlement OR the 2-week free trial is still running.
+/// Full access = an active paid entitlement (subscription incl. its App Store
+/// free-trial period, or the one-time purchase). Fresh installs are free.
 /// Developer builds ([kDevUnlockAll]) always report premium.
 class PremiumNotifier extends Notifier<bool> {
   @override
@@ -61,14 +56,12 @@ final entitlementProvider = Provider<Entitlement>((ref) {
     return const Entitlement(
       isPremium: true,
       kind: PlanKind.lifetime,
-      trialDaysLeft: 0,
       devUnlocked: true,
     );
   }
   return Entitlement(
     isPremium: s.hasFullAccess,
     kind: s.currentPlan,
-    trialDaysLeft: s.isTrialActive ? s.trialDaysLeft : 0,
     devUnlocked: false,
   );
 });

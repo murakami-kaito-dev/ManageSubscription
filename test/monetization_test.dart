@@ -15,39 +15,22 @@ Future<PurchaseService> serviceWith(Map<String, Object> initial) async {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('fresh install → 2-week trial active, full access, no payment', () async {
+  test('fresh install → free plan, no premium access (no app-side trial)',
+      () async {
     final s = await serviceWith({});
-    expect(s.isTrialActive, isTrue);
     expect(s.hasPaid, isFalse);
-    expect(s.hasFullAccess, isTrue);
-    expect(s.currentPlan, PlanKind.trial);
-    expect(s.trialDaysLeft, inInclusiveRange(13, 14));
-  });
-
-  test('after the trial window with no purchase → free, no access', () async {
-    final longAgo = DateTime.now()
-        .subtract(const Duration(days: 20))
-        .millisecondsSinceEpoch;
-    final s = await serviceWith({'first_launch_ms': longAgo});
-    expect(s.isTrialActive, isFalse);
     expect(s.hasFullAccess, isFalse);
     expect(s.currentPlan, PlanKind.free);
-    expect(s.trialDaysLeft, 0);
   });
 
   test('purchasing a plan grants access and records the plan', () async {
-    final longAgo = DateTime.now()
-        .subtract(const Duration(days: 20))
-        .millisecondsSinceEpoch;
-    final s = await serviceWith({'first_launch_ms': longAgo});
+    final s = await serviceWith({});
 
     final ok = await s.purchase(PlanKind.monthly);
     expect(ok, isTrue);
     expect(s.hasPaid, isTrue);
     expect(s.hasFullAccess, isTrue);
     expect(s.currentPlan, PlanKind.monthly);
-    // Trial reads as inactive once paid (paid supersedes trial).
-    expect(s.isTrialActive, isFalse);
   });
 
   test('the free plan kind cannot be "purchased"', () async {

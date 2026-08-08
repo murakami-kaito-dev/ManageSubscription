@@ -198,15 +198,10 @@ class _TrialBanner extends StatelessWidget {
     final accent = AppAccent.of(context);
     final (IconData icon, String title, String body) =
         switch (entitlement.kind) {
-      PlanKind.trial => (
-          Icons.hourglass_bottom_rounded,
-          '無料体験中（残り${entitlement.trialDaysLeft}日）',
-          '体験終了後も使い続けるには、下からプランを選んでください。',
-        ),
       PlanKind.free => (
           Icons.lock_open_rounded,
-          '無料体験は終了しました',
-          'プランを選ぶと、すべての機能がまた使えます。',
+          '無料プランで利用中',
+          '月額・年額プランは2週間無料でお試しできます。',
         ),
       _ => (
           Icons.workspace_premium_rounded,

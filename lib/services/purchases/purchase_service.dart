@@ -26,7 +26,6 @@ class PurchaseService {
   static const String _apiKeyIos = 'appl_kEznevQmXbYglmMxSOHrKEPtfcr';
 
   static const String _paidKey = 'is_premium'; // paid entitlement flag
-  static const String _firstLaunchKey = 'first_launch_ms';
   static const String _planKey = 'plan_kind';
 
   /// Fires whenever the *paid* entitlement changes. Trial changes are
@@ -34,11 +33,6 @@ class PurchaseService {
   final ValueNotifier<bool> isPremium = ValueNotifier<bool>(false);
 
   Future<void> init() async {
-    // Record the first-launch timestamp once; it anchors the free trial.
-    if (!_prefs.containsKey(_firstLaunchKey)) {
-      await _prefs.setInt(
-          _firstLaunchKey, DateTime.now().millisecondsSinceEpoch);
-    }
     isPremium.value = _prefs.getBool(_paidKey) ?? false;
 
     if (!useRevenueCat) return;
@@ -55,27 +49,15 @@ class PurchaseService {
     }
   }
 
-  // ── Trial ──────────────────────────────────────────────────────────────
-  DateTime get trialStart => DateTime.fromMillisecondsSinceEpoch(
-      _prefs.getInt(_firstLaunchKey) ?? DateTime.now().millisecondsSinceEpoch);
-
-  DateTime get trialEnd => trialStart.add(Iap.trialDuration);
-
-  bool get isTrialActive => DateTime.now().isBefore(trialEnd) && !hasPaid;
-
-  int get trialDaysLeft {
-    final ms = trialEnd.difference(DateTime.now()).inMilliseconds;
-    if (ms <= 0) return 0;
-    return (ms / Duration.millisecondsPerDay).ceil();
-  }
-
   // ── Entitlement ────────────────────────────────────────────────────────
   bool get hasPaid => isPremium.value;
 
-  /// Full access = paid OR still in the free trial.
-  bool get hasFullAccess => hasPaid || isTrialActive;
+  /// Full access = an active paid entitlement. For subscriptions this includes
+  /// the App Store free-trial (intro offer) period, which RevenueCat reports as
+  /// active. Fresh installs are the free plan — there is no app-side trial.
+  bool get hasFullAccess => hasPaid;
 
-  /// The current plan for display. Paid plan wins; then trial; then free.
+  /// The current plan for display. Paid plan wins; otherwise free.
   PlanKind get currentPlan {
     if (hasPaid) {
       final name = _prefs.getString(_planKey);
@@ -84,7 +66,6 @@ class PurchaseService {
         orElse: () => PlanKind.lifetime,
       );
     }
-    if (isTrialActive) return PlanKind.trial;
     return PlanKind.free;
   }
 

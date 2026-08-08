@@ -336,49 +336,33 @@ class _PremiumBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Paid or trialing → an info banner (trial also nudges toward a plan).
+    // Paid → an info banner. Free → the upgrade promo (below).
     if (entitlement.isPremium) {
-      final trialing = entitlement.isTrialing;
-      final title = trialing
-          ? '無料体験中（残り${entitlement.trialDaysLeft}日）'
-          : '${entitlement.kind.label}をご利用中';
-      final body = trialing
-          ? '体験終了後も使うにはプランを選択してください'
-          : 'すべての機能をご利用いただけます';
-      return Pressable(
-        onTap: trialing ? () => PremiumScreen.show(context) : null,
-        child: Container(
-          margin: const EdgeInsets.only(top: AppSpacing.sm),
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: BoxDecoration(
-            color: AppAccent.of(context).soft,
-            borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                  trialing
-                      ? Icons.hourglass_bottom_rounded
-                      : Icons.workspace_premium_rounded,
-                  color: AppColors.gold,
-                  size: 28),
-              const Gap(AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: AppType.display(17)),
-                    Text(body,
-                        style: AppType.body(12,
-                            color: AppColors.textSecondary)),
-                  ],
-                ),
+      return Container(
+        margin: const EdgeInsets.only(top: AppSpacing.sm),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: AppAccent.of(context).soft,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.workspace_premium_rounded,
+                color: AppColors.gold, size: 28),
+            const Gap(AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${entitlement.kind.label}をご利用中',
+                      style: AppType.display(17)),
+                  Text('すべての機能をご利用いただけます',
+                      style:
+                          AppType.body(12, color: AppColors.textSecondary)),
+                ],
               ),
-              if (trialing)
-                const Icon(Icons.chevron_right_rounded,
-                    color: AppColors.textMuted),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     }
