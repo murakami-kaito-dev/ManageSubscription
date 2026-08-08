@@ -34,8 +34,14 @@ import '../settings/payment_method_settings_screen.dart';
 import 'widgets/cospa_preview.dart';
 
 class SubscriptionFormScreen extends ConsumerStatefulWidget {
-  const SubscriptionFormScreen({super.key, this.existing});
+  const SubscriptionFormScreen(
+      {super.key, this.existing, this.readOnly = false});
   final Subscription? existing;
+
+  /// Preview-only: everything is shown (incl. 詳細設定) but non-interactive and
+  /// there is no save button. Used to review an item before deleting it from
+  /// the over-limit gate.
+  final bool readOnly;
 
   @override
   ConsumerState<SubscriptionFormScreen> createState() =>
@@ -550,14 +556,46 @@ class _SubscriptionFormScreenState
           child: Column(
             children: [
               SoftHeader(
-                title: _isEdit ? '編集' : '新規追加',
+                title: widget.readOnly
+                    ? '内容を確認'
+                    : (_isEdit ? '編集' : '新規追加'),
                 leading: SoftIconButton(
                   icon: Icons.arrow_back_rounded,
                   onTap: () => Navigator.of(context).pop(),
                 ),
               ),
+              if (widget.readOnly)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.sm),
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: AppColors.coralSoft,
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.visibility_rounded,
+                          size: 18, color: AppColors.coral),
+                      const Gap(AppSpacing.sm),
+                      Expanded(
+                        child: Text('確認のみ・編集はできません（削除の判断用）',
+                            style: AppType.body(12.5,
+                                weight: FontWeight.w600,
+                                color: AppColors.textSecondary)),
+                      ),
+                    ],
+                  ),
+                ),
               Expanded(
-                child: Form(
+                // In preview mode grey the whole form out and block all input,
+                // so it's clear nothing here is editable.
+                child: IgnorePointer(
+                  ignoring: widget.readOnly,
+                  child: Opacity(
+                    opacity: widget.readOnly ? 0.55 : 1,
+                    child: Form(
                   key: _formKey,
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(
@@ -612,10 +650,10 @@ class _SubscriptionFormScreenState
                           onPressed: _delete,
                         ),
                       ],
-                      // ── 詳細設定（デフォルトは折りたたみ）──────────────────────
+                      // ── 詳細設定（デフォルトは折りたたみ。確認モードでは常に表示）──
                       const Gap(AppSpacing.lg),
                       _DetailsSection(
-                        expanded: _detailsExpanded,
+                        expanded: widget.readOnly || _detailsExpanded,
                         alwaysShow: alwaysShow,
                         onToggleExpand: () => setState(
                             () => _detailsExpanded = !_detailsExpanded),
@@ -644,8 +682,11 @@ class _SubscriptionFormScreenState
                     ],
                   ),
                 ),
+                  ),
+                ),
               ),
-              _SaveBar(onSave: _save, label: _isEdit ? '保存する' : '追加する'),
+              if (!widget.readOnly)
+                _SaveBar(onSave: _save, label: _isEdit ? '保存する' : '追加する'),
             ],
           ),
         ),

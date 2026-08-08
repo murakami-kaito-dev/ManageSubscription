@@ -15,6 +15,7 @@ import '../../data/models/payment_method.dart';
 import '../../data/models/subscription.dart';
 import '../../providers/premium_provider.dart';
 import '../../providers/subscription_providers.dart';
+import '../subscription/subscription_form_screen.dart';
 import 'premium_screen.dart';
 
 /// Wraps the app shell. When a **free** user holds more items than the free
@@ -106,6 +107,13 @@ class _GateScreen extends ConsumerWidget {
                       title: s.name,
                       trailingText:
                           CurrencyFormatter(s.currency).format(s.amount),
+                      // Tap the row to review details before deleting.
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => SubscriptionFormScreen(
+                              existing: s, readOnly: true),
+                        ),
+                      ),
                       onDelete: () => _confirmDelete(context, s.name,
                           () => ref
                               .read(subscriptionsProvider.notifier)
@@ -234,34 +242,49 @@ class _Row extends StatelessWidget {
     required this.leading,
     required this.title,
     required this.onDelete,
+    this.onTap,
     this.trailingText,
     this.canDelete = true,
   });
   final Widget leading;
   final String title;
   final VoidCallback onDelete;
+  final VoidCallback? onTap;
   final String? trailingText;
   final bool canDelete;
 
   @override
   Widget build(BuildContext context) {
+    final content = Row(
+      children: [
+        leading,
+        const Gap(AppSpacing.md),
+        Expanded(
+          child: Text(title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppType.body(14.5)),
+        ),
+        if (trailingText != null) ...[
+          Text(trailingText!,
+              style: AppType.body(13, color: AppColors.textMuted)),
+          const Gap(AppSpacing.sm),
+        ],
+      ],
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          leading,
-          const Gap(AppSpacing.md),
           Expanded(
-            child: Text(title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppType.body(14.5)),
+            child: onTap == null
+                ? content
+                : GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: onTap,
+                    child: content,
+                  ),
           ),
-          if (trailingText != null) ...[
-            Text(trailingText!,
-                style: AppType.body(13, color: AppColors.textMuted)),
-            const Gap(AppSpacing.sm),
-          ],
           if (canDelete)
             Pressable(
               onTap: onDelete,
