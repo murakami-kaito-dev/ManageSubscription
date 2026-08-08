@@ -199,7 +199,7 @@ class SettingsScreen extends ConsumerWidget {
                           label: 'シェア',
                           onTap: () => Share.share(
                               'サブスク家計簿で毎月の固定費を見える化しよう！\n'
-                              '${StoreLinks.shareLinks()}'),
+                              '${StoreLinks.shareUrl()}'),
                         ),
                         const _Div(),
                         _Row(
