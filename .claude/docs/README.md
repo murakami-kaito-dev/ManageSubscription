@@ -20,7 +20,8 @@
 - [rating-share.md](rating-share.md) — アプリ評価・レビュー誘導・共有
 
 ### 運用ガイド
-- [monetization_setup.md](monetization_setup.md) — 課金（App Store Connect / RevenueCat）本番化の手順
+- [monetization_setup.md](monetization_setup.md) — 課金（App Store Connect / RevenueCat）本番化の全体像・役割分担
+- [monetization_setup_guide.md](monetization_setup_guide.md) — 上記の**画面順クリックガイド**（あなたが操作する実行手順）
 - [testing/README.md](testing/README.md) ＋ [testing/test_cases.xlsx](testing/test_cases.xlsx) — テスト計画・テストケース一覧
 
 ## 開発の要点（すぐ効く前提）
