@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <application
-        android:label="サブスク管理"
+        android:label="サブスク家計簿"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <!-- AdMob application ID (Google test ID — replace before release). -->

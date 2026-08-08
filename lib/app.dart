@@ -16,7 +16,7 @@ class ManageSubscriptionApp extends ConsumerWidget {
     final accent = ref.watch(settingsProvider.select((s) => s.accent));
 
     return MaterialApp(
-      title: 'サブスク管理',
+      title: 'サブスク家計簿',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(accent: accent),
       // Japanese UI for the native date/time pickers and calendar.

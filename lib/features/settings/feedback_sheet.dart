@@ -55,7 +55,7 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
     if (text.isEmpty) return;
     setState(() => _sending = true);
 
-    const subject = 'サブスク管理 ご意見・ご要望';
+    const subject = 'サブスク家計簿 ご意見・ご要望';
 
     // Preferred: submit in-app (no leaving the app) to the form endpoint.
     if (_endpointConfigured) {
