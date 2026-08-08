@@ -14,13 +14,16 @@ import '../../core/monetization/iap.dart';
 /// Access model: full access = an active paid entitlement (subscription OR the
 /// one-time purchase) **or** the 2-week free trial is still running.
 class PurchaseService {
-  PurchaseService(this._prefs);
+  PurchaseService(this._prefs, {this.useRevenueCat = true});
   final SharedPreferences _prefs;
 
-  /// Set true and provide real keys to enable live billing.
-  static const bool useRevenueCat = false;
+  /// Live billing via RevenueCat. Defaults on (iOS is live). Tests pass false to
+  /// force the offline mock path. iOS uses the public SDK key below; Android
+  /// isn't distributed yet (see StoreLinks.androidDistribution) so its key stays
+  /// a placeholder.
+  final bool useRevenueCat;
   static const String _apiKeyAndroid = 'goog_YOUR_KEY';
-  static const String _apiKeyIos = 'appl_YOUR_KEY';
+  static const String _apiKeyIos = 'appl_kEznevQmXbYglmMxSOHrKEPtfcr';
 
   static const String _paidKey = 'is_premium'; // paid entitlement flag
   static const String _firstLaunchKey = 'first_launch_ms';

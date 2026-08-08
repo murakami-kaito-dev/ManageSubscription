@@ -6,7 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 Future<PurchaseService> serviceWith(Map<String, Object> initial) async {
   SharedPreferences.setMockInitialValues(initial);
   final prefs = await SharedPreferences.getInstance();
-  final s = PurchaseService(prefs);
+  // Force the offline mock path (no RevenueCat plugin in unit tests).
+  final s = PurchaseService(prefs, useRevenueCat: false);
   await s.init();
   return s;
 }
