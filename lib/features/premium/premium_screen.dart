@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,6 +37,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
   late final ConfettiController _confetti =
       ConfettiController(duration: const Duration(seconds: 2));
   bool _busy = false;
+  bool _introEligible = true; // still eligible for the 2-week free trial?
   PlanKind _selected = PlanKind.yearly; // best value pre-selected
   Map<PlanKind, String> _prices = const {
     PlanKind.lifetime: Iap.priceLifetime,
@@ -46,11 +49,17 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
   void initState() {
     super.initState();
     _loadPrices();
+    _loadEligibility();
   }
 
   Future<void> _loadPrices() async {
     final p = await ref.read(purchaseServiceProvider).loadPrices();
     if (mounted) setState(() => _prices = p);
+  }
+
+  Future<void> _loadEligibility() async {
+    final ok = await ref.read(purchaseServiceProvider).introTrialEligible();
+    if (mounted) setState(() => _introEligible = ok);
   }
 
   @override
@@ -166,6 +175,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
                   busy: _busy,
                   selected: _selected,
                   prices: _prices,
+                  introEligible: _introEligible,
                   onPurchase: _purchase,
                   onRestore: _restore,
                   onStayFree: () => Navigator.of(context).pop(),
@@ -380,14 +390,11 @@ class _ComparisonTable extends StatelessWidget {
     ('カテゴリーの登録数', '${PremiumLimits.maxCategories}件', '無制限'),
     ('支払い方法の登録数', '${PremiumLimits.maxPaymentMethods}件', '無制限'),
     ('支払い前の通知ルール数', '無制限', '無制限'),
-    ('アイコン画像の登録', '×', '✓'),
+    ('アイコン画像の登録', '✓', '✓'),
     ('CSVエクスポート', '×', '✓'),
     ('CSVインポート', '×', '✓'),
     ('分析：カテゴリー別／支払い方法別', '✓', '✓'),
     ('カレンダー／履歴の閲覧範囲', '当月', '全期間'),
-    ('サブスク別の分析・ホーム・合計', '✓', '✓'),
-    ('並べ替え（自動ソート）', '✓', '✓'),
-    ('テーマカラー変更', '✓', '✓'),
   ];
 
   @override
@@ -480,6 +487,7 @@ class _PurchaseBar extends StatelessWidget {
     required this.busy,
     required this.selected,
     required this.prices,
+    required this.introEligible,
     required this.onPurchase,
     required this.onRestore,
     required this.onStayFree,
@@ -487,15 +495,30 @@ class _PurchaseBar extends StatelessWidget {
   final bool busy;
   final PlanKind selected;
   final Map<PlanKind, String> prices;
+  final bool introEligible;
   final VoidCallback onPurchase;
   final VoidCallback onRestore;
   final VoidCallback onStayFree;
 
-  String get _cta => switch (selected) {
+  // Main button label — short so it never truncates.
+  String get _ctaMain => switch (selected) {
         PlanKind.lifetime => '${prices[PlanKind.lifetime]} で購入する',
-        PlanKind.monthly => '2週間無料で始める（その後 ${prices[PlanKind.monthly]}/月）',
-        PlanKind.yearly => '2週間無料で始める（その後 ${prices[PlanKind.yearly]}/年）',
+        PlanKind.monthly =>
+          introEligible ? '2週間無料で始める' : '${prices[PlanKind.monthly]}/月 で始める',
+        PlanKind.yearly =>
+          introEligible ? '2週間無料で始める' : '${prices[PlanKind.yearly]}/年 で始める',
         _ => '続ける',
+      };
+
+  // Caption under the button (full pricing detail, wraps freely).
+  String? get _ctaSub => switch (selected) {
+        PlanKind.monthly => introEligible
+            ? 'その後 ${prices[PlanKind.monthly]} / 月・いつでも解約できます'
+            : 'いつでも解約できます',
+        PlanKind.yearly => introEligible
+            ? 'その後 ${prices[PlanKind.yearly]} / 年・いつでも解約できます'
+            : 'いつでも解約できます',
+        _ => null,
       };
 
   @override
@@ -513,10 +536,18 @@ class _PurchaseBar extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           SoftButton(
-            label: busy ? '処理中…' : _cta,
+            label: busy ? '処理中…' : _ctaMain,
             icon: busy ? null : Icons.workspace_premium_rounded,
             onPressed: busy ? null : onPurchase,
           ),
+          if (!busy && _ctaSub != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(_ctaSub!,
+                  textAlign: TextAlign.center,
+                  style:
+                      AppType.body(11.5, color: AppColors.textSecondary)),
+            ),
           const Gap(AppSpacing.xs),
           Pressable(
             onTap: onStayFree,
@@ -559,7 +590,29 @@ class _PurchaseBar extends StatelessWidget {
       );
 }
 
-class _CelebrationDialog extends StatelessWidget {
+class _CelebrationDialog extends StatefulWidget {
+  @override
+  State<_CelebrationDialog> createState() => _CelebrationDialogState();
+}
+
+class _CelebrationDialogState extends State<_CelebrationDialog> {
+  Timer? _auto;
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-dismiss so the paywall closes on its own after a purchase.
+    _auto = Timer(const Duration(milliseconds: 1600), () {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
+
+  @override
+  void dispose() {
+    _auto?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(

@@ -174,10 +174,16 @@ class SettingsScreen extends ConsumerWidget {
                         _Row(
                           icon: Icons.help_outline_rounded,
                           label: 'CSVの書式・サンプル',
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (_) => const CsvImportHelpScreen()),
-                          ),
+                          premium: !isPremium,
+                          onTap: () {
+                            if (!isPremium) {
+                              PremiumScreen.show(context,
+                                  reason: 'CSVの機能はプレミアム限定です。');
+                              return;
+                            }
+                            Navigator.of(context).push(MaterialPageRoute(
+                                builder: (_) => const CsvImportHelpScreen()));
+                          },
                         ),
                       ],
                     ),

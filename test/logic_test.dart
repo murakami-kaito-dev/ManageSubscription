@@ -146,7 +146,6 @@ void main() {
     test('premium-only capabilities are gated', () {
       expect(PremiumLimits.canExportCsv(false), isFalse);
       expect(PremiumLimits.canExportCsv(true), isTrue);
-      expect(PremiumLimits.canAttachImage(false), isFalse);
       expect(PremiumLimits.canViewAllPeriods(false), isFalse);
     });
 
@@ -157,10 +156,11 @@ void main() {
       expect(PremiumLimits.canAddPaymentMethod(false, 5), isFalse);
     });
 
-    test('sorting, theme, and category/method breakdown are free', () {
+    test('sorting, theme, breakdown, and image are free', () {
       expect(PremiumLimits.canAutoSort(false), isTrue);
       expect(PremiumLimits.canChangeTheme(false), isTrue);
       expect(PremiumLimits.canBreakdownByCategoryOrMethod(false), isTrue);
+      expect(PremiumLimits.canAttachImage(false), isTrue);
     });
 
     test('notify-rule limit is unlimited for everyone', () {

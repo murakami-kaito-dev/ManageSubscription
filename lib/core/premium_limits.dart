@@ -29,8 +29,10 @@ class PremiumLimits {
   static int notifyRuleLimit(bool isPremium) => maxNotifyRules;
 
   // Pure premium-only capabilities.
-  static bool canAttachImage(bool isPremium) => isPremium;
   static bool canExportCsv(bool isPremium) => isPremium;
+
+  // Free for everyone now: attaching an icon image.
+  static bool canAttachImage(bool isPremium) => true;
 
   // Now free for everyone (per product decision): sorting, theme color, and
   // category/payment-method breakdown analytics.

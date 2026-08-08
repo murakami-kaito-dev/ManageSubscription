@@ -121,6 +121,24 @@ class PurchaseService {
     }
   }
 
+  /// Whether the user is still eligible for the subscriptions' 2-week free
+  /// trial (App Store intro offer). Apple grants it once per subscription group
+  /// per Apple ID, so a returning subscriber is ineligible. Best-effort: on the
+  /// mock path or any error we assume eligible (Apple still enforces the real
+  /// rule at purchase time).
+  Future<bool> introTrialEligible() async {
+    if (!useRevenueCat) return true;
+    try {
+      final map = await Purchases.checkTrialOrIntroductoryPriceEligibility(
+          [Iap.monthlyId, Iap.yearlyId]);
+      return map.values.any((e) =>
+          e.status == IntroEligibilityStatus.introEligibilityStatusEligible ||
+          e.status == IntroEligibilityStatus.introEligibilityStatusUnknown);
+    } catch (_) {
+      return true;
+    }
+  }
+
   Future<bool> restore() async {
     if (!useRevenueCat) return hasPaid;
     try {

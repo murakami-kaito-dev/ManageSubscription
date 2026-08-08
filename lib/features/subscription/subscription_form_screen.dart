@@ -254,10 +254,6 @@ class _SubscriptionFormScreenState
   }
 
   Future<void> _pickImage({required bool fromCamera}) async {
-    if (!ref.read(premiumProvider)) {
-      PremiumScreen.show(context, reason: '画像の登録はプレミアム機能です。');
-      return;
-    }
     setState(() => _pickingImage = true);
     try {
       final path = await ref
