@@ -47,3 +47,7 @@ app.*.map.json
 /ios/AuthKey_*.p8
 /ios/AppStoreConnect*.json
 /ios/AppStoreConnectKeyIdIssuerId.json
+
+# Project-local, git-excluded working files (screenshots, setup notes, private records).
+# Managed via the /keep-local slash command.
+/.local/
