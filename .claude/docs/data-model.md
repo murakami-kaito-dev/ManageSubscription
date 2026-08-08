@@ -34,10 +34,10 @@
 
 ## テーブル: categories / payment_methods
 `Category` / `PaymentMethod`: id, name, icon(codePoint), color(int), sort_order, is_built_in。
-無料枠の上限は `PremiumLimits`（カテゴリ3 / 支払い方法3）。
+無料枠の上限は `PremiumLimits`（カテゴリ**5** / 支払い方法**5**、プレミアムは無制限）。
 
 ## NotifyRule
-`NotifyRule(daysBefore, hour=9, minute=0)`。「支払日の N 日前 HH:MM」。`encode/decode` で TEXT 保存。無料枠は1件（`PremiumLimits.maxNotifyRules`）。
+`NotifyRule(daysBefore, hour=9, minute=0)`。「支払日の N 日前 HH:MM」。`encode/decode` で TEXT 保存。**通知ルールは全ユーザー無制限**（`PremiumLimits.notifyRuleLimit` は誰でも `maxNotifyRules`=99）。
 
 ## AppSettings（SharedPreferences）
 `settingsProvider`。主なキー: メイン通貨、テーマ色(accent int)、通知ON(`settings_notify`)、詳細常時表示、停止中表示、並べ替えモード(`SortMode`)。

@@ -48,14 +48,19 @@
 
 ## 設定（`features/settings/settings_screen.dart`）
 - フルスクリーンダイアログ。閉じる×は**右上**（開く歯車と同じ側）
-- プレミアムバナー: 試用残日数 or 現在プラン。無料時はペイウォール誘導
+- プレミアムバナー: 現在プラン（有料時）。無料時はペイウォール誘導（試用カウントダウンは無し＝インストール直後は無料プラン）
 - 「設定」: 通知ON/OFF、メイン通貨、テーマカラー（3列固定グリッド）、CSVエクスポート、CSVから読み込み、CSVの書式・サンプル
 - 「アプリ」: このアプリを応援する（ストア評価）、シェア（ストアURL入り）、ご意見・ご要望（`feedback_sheet`）
 - 版数長押しでデバッグ: プレミアム切替
 
 ## ペイウォール（`features/premium/premium_screen.dart`）
-- 3プラン選択（年額おすすめ/月額/買い切り）＋試用状況バナー。購入/復元/利用規約/プライバシーポリシー
-- 詳細は [monetization.md](monetization.md)
+- 閉じる **✗ は右上**（設定画面と統一）。Hero は実アプリアイコン（`assets/icon/icon.png`）
+- 3プラン選択（年額おすすめ/月額/買い切り）＋状態バナー（無料 or 現プラン）＋無料/プレミアム比較表。購入/復元/利用規約/プライバシーポリシー
+- サブスクは「2週間無料で始める」（App Store 導入オファー）。詳細は [monetization.md](monetization.md)
+
+## 上限超過ロック（`features/premium/limit_gate.dart`）
+- 無料ユーザーが上限超過アイテムを持つ場合、シェル全体を「整理 or アップグレード」画面に置換。
+  その場で削除／プレミアム登録／復元でき、上限内に戻れば自動解除（[monetization.md](monetization.md)）
 
 ## CSVインポート関連
 - プレビュー画面 `csv_import_screen.dart`、書式ヘルプ `features/csv/csv_import_help_screen.dart`。詳細は [csv-import.md](csv-import.md)
