@@ -37,19 +37,6 @@ Future<void> main() async {
   if (kAdsEnabled) await AdService.instance.init();
   await NotificationService.instance.init();
 
-  // Ensure reminders are (re)scheduled on every launch — otherwise seeded or
-  // previously-added subscriptions would never schedule until the user edits
-  // one. Request permission first when notifications are enabled.
-  final notifyEnabled = prefs.getBool('settings_notify') ?? true;
-  if (notifyEnabled) {
-    await NotificationService.instance.requestPermission();
-  }
-  try {
-    final subs = await SubscriptionRepository(db).getAll();
-    await NotificationService.instance
-        .rescheduleAll(subs, enabled: notifyEnabled);
-  } catch (_) {/* best-effort */}
-
   runApp(
     ProviderScope(
       overrides: [
@@ -60,4 +47,20 @@ Future<void> main() async {
       child: const ManageSubscriptionApp(),
     ),
   );
+
+  // Reschedule reminders OFF the launch critical path: requesting permission,
+  // loading all rows and scheduling one OS notification per subscription are
+  // O(item count) platform round-trips (plus a temp-image copy each). Doing
+  // this after runApp keeps startup fast even with a large library.
+  final notifyEnabled = prefs.getBool('settings_notify') ?? true;
+  if (notifyEnabled) {
+    Future(() async {
+      try {
+        await NotificationService.instance.requestPermission();
+        final subs = await SubscriptionRepository(db).getAll();
+        await NotificationService.instance
+            .rescheduleAll(subs, enabled: notifyEnabled);
+      } catch (_) {/* best-effort */}
+    });
+  }
 }

@@ -19,6 +19,7 @@ import '../../providers/subscription_providers.dart';
 import '../premium/premium_screen.dart';
 import '../settings/settings_screen.dart';
 import '../subscription/subscription_form_screen.dart';
+import 'home_selection_provider.dart';
 import 'subscription_settings_sheet.dart';
 import 'widgets/subscription_tile.dart';
 
@@ -27,8 +28,26 @@ class HomeScreen extends ConsumerWidget {
 
   void _openForm(BuildContext context, WidgetRef ref, {Subscription? existing}) {
     if (existing == null) {
-      final isPremium = ref.read(premiumProvider);
       final count = ref.read(subscriptionCountProvider);
+      // Silent hard cap (100 for everyone): only warn on the attempt to exceed.
+      if (!PremiumLimits.underHardMax(count)) {
+        showDialog<void>(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('これ以上は登録できません'),
+            content: const Text(
+                '登録できるサブスクは${PremiumLimits.hardMaxSubscriptions}件までです。'
+                '不要なものを削除してから追加してください。'),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK')),
+            ],
+          ),
+        );
+        return;
+      }
+      final isPremium = ref.read(premiumProvider);
       if (!PremiumLimits.canAddSubscription(isPremium, count)) {
         PremiumScreen.show(
           context,
@@ -48,26 +67,47 @@ class HomeScreen extends ConsumerWidget {
     final asyncSubs = ref.watch(subscriptionsProvider);
     final visible = ref.watch(visibleSubscriptionsProvider);
     final settings = ref.watch(settingsProvider);
+    final selection = ref.watch(homeSelectionProvider);
+    final selectionCtrl = ref.read(homeSelectionProvider.notifier);
+
+    final allVisibleSelected = visible.isNotEmpty &&
+        visible.every((s) => selection.ids.contains(s.id));
 
     return Scaffold(
-      floatingActionButton: _AddFab(onTap: () => _openForm(context, ref)),
+      floatingActionButton:
+          selection.active ? null : _AddFab(onTap: () => _openForm(context, ref)),
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
-            SoftHeader(
-              title: 'サブスクリプション',
-              // Menu (three dots) on the LEFT, settings gear on the RIGHT.
-              leading: SoftIconButton(
-                icon: Icons.more_horiz_rounded,
-                onTap: () => showSubscriptionSettingsSheet(context),
+            if (selection.active)
+              SoftHeader(
+                title: '${selection.count}件を選択',
+                leading: SoftIconButton(
+                  icon: Icons.close_rounded,
+                  onTap: selectionCtrl.exit,
+                ),
+                trailing: _TextAction(
+                  label: allVisibleSelected ? '全解除' : '全選択',
+                  onTap: () => allVisibleSelected
+                      ? selectionCtrl.clear()
+                      : selectionCtrl.selectAll(visible.map((s) => s.id)),
+                ),
+              )
+            else
+              SoftHeader(
+                title: 'サブスクリプション',
+                // Menu (three dots) on the LEFT, settings gear on the RIGHT.
+                leading: SoftIconButton(
+                  icon: Icons.more_horiz_rounded,
+                  onTap: () => showSubscriptionSettingsSheet(context),
+                ),
+                onSettings: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    fullscreenDialog: true,
+                    builder: (_) => const SettingsScreen()),
+                ),
               ),
-              onSettings: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  fullscreenDialog: true,
-                  builder: (_) => const SettingsScreen()),
-              ),
-            ),
             Expanded(
               child: asyncSubs.when(
                 loading: () =>
@@ -92,12 +132,18 @@ class HomeScreen extends ConsumerWidget {
                     padding: const EdgeInsets.fromLTRB(
                         AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 120),
                     children: [
-                      _SummaryCard(active: active),
-                      const Gap(AppSpacing.lg),
+                      if (!selection.active) ...[
+                        _SummaryCard(active: active),
+                        const Gap(AppSpacing.lg),
+                      ],
                       _ListBody(
                         visible: visible,
                         manualSort: settings.sortMode == SortMode.manual,
-                        onTapTile: (s) => _openForm(context, ref, existing: s),
+                        selectionActive: selection.active,
+                        selectedIds: selection.ids,
+                        onTapTile: (s) => selection.active
+                            ? selectionCtrl.toggle(s.id)
+                            : _openForm(context, ref, existing: s),
                         onReorder: (list) =>
                             ref.read(subscriptionsProvider.notifier).reorder(list),
                       ),
@@ -106,8 +152,79 @@ class HomeScreen extends ConsumerWidget {
                 },
               ),
             ),
+            if (selection.active)
+              _DeleteBar(
+                count: selection.count,
+                onDelete: () => _confirmBulkDelete(context, ref, selection.ids),
+              ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _confirmBulkDelete(
+      BuildContext context, WidgetRef ref, Set<String> ids) async {
+    if (ids.isEmpty) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('${ids.length}件を削除しますか？'),
+        content: const Text('選択したサブスクを削除します。この操作は取り消せません。'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('キャンセル')),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('削除', style: TextStyle(color: AppColors.danger))),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await ref.read(subscriptionsProvider.notifier).deleteMany(ids.toList());
+    ref.read(homeSelectionProvider.notifier).exit();
+    if (context.mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('${ids.length}件を削除しました')));
+    }
+  }
+}
+
+class _TextAction extends StatelessWidget {
+  const _TextAction({required this.label, required this.onTap});
+  final String label;
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) {
+    return Pressable(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: Text(label,
+            style: AppType.body(14,
+                weight: FontWeight.w700, color: AppAccent.of(context).deep)),
+      ),
+    );
+  }
+}
+
+/// Bottom action bar shown in selection mode.
+class _DeleteBar extends StatelessWidget {
+  const _DeleteBar({required this.count, required this.onDelete});
+  final int count;
+  final VoidCallback onDelete;
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg,
+          AppSpacing.md + MediaQuery.of(context).padding.bottom),
+      decoration: const BoxDecoration(color: AppColors.canvas),
+      child: SoftButton(
+        label: count > 0 ? '$count件を削除' : '削除する項目を選択',
+        icon: count > 0 ? Icons.delete_outline_rounded : null,
+        kind: SoftButtonKind.danger,
+        onPressed: count > 0 ? onDelete : null,
       ),
     );
   }
@@ -214,17 +331,37 @@ class _ListBody extends StatelessWidget {
   const _ListBody({
     required this.visible,
     required this.manualSort,
+    required this.selectionActive,
+    required this.selectedIds,
     required this.onTapTile,
     required this.onReorder,
   });
 
   final List<Subscription> visible;
   final bool manualSort;
+  final bool selectionActive;
+  final Set<String> selectedIds;
   final void Function(Subscription) onTapTile;
   final void Function(List<Subscription>) onReorder;
 
   @override
   Widget build(BuildContext context) {
+    // Selection mode: a plain, non-reorderable list with a check per tile.
+    if (selectionActive) {
+      return Column(
+        children: [
+          for (final s in visible)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
+              child: _SelectableTile(
+                sub: s,
+                selected: selectedIds.contains(s.id),
+                onTap: () => onTapTile(s),
+              ),
+            ),
+        ],
+      );
+    }
     if (manualSort) {
       return ReorderableListView.builder(
         shrinkWrap: true,
@@ -264,6 +401,38 @@ class _ListBody extends StatelessWidget {
             child: SubscriptionTile(sub: s, onTap: () => onTapTile(s)),
           ),
       ],
+    );
+  }
+}
+
+/// A subscription tile with a leading checkbox for multi-select. Tapping
+/// anywhere toggles selection (the tile itself doesn't handle the tap).
+class _SelectableTile extends StatelessWidget {
+  const _SelectableTile(
+      {required this.sub, required this.selected, required this.onTap});
+  final Subscription sub;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = AppAccent.of(context);
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(
+            selected
+                ? Icons.check_circle_rounded
+                : Icons.radio_button_unchecked_rounded,
+            color: selected ? accent.primary : AppColors.textMuted,
+            size: 26,
+          ),
+          const Gap(AppSpacing.sm),
+          Expanded(child: IgnorePointer(child: SubscriptionTile(sub: sub))),
+        ],
+      ),
     );
   }
 }

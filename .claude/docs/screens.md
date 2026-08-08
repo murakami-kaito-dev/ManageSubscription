@@ -14,6 +14,8 @@
 - サブスク一覧: `SubscriptionTile`（アイコン=`SubscriptionAvatar`、名称、次回支払日、金額/周期、支払いまで残日数、下部にゲージ=`periodProgress`）
 - タップ→編集画面（`SubscriptionFormScreen(existing:)`）。右下 FAB→新規追加
 - 並べ替え/停止表示は「…」シート（`subscription_settings_sheet.dart`）で設定
+- **登録上限（サイレント）**: 合計100件（`PremiumLimits.hardMaxSubscriptions`）。UIに事前表記はせず、101件目を追加しようとした瞬間だけ警告ダイアログ。無料枠ゲート（`maxSubscriptions=8`）より前にチェック
+- **複数選択・一括削除**: 「…」シートの「選択して削除」で選択モードに入る（状態は `home_selection_provider.dart`）。選択モード中はヘッダーが「N件を選択」に変わり、左=閉じる（`exit`）、右=全選択/全解除。各行は先頭チェック付きの `_SelectableTile`（タップでトグル・並べ替え/合計カードは非表示）。下部の `_DeleteBar`（危険色）でまとめて削除→確認ダイアログ→`SubscriptionsNotifier.deleteMany`
 
 ## 分析（`features/analytics/analytics_screen.dart`）
 - 月間/年間タブ（下線式）。軸セレクタ: サブスク別 / カテゴリー別 / 支払い方法別（後2つはプレミアム）
@@ -60,4 +62,5 @@
 
 ## サブスクリプション設定シート（`subscription_settings_sheet.dart`）
 - ホームの「…」から開くボトムシート。閉じ×は**左上**、タイトル中央
-- 表示（停止中を表示）/ 管理（カテゴリー・支払い方法・停止中一覧）/ 並べ替え
+- 表示（停止中を表示）/ 管理（**選択して削除**・カテゴリー・支払い方法・停止中一覧）/ 並べ替え
+- 「選択して削除」→シートを閉じてホームを選択モードに（`homeSelectionProvider.enter()`）

@@ -37,6 +37,16 @@ class SubscriptionRepository {
     await _db.delete('subscriptions', where: 'id = ?', whereArgs: [id]);
   }
 
+  /// Batch-delete many subscriptions by id (bulk delete).
+  Future<void> deleteMany(List<String> ids) async {
+    if (ids.isEmpty) return;
+    final batch = _db.batch();
+    for (final id in ids) {
+      batch.delete('subscriptions', where: 'id = ?', whereArgs: [id]);
+    }
+    await batch.commit(noResult: true);
+  }
+
   Future<void> setPaused(String id, bool paused) async {
     await _db.update('subscriptions', {'is_paused': paused ? 1 : 0},
         where: 'id = ?', whereArgs: [id]);

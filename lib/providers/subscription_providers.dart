@@ -36,6 +36,15 @@ class SubscriptionsNotifier extends AsyncNotifier<List<Subscription>> {
     _reschedule();
   }
 
+  /// Deletes many subscriptions at once (bulk delete).
+  Future<void> deleteMany(List<String> ids) async {
+    if (ids.isEmpty) return;
+    await ref.read(subscriptionRepositoryProvider).deleteMany(ids);
+    ref.invalidateSelf();
+    await future;
+    _reschedule();
+  }
+
   Future<void> setPaused(String id, bool paused) async {
     await ref.read(subscriptionRepositoryProvider).setPaused(id, paused);
     ref.invalidateSelf();

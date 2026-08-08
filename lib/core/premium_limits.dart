@@ -8,6 +8,15 @@ class PremiumLimits {
   static const int maxPaymentMethods = 3;
   static const int maxNotifyRules = 1;
 
+  /// Hard ceiling on total subscriptions for EVERYONE (incl. premium/trial).
+  /// A large number of items makes startup notification rescheduling and list
+  /// rendering blow up; 100 keeps the app responsive. Silent — no UI hint;
+  /// only alerts when the user tries to exceed it.
+  static const int hardMaxSubscriptions = 100;
+
+  /// True when another subscription may be added without hitting the hard cap.
+  static bool underHardMax(int current) => current < hardMaxSubscriptions;
+
   // Feature gates (true = allowed only for premium).
   static bool canAddSubscription(bool isPremium, int current) =>
       isPremium || current < maxSubscriptions;

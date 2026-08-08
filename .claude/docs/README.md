@@ -36,3 +36,4 @@
   ```
   （端末からアプリを一度アンインストールすれば、次の `flutter run` で DB 空＝初期シードのみになります）
 - 金額上限: 1アイテム **¥100,000,000（1億）**（`kMaxAmount`）
+- 登録上限: 全ユーザー **100件**（`PremiumLimits.hardMaxSubscriptions`、サイレント制限）。パフォーマンス（起動コスト）保護も兼ねる — [architecture.md](architecture.md) の「起動コストとスケール」参照

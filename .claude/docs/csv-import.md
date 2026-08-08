@@ -13,6 +13,11 @@
 2. `parse(content, {categoryNameToId, methodNameToId, startSortOrder})` → `CsvImportResult`
 3. `CsvImportPreviewScreen` で確認 → `subscriptionsProvider.saveAll(valid)`
 
+### 100件上限との整合
+確定時に現在件数と合わせて **100件（`PremiumLimits.hardMaxSubscriptions`）** を超えないよう制御。
+残り枠が0なら取り込み不可のダイアログ、残りが正なら先頭から残り枠ぶんだけ保存し、あふれた分は
+スキップ件数を SnackBar で通知する（部分取り込み）。
+
 ### 必須列
 `サービス名 / 金額 / 通貨 / 周期 / 初回支払日`。欠けると**ファイル全体を拒否**（`fatal`）。
 

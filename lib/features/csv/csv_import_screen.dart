@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/premium_limits.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
@@ -32,12 +33,41 @@ class _CsvImportPreviewScreenState
   Future<void> _import() async {
     final valid = widget.result.valid;
     if (valid.isEmpty || _saving) return;
+
+    // Respect the 100-item hard cap: import only up to the remaining slots.
+    final current = ref.read(subscriptionCountProvider);
+    final remaining = PremiumLimits.hardMaxSubscriptions - current;
+    if (remaining <= 0) {
+      await showDialog<void>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('取り込めません'),
+          content: const Text('登録できるサブスクは'
+              '${PremiumLimits.hardMaxSubscriptions}件までです。'
+              '不要なものを削除してからお試しください。'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK')),
+          ],
+        ),
+      );
+      return;
+    }
+    final toSave =
+        valid.length > remaining ? valid.sublist(0, remaining) : valid;
+    final skipped = valid.length - toSave.length;
+
     setState(() => _saving = true);
-    await ref.read(subscriptionsProvider.notifier).saveAll(valid);
+    await ref.read(subscriptionsProvider.notifier).saveAll(toSave);
     if (!mounted) return;
     Navigator.of(context).pop();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${valid.length}件を追加しました')),
+      SnackBar(
+        content: Text(skipped > 0
+            ? '${toSave.length}件を追加しました（上限${PremiumLimits.hardMaxSubscriptions}件のため$skipped件は取り込めませんでした）'
+            : '${toSave.length}件を追加しました'),
+      ),
     );
   }
 

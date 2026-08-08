@@ -13,6 +13,7 @@ import '../../providers/settings_provider.dart';
 import '../settings/category_settings_screen.dart';
 import '../settings/payment_method_settings_screen.dart';
 import '../settings/paused_subscriptions_screen.dart';
+import 'home_selection_provider.dart';
 
 Future<void> showSubscriptionSettingsSheet(BuildContext context) {
   return showModalBottomSheet<void>(
@@ -82,6 +83,15 @@ class _SubscriptionSettingsSheet extends ConsumerWidget {
             ]),
             const SectionHeader('管理'),
             _Card(children: [
+              _NavRow(
+                icon: Icons.checklist_rounded,
+                label: '選択して削除',
+                onTap: () {
+                  Navigator.of(context).pop();
+                  ref.read(homeSelectionProvider.notifier).enter();
+                },
+              ),
+              const _Divider(),
               _NavRow(
                 icon: Icons.folder_rounded,
                 label: 'カテゴリー設定',
