@@ -192,85 +192,89 @@ class _PaymentMethodEditorDialogState extends State<PaymentMethodEditorDialog> {
           borderRadius: BorderRadius.circular(AppSpacing.radiusCard)),
       title: Text(widget.existing == null ? '支払い方法を追加' : '支払い方法を編集',
           style: AppType.display(19)),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: _name,
-            enabled: widget.nameEditable,
-            decoration: InputDecoration(
-              labelText: '名前',
-              errorText: _error,
-              helperText:
-                  widget.nameEditable ? null : '既定の支払い方法名は変更できません',
+      // Scrollable so a validation error (which adds height) reflows the whole
+      // body instead of overflowing the icon/color grid onto the action buttons.
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _name,
+              enabled: widget.nameEditable,
+              decoration: InputDecoration(
+                labelText: '名前',
+                errorText: _error,
+                helperText:
+                    widget.nameEditable ? null : '既定の支払い方法名は変更できません',
+              ),
+              onChanged: (_) {
+                if (_error != null) setState(() => _error = null);
+              },
             ),
-            onChanged: (_) {
-              if (_error != null) setState(() => _error = null);
-            },
-          ),
-          const Gap(AppSpacing.lg),
-          const SectionHeader('アイコン'),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final ic in _icons)
-                Pressable(
-                  scale: 0.85,
-                  onTap: () => setState(() => _icon = ic.codePoint),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: _icon == ic.codePoint
-                          ? Color(_color).withOpacity(0.2)
-                          : AppColors.surfaceSunken,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
+            const Gap(AppSpacing.lg),
+            const SectionHeader('アイコン'),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final ic in _icons)
+                  Pressable(
+                    scale: 0.85,
+                    onTap: () => setState(() => _icon = ic.codePoint),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
                         color: _icon == ic.codePoint
-                            ? Color(_color)
-                            : Colors.transparent,
-                        width: 2,
+                            ? Color(_color).withOpacity(0.2)
+                            : AppColors.surfaceSunken,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _icon == ic.codePoint
+                              ? Color(_color)
+                              : Colors.transparent,
+                          width: 2,
+                        ),
                       ),
+                      child: Icon(ic,
+                          size: 20,
+                          color: _icon == ic.codePoint
+                              ? Color(_color)
+                              : AppColors.textSecondary),
                     ),
-                    child: Icon(ic,
-                        size: 20,
-                        color: _icon == ic.codePoint
-                            ? Color(_color)
-                            : AppColors.textSecondary),
                   ),
-                ),
-            ],
-          ),
-          const Gap(AppSpacing.lg),
-          const SectionHeader('アイコンカラー'),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              for (final col in AppColors.chartPalette)
-                Pressable(
-                  scale: 0.85,
-                  onTap: () => setState(() => _color = col.value),
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: col,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: _color == col.value
-                            ? AppColors.textPrimary
-                            : Colors.transparent,
-                        width: 3,
+              ],
+            ),
+            const Gap(AppSpacing.lg),
+            const SectionHeader('アイコンカラー'),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                for (final col in AppColors.chartPalette)
+                  Pressable(
+                    scale: 0.85,
+                    onTap: () => setState(() => _color = col.value),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: col,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: _color == col.value
+                              ? AppColors.textPrimary
+                              : Colors.transparent,
+                          width: 3,
+                        ),
                       ),
                     ),
                   ),
-                ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(

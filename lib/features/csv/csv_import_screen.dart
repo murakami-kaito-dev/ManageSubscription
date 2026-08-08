@@ -43,26 +43,19 @@ class _CsvImportPreviewScreenState
   bool _needsSelection(int remaining) =>
       remaining > 0 && widget.result.validCount > remaining;
 
-  void _toggle(String id, int remaining) {
-    if (_selectedIds.contains(id)) {
-      setState(() => _selectedIds.remove(id));
-      return;
-    }
-    if (_selectedIds.length >= remaining) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('選択できるのは最大$remaining件です')),
-      );
-      return;
-    }
-    setState(() => _selectedIds.add(id));
+  void _toggle(String id) {
+    setState(() {
+      if (!_selectedIds.remove(id)) _selectedIds.add(id);
+    });
   }
 
-  /// Select as many as allowed (the first `remaining` rows). "全解除" clears.
-  void _selectAll(int remaining) {
+  /// Select EVERY valid row — even beyond the cap. The import button then stays
+  /// disabled until the user trims the selection down to the free slots.
+  void _selectAll() {
     setState(() {
       _selectedIds
         ..clear()
-        ..addAll(widget.result.valid.take(remaining).map((s) => s.id));
+        ..addAll(widget.result.valid.map((s) => s.id));
     });
   }
 
@@ -92,10 +85,11 @@ class _CsvImportPreviewScreenState
       return;
     }
 
-    // If everything fits, import all. Otherwise import only the user's picks.
+    // If everything fits, import all. Otherwise import only the user's picks —
+    // but never more than the free slots (the button is disabled past that).
     final List<Subscription> toSave;
     if (_needsSelection(remaining)) {
-      if (_selectedIds.isEmpty) return;
+      if (_selectedIds.isEmpty || _selectedIds.length > remaining) return;
       toSave = valid.where((s) => _selectedIds.contains(s.id)).toList();
     } else {
       toSave = valid;
@@ -118,7 +112,8 @@ class _CsvImportPreviewScreenState
     final selecting = _needsSelection(remaining);
     final full = remaining <= 0;
     final importCount = selecting ? _selectedIds.length : r.validCount;
-    final canImport = !full && !_saving && importCount > 0;
+    final overCap = selecting && importCount > remaining;
+    final canImport = !full && !_saving && importCount > 0 && !overCap;
 
     return Scaffold(
       body: SafeArea(
@@ -164,7 +159,7 @@ class _CsvImportPreviewScreenState
                         _SelectionBar(
                           remaining: remaining,
                           selected: _selectedIds.length,
-                          onSelectAll: () => _selectAll(remaining),
+                          onSelectAll: _selectAll,
                           onClear: _clearAll,
                         )
                       else
@@ -180,9 +175,7 @@ class _CsvImportPreviewScreenState
                             s,
                             selecting: selecting,
                             selected: _selectedIds.contains(s.id),
-                            onTap: selecting
-                                ? () => _toggle(s.id, remaining)
-                                : null,
+                            onTap: selecting ? () => _toggle(s.id) : null,
                           ),
                         ),
                     ],
@@ -218,9 +211,11 @@ class _CsvImportPreviewScreenState
                       : full
                           ? 'これ以上追加できません（上限${PremiumLimits.hardMaxSubscriptions}件）'
                           : selecting
-                              ? (importCount > 0
-                                  ? '$importCount件を取り込む'
-                                  : '取り込む項目を選択してください')
+                              ? (importCount == 0
+                                  ? '取り込む項目を選択してください'
+                                  : overCap
+                                      ? '選択を$remaining件以下にしてください'
+                                      : '$importCount件を取り込む')
                               : (r.validCount > 0
                                   ? '${r.validCount}件を取り込む'
                                   : '取り込める項目がありません'),
@@ -304,11 +299,12 @@ class _SelectionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final over = selected > remaining;
     return SoftCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('取り込む項目を選択', style: AppType.display(15)),
+          Text('⚠️取り込む項目を選択', style: AppType.display(15)),
           const Gap(AppSpacing.xs),
           Text(
             '登録できるのは合計${PremiumLimits.hardMaxSubscriptions}件までです。'
@@ -322,8 +318,11 @@ class _SelectionBar extends StatelessWidget {
               TextButton(onPressed: onSelectAll, child: const Text('全選択')),
               TextButton(onPressed: onClear, child: const Text('全解除')),
               const Spacer(),
+              // e.g. "120 / 97" — turns red when the pick exceeds the free slots.
               Text('$selected / $remaining',
-                  style: AppType.body(13, weight: FontWeight.w700)),
+                  style: AppType.body(13,
+                      weight: FontWeight.w700,
+                      color: over ? AppColors.danger : null)),
             ],
           ),
         ],
