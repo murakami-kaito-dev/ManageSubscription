@@ -86,6 +86,12 @@ RevenueCat が Apple のレシートを検証するために必要です。**推
 
 ## パート B：RevenueCat ダッシュボード（無料枠でOK）
 
+> **役割分担**：B-1（アカウント/プロジェクト作成・App追加・App Store 鍵の登録）は
+> **本人のみ**（ログイン・秘密情報の入力のため Claude 代行不可）。
+> B-2〜B-4（Entitlement `premium`・Products 紐付け・Offering `default`）は、
+> RevenueCat の **Secret API key（v2）を Claude に渡せば API で代行可能**。UIで自分でやってもOK。
+> アプリに埋める **Public SDK key（`appl_...`）** は必ず Claude に渡すこと（`useRevenueCat=true` 化に必要）。
+
 ### B-1. プロジェクトと App
 1. RevenueCat にサインアップ → **Project を作成**。
 2. **＋ New app（App Store）** → **App name** 任意、**App Bundle ID**＝`com.submana.app`。
