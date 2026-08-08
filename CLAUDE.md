@@ -39,7 +39,8 @@ repo: github.com/murakami-kaito-dev/ManageSubscription）。Flutter 単一コー
 - push はユーザーに言われたときだけ。
 
 ## 秘密情報（コミット禁止・.gitignore 済み）
-- `ios/AuthKey_*.p8`、`ios/AppStoreConnect*.json` などの資格情報は**絶対にコミット/共有しない**。
+- `ios/AuthKey_*.p8`（ASC APIキー）、`ios/AppStoreConnect*.json`、`ios/SubscriptionKey_*.p8`
+  （RevenueCat用 In-App Purchase Key）、`ios/*Issuer*.json` などの資格情報は**絶対にコミット/共有・中身を読まない**。
 
 ## 開発コマンド
 - 全解放ビルド: `flutter run --dart-define=DEV_UNLOCK=true`（`kDevUnlockAll`）

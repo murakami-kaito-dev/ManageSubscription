@@ -51,3 +51,4 @@ app.*.map.json
 # Project-local, git-excluded working files (screenshots, setup notes, private records).
 # Managed via the /keep-local slash command.
 /.local/
+/ios/*Issuer*.json
