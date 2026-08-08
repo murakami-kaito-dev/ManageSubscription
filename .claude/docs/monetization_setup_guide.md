@@ -92,12 +92,19 @@ RevenueCat が Apple のレシートを検証するために必要です。**推
 > RevenueCat の **Secret API key（v2）を Claude に渡せば API で代行可能**。UIで自分でやってもOK。
 > アプリに埋める **Public SDK key（`appl_...`）** は必ず Claude に渡すこと（`useRevenueCat=true` 化に必要）。
 
-### B-1. プロジェクトと App
-1. RevenueCat にサインアップ → **Project を作成**。
-2. **＋ New app（App Store）** → **App name** 任意、**App Bundle ID**＝`com.submana.app`。
-3. **App Store Connect の鍵を登録**：
-   - In-App Purchase Key 方式 →（.p8 の内容 / Key ID / Issuer ID）を入力、または
-   - Shared Secret 方式 → A-3 の共有シークレットを入力。
+### B-1. プロジェクトと App（本人・詳細手順）
+1. RevenueCat にサインアップ → **Project を作成**（作成済みならスキップ）。
+2. **App を追加**：Project settings（歯車）→ **Apps** → **＋ New**（または「Add app」）→ **App Store** を選択
+   → App name 任意、**Bundle ID＝`com.submana.app`** → 保存。
+3. **In-App Purchase Key を登録**（レシート検証に必須。ASC APIキーとは別物・専用に新規生成する）：
+   - App Store Connect → **ユーザーとアクセス** → **Integrations（統合）** タブ → 左 **In-App Purchase（アプリ内課金）**
+     → **Generate In-App Purchase Key**（または＋）→ 名前（例 `RevenueCat`）→ 生成 → **Download API Key**（.p8、DLは1回だけ）。
+     この画面**上部の Issuer ID** と、鍵行の **Key ID** を控える。
+   - RevenueCat → **Apps** → 対象App → **In-app purchase key configuration** タブ → **.p8 をアップロード**＋**Issuer ID** を入力 → **Save**。
+   - ⚠️ この `.p8` は秘密鍵。RevenueCat に入れるだけで、**リポジトリや Claude には渡さない**。
+4. **鍵を2つ控える**（Project settings → **API keys**）：
+   - **Public SDK key**（App specific keys の `appl_...`）… アプリ埋め込み用 → Claude へ。
+   - **Secret API key（v2）**… B-2〜B-4 を Claude に代行させる場合に発行 → Claude へ（任意）。
 
 ### B-2. Entitlement（権利）
 1. **Entitlements** → ＋ → **Identifier**＝`premium` を作成。
