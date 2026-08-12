@@ -9,6 +9,7 @@ import '../../core/theme/app_typography.dart';
 import '../../core/utils/currency.dart';
 import '../../core/utils/dates.dart';
 import '../../core/widgets/pressable.dart';
+import '../../core/widgets/section_header.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/subscription_avatar.dart';
 import '../../core/widgets/soft_header.dart';
@@ -81,8 +82,12 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     final fmt = ref.watch(mainCurrencyFormatterProvider);
     final data = ref.watch(monthlyHistoryProvider(_year));
     final payments = ref.watch(monthPaymentsProvider(DateTime(_year, _month)));
+    // Split the month's payments into what's already been billed and what's
+    // still upcoming, for the 「支払い済み」/「支払い予定」 sections below.
+    final paidRows = [for (final p in payments) if (p.paid) p];
+    final upcomingRows = [for (final p in payments) if (!p.paid) p];
     // The headline total is what's actually been paid this month, matching the
-    // (future-filtered) list below.
+    // colored (paid) portion of the bar and the 「支払い済み」 section.
     final monthTotal = data[_month - 1].paid;
 
     void guardYearChange() {
@@ -168,17 +173,34 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 onTap: () => changeMonth(1)),
           ],
         ),
-        const Gap(AppSpacing.lg),
-        if (payments.isEmpty)
-          _emptyCard('この月の支払いはありません')
+        const Gap(AppSpacing.xs),
+        // ── 支払い済み ──
+        const SectionHeader('支払い済み'),
+        if (paidRows.isEmpty)
+          _emptyCard('支払い済みアイテムはありません')
         else
-          for (final p in payments)
+          for (final p in paidRows)
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: _PaymentRow(
                 sub: p.sub,
                 subtitle: JpDate.short(p.date),
                 amount: CurrencyFormatter(p.sub.currency).format(p.sub.amount),
+              ),
+            ),
+        // ── 支払い予定（未払い＝半透明） ──
+        const SectionHeader('支払い予定'),
+        if (upcomingRows.isEmpty)
+          _emptyCard('支払い予定アイテムはありません')
+        else
+          for (final p in upcomingRows)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: _PaymentRow(
+                sub: p.sub,
+                subtitle: JpDate.short(p.date),
+                amount: CurrencyFormatter(p.sub.currency).format(p.sub.amount),
+                dimmed: true,
               ),
             ),
       ],
@@ -397,14 +419,19 @@ class _PaymentRow extends StatelessWidget {
     required this.sub,
     required this.subtitle,
     required this.amount,
+    this.dimmed = false,
   });
   final Subscription sub;
   final String subtitle;
   final String amount;
 
+  /// Upcoming (not-yet-billed) rows render half-transparent to signal they
+  /// haven't been paid yet.
+  final bool dimmed;
+
   @override
   Widget build(BuildContext context) {
-    return SoftCard(
+    final card = SoftCard(
       padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg, vertical: AppSpacing.md),
       // Long-press jumps straight to the subscription's editor.
@@ -430,6 +457,7 @@ class _PaymentRow extends StatelessWidget {
         ],
       ),
     );
+    return dimmed ? Opacity(opacity: 0.5, child: card) : card;
   }
 }
 

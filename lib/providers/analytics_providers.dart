@@ -217,23 +217,25 @@ final monthlyHistoryProvider =
   return [for (var m = 1; m <= 12; m++) MonthlySpend(m, planned[m - 1], paid[m - 1])];
 });
 
-/// Subscriptions already billed within a specific month (for the history detail
-/// list). Future-dated payments are excluded — only payments whose date has
-/// already arrived are shown.
+/// Every payment scheduled within a specific month (for the history detail
+/// list), each flagged as [paid] or not. `paid == true` means the payment date
+/// has already arrived (on or before today); `paid == false` is a future,
+/// not-yet-billed payment. The history screen splits these into the
+/// 「支払い済み」/「支払い予定」 sections. Sorted by date (earliest first).
 final monthPaymentsProvider =
-    Provider.family<List<({Subscription sub, DateTime date})>, DateTime>(
-        (ref, month) {
+    Provider.family<List<({Subscription sub, DateTime date, bool paid})>,
+        DateTime>((ref, month) {
   final subs = ref.watch(subscriptionsProvider).valueOrNull ?? const [];
   final start = DateTime(month.year, month.month, 1);
   final end = DateTime(month.year, month.month + 1, 0);
   final today = DateTime.now();
-  final rows = <({Subscription sub, DateTime date})>[];
+  final rows = <({Subscription sub, DateTime date, bool paid})>[];
   for (final s in subs) {
     if (s.isPaused) continue;
     for (final d
         in Billing.paymentsInRange(s.firstPaymentDate, s.recurrence, start, end)) {
-      if (d.isAfter(today)) continue; // hide not-yet-billed payments
-      rows.add((sub: s, date: d));
+      // Same rule the bar chart uses: on/before today = paid, after = upcoming.
+      rows.add((sub: s, date: d, paid: !d.isAfter(today)));
     }
   }
   rows.sort((a, b) => a.date.compareTo(b.date));
