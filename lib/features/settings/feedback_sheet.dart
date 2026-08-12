@@ -18,11 +18,10 @@ const String _feedbackEndpoint = 'https://formspree.io/f/your-form-id';
 
 /// Contact address shown to the user and used for the mailto fallback when
 /// [_feedbackEndpoint] isn't configured.
-const String _supportEmail = 'solo.developer@gmail.com';
+const String _supportEmail = 'km.solo.developer@gmail.com';
 
 bool get _endpointConfigured =>
-    _feedbackEndpoint.isNotEmpty &&
-    !_feedbackEndpoint.contains('your-form-id');
+    _feedbackEndpoint.isNotEmpty && !_feedbackEndpoint.contains('your-form-id');
 
 Future<void> showFeedbackSheet(BuildContext context) {
   return showModalBottomSheet<void>(
@@ -64,9 +63,8 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
       setState(() => _sending = false);
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(ok
-              ? 'ご意見ありがとうございます！送信しました。'
-              : '送信に失敗しました。時間をおいて再度お試しください。')));
+          content: Text(
+              ok ? 'ご意見ありがとうございます！送信しました。' : '送信に失敗しました。時間をおいて再度お試しください。')));
       return;
     }
 
@@ -187,9 +185,8 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
           SoftButton(
             label: _sending ? '送信中…' : '送信する',
             icon: _sending ? null : Icons.send_rounded,
-            onPressed: (_controller.text.trim().isEmpty || _sending)
-                ? null
-                : _send,
+            onPressed:
+                (_controller.text.trim().isEmpty || _sending) ? null : _send,
           ),
           const Gap(AppSpacing.sm),
         ],
