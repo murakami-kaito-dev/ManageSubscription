@@ -18,7 +18,7 @@ const String _feedbackEndpoint = 'https://formspree.io/f/your-form-id';
 
 /// Contact address shown to the user and used for the mailto fallback when
 /// [_feedbackEndpoint] isn't configured.
-const String _supportEmail = 'subsc.management@gmail.com';
+const String _supportEmail = 'solo.developer@gmail.com';
 
 bool get _endpointConfigured =>
     _feedbackEndpoint.isNotEmpty &&

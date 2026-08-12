@@ -2,14 +2,14 @@ import 'dart:io';
 
 /// Store identifiers & URLs used for app rating and sharing.
 ///
-/// TODO(after ASC app creation): set [appStoreId] to the numeric Apple App
-/// Store ID. Until then the App Store URL is omitted (rating falls back to the
-/// native in-app review prompt).
+/// Store identifiers for rating and sharing. [appStoreId] is the app's numeric
+/// Apple App Store ID, so share messages and the rating flow carry a working
+/// App Store link.
 class StoreLinks {
   StoreLinks._();
 
-  /// Numeric Apple App Store ID, e.g. "1234567890". Empty until published.
-  static const String appStoreId = '';
+  /// Numeric Apple App Store ID for サブスク家計簿 (App Store id6799400490).
+  static const String appStoreId = '6799400490';
 
   /// Android applicationId (see android/app/build.gradle → applicationId).
   static const String androidPackage = 'com.example.manage_subscription';

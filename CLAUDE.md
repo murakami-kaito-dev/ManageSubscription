@@ -17,6 +17,17 @@ repo: github.com/murakami-kaito-dev/ManageSubscription）。Flutter 単一コー
 - **`flutter test` は常にグリーン**。ロジックを変えたらテストも足す/直す。
 - 周辺コードの命名・コメント密度・スタイルに合わせる（claymorphism: `SoftCard`/`SoftButton`/`SoftHeader`/`Pressable`）。
 
+## リリース前チェックリスト（禁忌事項・毎回必ず確認）
+配信（Release）ビルドを作る前に、以下の3点を**毎回必ず**確認する。1つでも欠けたらリリースしない。
+1. **サブスク購入が実機/サンドボックスで正常に完了できること。** 購入ボタンで OS 決済シートが出て、
+   購入後に `premium` エンタイトルメントが有効化されること。「決済シートが出ない／エラーで終わる」状態を放置しない。
+   （購入経路は `PurchaseService.purchase` → RevenueCat。全オファリング横断＋商品直接購入のフォールバックあり。）
+2. **デバッグ機能がリリースビルドに含まれていないこと。** 設定画面のバージョン長押しによるプレミアム切替
+   （`debugToggle`/`debugSetPremium`）などのデバッグ導線は `kDebugMode` ガードで Release から完全に除外する
+   （一般ユーザーがプレミアムを不正に有効化できてはならない）。
+3. **シェア機能に正しい App Store リンクが含まれていること。** `StoreLinks.appStoreId` が実際の App Store ID
+   （現行 `6799400490`）で、`StoreLinks.shareUrl()` が有効な App Store URL を返すこと。空文字のまま出荷しない。
+
 ## データ・マイグレーション方針
 - 出荷済みのデータ形状を変えるときだけ `AppDatabase` に `onUpgrade` を追加する。
   **未リリース（既存インストールなし）の間はマイグレーション不要**——スキーマは直接変えてよい。

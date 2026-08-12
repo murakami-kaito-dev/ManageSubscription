@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
@@ -218,21 +219,32 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   const Gap(AppSpacing.xxl),
                   Center(
-                    child: Pressable(
-                      // Hidden debug: long-press version to toggle premium.
-                      onLongPress: () async {
-                        await ref.read(premiumProvider.notifier).debugToggle();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(ref.read(premiumProvider)
-                                  ? 'デバッグ: プレミアム ON'
-                                  : 'デバッグ: プレミアム OFF')));
-                        }
-                      },
-                      child: Text('v1.0.0',
-                          style:
-                              AppType.body(12, color: AppColors.textMuted)),
-                    ),
+                    // Plain, non-interactive version label in RELEASE builds.
+                    // The premium-toggle debug gesture exists ONLY in debug
+                    // builds: `kDebugMode` is a compile-time const, so the
+                    // Pressable/`debugToggle` branch is stripped from release
+                    // AOT binaries and can never be reached by users.
+                    child: kDebugMode
+                        ? Pressable(
+                            onLongPress: () async {
+                              await ref
+                                  .read(premiumProvider.notifier)
+                                  .debugToggle();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(ref.read(premiumProvider)
+                                            ? 'デバッグ: プレミアム ON'
+                                            : 'デバッグ: プレミアム OFF')));
+                              }
+                            },
+                            child: Text('v1.0.0',
+                                style: AppType.body(12,
+                                    color: AppColors.textMuted)),
+                          )
+                        : Text('v1.0.0',
+                            style:
+                                AppType.body(12, color: AppColors.textMuted)),
                   ),
                   const Gap(AppSpacing.lg),
                 ],

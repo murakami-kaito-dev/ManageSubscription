@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -96,25 +97,59 @@ class PurchaseService {
       await _applyPaid(true, plan: kind);
       return true;
     }
+    final wanted = Iap.productId(kind);
     try {
-      final wanted = Iap.productId(kind);
+      // 1) Prefer a package from the configured offerings. Search ALL offerings
+      //    (not only `current`): a mis-set "current" flag on the RevenueCat
+      //    dashboard would otherwise leave `availablePackages` empty and make
+      //    the purchase silently fail *before* the StoreKit sheet appears —
+      //    which is exactly the "決済シートが出ない" symptom.
       final offerings = await Purchases.getOfferings();
-      final packages = offerings.current?.availablePackages ?? const [];
       Package? pkg;
-      for (final p in packages) {
-        if (p.storeProduct.identifier == wanted) {
-          pkg = p;
-          break;
+      for (final offering in offerings.all.values) {
+        for (final p in offering.availablePackages) {
+          if (p.storeProduct.identifier == wanted) {
+            pkg = p;
+            break;
+          }
         }
+        if (pkg != null) break;
       }
-      if (pkg == null) {
-        debugPrint('No package found for $wanted');
-        return false;
+      if (pkg != null) {
+        // ignore: deprecated_member_use
+        final result = await Purchases.purchasePackage(pkg);
+        await _applyCustomerInfo(result.customerInfo);
+        return hasPaid;
       }
-      // ignore: deprecated_member_use
-      final result = await Purchases.purchasePackage(pkg);
-      await _applyCustomerInfo(result.customerInfo);
-      return hasPaid;
+
+      // 2) Fallback: fetch the product straight from the store and buy it. This
+      //    still opens the StoreKit sheet when the RevenueCat offering isn't
+      //    configured/current, as long as the product exists in App Store
+      //    Connect. Lifetime is a non-subscription product, so pick the right
+      //    category (matters on Android; ignored on iOS).
+      final category = kind == PlanKind.lifetime
+          ? ProductCategory.nonSubscription
+          : ProductCategory.subscription;
+      final products =
+          await Purchases.getProducts([wanted], productCategory: category);
+      if (products.isNotEmpty) {
+        // ignore: deprecated_member_use
+        final result = await Purchases.purchaseStoreProduct(products.first);
+        await _applyCustomerInfo(result.customerInfo);
+        return hasPaid;
+      }
+
+      debugPrint('No package/product found for $wanted');
+      return false;
+    } on PlatformException catch (e) {
+      // A user-initiated cancel is not a failure worth alarming about; keep the
+      // current entitlement and let the paywall stay open silently.
+      if (PurchasesErrorHelper.getErrorCode(e) ==
+          PurchasesErrorCode.purchaseCancelledError) {
+        return hasPaid;
+      }
+      debugPrint('purchase failed: $e');
+      return false;
     } catch (e) {
       debugPrint('purchase failed: $e');
       return false;
