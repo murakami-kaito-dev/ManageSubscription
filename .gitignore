@@ -52,3 +52,6 @@ app.*.map.json
 # Managed via the /keep-local slash command.
 /.local/
 /ios/*Issuer*.json
+
+# ローカルのビルドコマンド早見表（管理外）
+ビルドコマンド.txt
