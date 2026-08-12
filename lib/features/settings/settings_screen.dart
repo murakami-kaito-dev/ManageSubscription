@@ -238,11 +238,11 @@ class SettingsScreen extends ConsumerWidget {
                                             : 'デバッグ: プレミアム OFF')));
                               }
                             },
-                            child: Text('v1.0.0',
+                            child: Text('v1.1.0',
                                 style: AppType.body(12,
                                     color: AppColors.textMuted)),
                           )
-                        : Text('v1.0.0',
+                        : Text('v1.1.0',
                             style:
                                 AppType.body(12, color: AppColors.textMuted)),
                   ),
