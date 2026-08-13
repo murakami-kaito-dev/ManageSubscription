@@ -52,15 +52,14 @@ Future<void> main() async {
   // loading all rows and scheduling one OS notification per subscription are
   // O(item count) platform round-trips (plus a temp-image copy each). Doing
   // this after runApp keeps startup fast even with a large library.
-  final notifyEnabled = prefs.getBool('settings_notify') ?? true;
-  if (notifyEnabled) {
-    Future(() async {
-      try {
-        await NotificationService.instance.requestPermission();
-        final subs = await SubscriptionRepository(db).getAll();
-        await NotificationService.instance
-            .rescheduleAll(subs, enabled: notifyEnabled);
-      } catch (_) {/* best-effort */}
-    });
-  }
+  // Reschedule from each subscription's own notify rules (the single source of
+  // truth). We do NOT prompt for OS permission at cold start — that's asked
+  // contextually when the user adds a reminder, and the home banner nudges them
+  // to Settings if notifications are off at the OS level.
+  Future(() async {
+    try {
+      final subs = await SubscriptionRepository(db).getAll();
+      await NotificationService.instance.rescheduleAll(subs);
+    } catch (_) {/* best-effort */}
+  });
 }

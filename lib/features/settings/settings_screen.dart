@@ -109,31 +109,6 @@ class SettingsScreen extends ConsumerWidget {
                     child: Column(
                       children: [
                         _Row(
-                          icon: Icons.notifications_rounded,
-                          label: '支払い日前に通知でお知らせ',
-                          trailing: Switch(
-                            value: settings.notifyEnabled,
-                            onChanged: (v) {
-                              ref
-                                  .read(settingsProvider.notifier)
-                                  .setNotifyEnabled(v);
-                              if (v) {
-                                ref
-                                    .read(notificationServiceProvider)
-                                    .requestPermission();
-                              }
-                              final subs = ref
-                                      .read(subscriptionsProvider)
-                                      .valueOrNull ??
-                                  const [];
-                              ref
-                                  .read(notificationServiceProvider)
-                                  .rescheduleAll(subs, enabled: v);
-                            },
-                          ),
-                        ),
-                        const _Div(),
-                        _Row(
                           icon: Icons.currency_yen_rounded,
                           label: 'メイン通貨',
                           trailing: Text(settings.mainCurrency.code,

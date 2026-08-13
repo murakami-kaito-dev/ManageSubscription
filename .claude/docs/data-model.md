@@ -40,7 +40,7 @@
 `NotifyRule(daysBefore, hour=9, minute=0)`。「支払日の N 日前 HH:MM」。`encode/decode` で TEXT 保存。**通知ルールは全ユーザー無制限**（`PremiumLimits.notifyRuleLimit` は誰でも `maxNotifyRules`=99）。
 
 ## AppSettings（SharedPreferences）
-`settingsProvider`。主なキー: メイン通貨、テーマ色(accent int)、通知ON(`settings_notify`)、詳細常時表示、停止中表示、並べ替えモード(`SortMode`)。
+`settingsProvider`。主なキー: メイン通貨、テーマ色(accent int)、詳細常時表示、停止中表示、並べ替えモード(`SortMode`)。※通知ON(`settings_notify`)は廃止（通知は各アイテムの `NotifyRule` が真実の源）。
 その他フラグ: `first_launch_ms`（試用起点）、`is_premium`/`plan_kind`（課金）、`rating_first_add_prompt_shown`、`fx_rates_json`/`fx_rates_date`。
 
 ## シードデータ

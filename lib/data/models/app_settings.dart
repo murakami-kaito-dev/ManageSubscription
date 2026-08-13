@@ -46,7 +46,6 @@ class AppSettings {
     this.sortMode = SortMode.manual,
     this.accentColorValue = 0xFF6E9080,
     this.showPaused = true,
-    this.notifyEnabled = true,
     this.alwaysShowDetails = false,
   });
 
@@ -54,7 +53,6 @@ class AppSettings {
   final SortMode sortMode;
   final int accentColorValue;
   final bool showPaused;
-  final bool notifyEnabled;
 
   /// When true, the subscription form's "詳細設定" section starts expanded.
   final bool alwaysShowDetails;
@@ -66,7 +64,6 @@ class AppSettings {
     SortMode? sortMode,
     int? accentColorValue,
     bool? showPaused,
-    bool? notifyEnabled,
     bool? alwaysShowDetails,
   }) =>
       AppSettings(
@@ -74,7 +71,6 @@ class AppSettings {
         sortMode: sortMode ?? this.sortMode,
         accentColorValue: accentColorValue ?? this.accentColorValue,
         showPaused: showPaused ?? this.showPaused,
-        notifyEnabled: notifyEnabled ?? this.notifyEnabled,
         alwaysShowDetails: alwaysShowDetails ?? this.alwaysShowDetails,
       );
 }

@@ -12,7 +12,6 @@ import '../../core/utils/currency.dart';
 import '../../core/widgets/subscription_avatar.dart';
 import '../../data/models/notify_rule.dart';
 import '../../data/models/subscription.dart';
-import '../../providers/settings_provider.dart';
 import '../../providers/subscription_providers.dart';
 
 /// Guarantees that a payment reminder is shown **while the app is open**.
@@ -61,9 +60,9 @@ class _ForegroundReminderHostState extends ConsumerState<ForegroundReminderHost>
     if (state == AppLifecycleState.resumed) _scheduleNext();
   }
 
-  /// All reminder fire-times still in the future, soonest first.
+  /// All reminder fire-times still in the future, soonest first. Driven purely
+  /// by each subscription's own notify rules (no app-wide on/off gate).
   List<ReminderFire> _upcoming(DateTime now) {
-    if (!ref.read(settingsProvider).notifyEnabled) return const [];
     final subs = ref.read(subscriptionsProvider).valueOrNull ?? const [];
     return computeUpcomingReminders(subs, now);
   }
@@ -98,8 +97,6 @@ class _ForegroundReminderHostState extends ConsumerState<ForegroundReminderHost>
   Widget build(BuildContext context) {
     // Re-arm whenever the data that determines fire-times changes.
     ref.listen(subscriptionsProvider, (_, __) => _scheduleNext());
-    ref.listen(settingsProvider.select((s) => s.notifyEnabled),
-        (_, __) => _scheduleNext());
 
     return Stack(
       textDirection: TextDirection.ltr,

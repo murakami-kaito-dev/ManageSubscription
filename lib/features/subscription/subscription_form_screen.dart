@@ -248,7 +248,14 @@ class _SubscriptionFormScreenState
       context: context,
       builder: (_) => const _NotifyRuleDialog(),
     );
-    if (rule != null) setState(() => _notifyRules.add(rule));
+    if (rule == null) return;
+    final wasEmpty = _notifyRules.isEmpty;
+    setState(() => _notifyRules.add(rule));
+    // Contextual permission: the moment the user sets their first reminder is
+    // when we ask the OS — so a set reminder never silently fails to fire.
+    if (wasEmpty) {
+      await ref.read(notificationServiceProvider).requestPermission();
+    }
   }
 
   Future<void> _editNotifyRule(int index) async {

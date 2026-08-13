@@ -67,8 +67,9 @@ class SubscriptionsNotifier extends AsyncNotifier<List<Subscription>> {
 
   void _reschedule() {
     final subs = state.valueOrNull ?? const [];
-    final enabled = ref.read(settingsProvider).notifyEnabled;
-    ref.read(notificationServiceProvider).rescheduleAll(subs, enabled: enabled);
+    // Notifications are driven solely by each subscription's own notify rules;
+    // whether they actually show is governed by the OS permission.
+    ref.read(notificationServiceProvider).rescheduleAll(subs);
   }
 }
 

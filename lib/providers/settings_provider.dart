@@ -9,7 +9,6 @@ class SettingsNotifier extends Notifier<AppSettings> {
   static const _kSort = 'settings_sort';
   static const _kAccent = 'settings_accent';
   static const _kShowPaused = 'settings_show_paused';
-  static const _kNotify = 'settings_notify';
   static const _kAlwaysDetails = 'settings_always_details';
 
   @override
@@ -23,7 +22,6 @@ class SettingsNotifier extends Notifier<AppSettings> {
       ),
       accentColorValue: p.getInt(_kAccent) ?? 0xFF6E9080,
       showPaused: p.getBool(_kShowPaused) ?? true,
-      notifyEnabled: p.getBool(_kNotify) ?? true,
       alwaysShowDetails: p.getBool(_kAlwaysDetails) ?? false,
     );
   }
@@ -53,10 +51,6 @@ class SettingsNotifier extends Notifier<AppSettings> {
     await ref.read(prefsProvider).setBool(_kShowPaused, v);
   }
 
-  Future<void> setNotifyEnabled(bool v) async {
-    state = state.copyWith(notifyEnabled: v);
-    await ref.read(prefsProvider).setBool(_kNotify, v);
-  }
 }
 
 final settingsProvider =

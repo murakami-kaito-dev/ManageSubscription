@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/utils/currency.dart';
 import '../../core/utils/image_paths.dart';
@@ -66,6 +67,41 @@ class NotificationService {
     }
   }
 
+  /// Whether the OS currently allows this app to show notifications. Used to
+  /// surface the "iOSの設定で通知がオフです" banner so a set reminder never
+  /// fails silently.
+  Future<bool> hasPermission() async {
+    if (!_ready) return false;
+    try {
+      final ios = _plugin.resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin>();
+      if (ios != null) {
+        final s = await ios.checkPermissions();
+        return s?.isEnabled ?? false;
+      }
+      final android = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      return (await android?.areNotificationsEnabled()) ?? true;
+    } catch (e) {
+      debugPrint('permission check skipped: $e');
+      return false;
+    }
+  }
+
+  /// Opens this app's page in the system Settings (iOS: includes 通知), so the
+  /// user can re-enable notifications when they've been turned off at the OS
+  /// level.
+  Future<void> openSystemSettings() async {
+    try {
+      // iOS: "app-settings:" == UIApplication.openSettingsURLString (App
+      // Store-safe); opens this app's Settings page, which includes 通知.
+      // (iOS-only distribution; on Android this simply no-ops.)
+      await launchUrl(Uri.parse('app-settings:'));
+    } catch (e) {
+      debugPrint('open settings skipped: $e');
+    }
+  }
+
   /// Builds the platform details for one reminder. When the subscription has a
   /// custom **image** (not an emoji/letter), it's used as the notification's
   /// icon: an Android large icon and an iOS attachment thumbnail.
@@ -121,14 +157,15 @@ class NotificationService {
     );
   }
 
-  /// Reschedules reminders for the whole list. Free tier is already capped to a
-  /// single reminder rule per subscription by the caller.
-  Future<void> rescheduleAll(List<Subscription> subs,
-      {required bool enabled}) async {
+  /// Reschedules reminders for the whole list, driven purely by each
+  /// subscription's per-item notify rules (the single source of truth) — there
+  /// is no separate app-wide on/off gate. Whether the OS actually shows them is
+  /// governed only by the system notification permission. Free tier is already
+  /// capped to a single reminder rule per subscription by the caller.
+  Future<void> rescheduleAll(List<Subscription> subs) async {
     if (!_ready) return;
     try {
       await _plugin.cancelAll();
-      if (!enabled) return;
       var id = 0;
       final now = tz.TZDateTime.now(tz.local);
       for (final s in subs) {

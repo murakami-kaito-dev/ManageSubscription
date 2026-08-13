@@ -16,6 +16,7 @@ import '../../data/models/subscription.dart';
 import '../../providers/premium_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/subscription_providers.dart';
+import '../notifications/notification_permission_banner.dart';
 import '../premium/premium_screen.dart';
 import '../settings/settings_screen.dart';
 import '../subscription/subscription_form_screen.dart';
@@ -108,6 +109,9 @@ class HomeScreen extends ConsumerWidget {
                     builder: (_) => const SettingsScreen()),
                 ),
               ),
+            // Nudge to re-enable OS notifications when reminders are set but the
+            // system permission is off (only renders in that state).
+            const NotificationPermissionBanner(),
             Expanded(
               child: asyncSubs.when(
                 loading: () =>

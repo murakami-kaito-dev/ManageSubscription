@@ -4,7 +4,7 @@
 - **Flutter**（Dart）。iOS/Android。UI は `Locale('ja')` 固定
 - **Riverpod**（flutter_riverpod）— 状態管理
 - **sqflite** — サブスク/カテゴリ/支払い方法の永続化
-- **SharedPreferences** — 設定・フラグ（試用開始日、通知ON/OFF、テーマ色、レビュー表示済み等）
+- **SharedPreferences** — 設定・フラグ（試用開始日、テーマ色、レビュー表示済み等）。※アプリ全体の通知ON/OFFは廃止（通知は各アイテムのルールが真実の源）
 - 主なパッケージ: fl_chart（グラフ）, table_calendar（カレンダー）, flutter_local_notifications ＋ flutter_timezone（通知）, image_picker ＋ image_cropper（アイコン画像）, file_picker（CSV選択）, csv（CSV入出力）, share_plus（共有）, purchases_flutter（RevenueCat）, in_app_review（評価）, http（為替・フィードバック）, url_launcher（規約/ポリシー）
 
 ## レイヤ構成（`lib/`）
