@@ -17,6 +17,18 @@ class SubscriptionAvatar extends StatelessWidget {
     this.radius = 13,
   });
 
+  /// アバターをデコードする論理サイズ。**全画面で同じ値**を使う。
+  ///
+  /// 画像は `cacheWidth`（＝この値 × devicePixelRatio）でデコードするので、
+  /// 元ファイルが 1024px でも実際に画面が使うピクセル数しかメモリに載らない
+  /// （1024² × 4B = 4MiB → 138² × 4B = 約73KiB）。表示は 1px も変わらない。
+  ///
+  /// 画面ごとに違う値を渡すと、Flutter の ImageCache は
+  /// 「画像 × デコードサイズ」ごとに別エントリを持つため**同じ画像が何度も
+  /// キャッシュされる**。それを避けるため、実際に使う最大サイズ（ホームの 46）
+  /// をわずかに上回る一定値に固定してある。
+  static const double _decodeSize = 48;
+
   final Subscription sub;
   final double size;
   final double radius;
@@ -57,7 +69,16 @@ class SubscriptionAvatar extends StatelessWidget {
         border: Border.all(color: base, width: ring.toDouble()),
       ),
       child: hasImage
-          ? Image.file(file, fit: BoxFit.cover, width: size, height: size)
+          ? Image.file(
+              file,
+              fit: BoxFit.cover,
+              width: size,
+              height: size,
+              // 正方形にクロップ済みなので幅だけ指定すれば縦横比は保たれる。
+              cacheWidth:
+                  (_decodeSize * MediaQuery.devicePixelRatioOf(context))
+                      .round(),
+            )
           : (sub.emoji != null && sub.emoji!.trim().isNotEmpty
               ? Text(sub.emoji!.trim(),
                   style: TextStyle(fontSize: size * 0.48))

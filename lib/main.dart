@@ -8,7 +8,7 @@ import 'core/utils/image_paths.dart';
 import 'data/database/app_database.dart';
 import 'data/repositories/subscription_repository.dart';
 import 'providers/core_providers.dart';
-import 'services/ads/ad_service.dart';
+// import 'services/ads/ad_service.dart'; // 広告は無効化中
 import 'services/currency/rates_service.dart';
 import 'services/notifications/notification_service.dart';
 import 'services/purchases/purchase_service.dart';
@@ -16,6 +16,14 @@ import 'services/purchases/purchase_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('ja');
+
+  // 画像キャッシュの上限を絞る（既定は 1000枚 / 100MB）。
+  // アイコンは表示サイズでデコードするので1枚あたり数十KiBしかなく、この上限に
+  // 触れることはまずないが、iOS は物理フットプリントが大きいアプリから順に
+  // バックグラウンドで終了させるため、上限自体を低く抑えて上振れを防ぐ。
+  PaintingBinding.instance.imageCache
+    ..maximumSizeBytes = 16 << 20 // 16 MiB
+    ..maximumSize = 200;
 
   // Open the local DB and load persisted settings before the first frame so
   // repositories can be provided synchronously.
@@ -32,9 +40,9 @@ Future<void> main() async {
   await purchases.init();
 
   // Notifications init is best-effort and must never block startup.
-  // Ads are disabled in v1 (kAdsEnabled = false) so AdService.init() is not
-  // called and the AdMob SDK never starts.
-  if (kAdsEnabled) await AdService.instance.init();
+  // 広告は全面的に無効化してあり、AdMob SDK は依存ごと外してある
+  // （復活手順は ad_service.dart のヘッダー参照）。
+  // if (kAdsEnabled) await AdService.instance.init();
   await NotificationService.instance.init();
 
   runApp(

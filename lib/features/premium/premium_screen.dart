@@ -340,7 +340,13 @@ class _Hero extends StatelessWidget {
                 intensity: 1.4),
           ),
           clipBehavior: Clip.antiAlias,
-          child: Image.asset('assets/icon/icon.png', fit: BoxFit.cover),
+          // 元画像は 2048×2048（＝そのままだと 16MiB）。表示は 110pt なので
+          // 実ピクセル数だけデコードする。見た目は変わらない。
+          child: Image.asset(
+            'assets/icon/icon.png',
+            fit: BoxFit.cover,
+            cacheWidth: (110 * MediaQuery.devicePixelRatioOf(context)).round(),
+          ),
         ),
       ],
     );
