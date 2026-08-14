@@ -38,13 +38,6 @@ PODS:
     - Flutter
   - flutter_timezone (0.0.1):
     - Flutter
-  - Google-Mobile-Ads-SDK (11.13.0):
-    - GoogleUserMessagingPlatform (>= 1.1)
-  - google_mobile_ads (5.3.1):
-    - Flutter
-    - Google-Mobile-Ads-SDK (~> 11.13.0)
-    - webview_flutter_wkwebview
-  - GoogleUserMessagingPlatform (3.1.0)
   - image_cropper (0.0.4):
     - Flutter
     - TOCropViewController (~> 2.7.4)
@@ -76,16 +69,12 @@ PODS:
   - TOCropViewController (2.7.4)
   - url_launcher_ios (0.0.1):
     - Flutter
-  - webview_flutter_wkwebview (0.0.1):
-    - Flutter
-    - FlutterMacOS
 
 DEPENDENCIES:
   - file_picker (from `.symlinks/plugins/file_picker/ios`)
   - Flutter (from `Flutter`)
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
   - flutter_timezone (from `.symlinks/plugins/flutter_timezone/ios`)
-  - google_mobile_ads (from `.symlinks/plugins/google_mobile_ads/ios`)
   - image_cropper (from `.symlinks/plugins/image_cropper/ios`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - in_app_review (from `.symlinks/plugins/in_app_review/ios`)
@@ -95,14 +84,11 @@ DEPENDENCIES:
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - sqflite_darwin (from `.symlinks/plugins/sqflite_darwin/darwin`)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
-  - webview_flutter_wkwebview (from `.symlinks/plugins/webview_flutter_wkwebview/darwin`)
 
 SPEC REPOS:
   trunk:
     - DKImagePickerController
     - DKPhotoGallery
-    - Google-Mobile-Ads-SDK
-    - GoogleUserMessagingPlatform
     - PurchasesHybridCommon
     - RevenueCat
     - SDWebImage
@@ -118,8 +104,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_local_notifications/ios"
   flutter_timezone:
     :path: ".symlinks/plugins/flutter_timezone/ios"
-  google_mobile_ads:
-    :path: ".symlinks/plugins/google_mobile_ads/ios"
   image_cropper:
     :path: ".symlinks/plugins/image_cropper/ios"
   image_picker_ios:
@@ -138,8 +122,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/sqflite_darwin/darwin"
   url_launcher_ios:
     :path: ".symlinks/plugins/url_launcher_ios/ios"
-  webview_flutter_wkwebview:
-    :path: ".symlinks/plugins/webview_flutter_wkwebview/darwin"
 
 SPEC CHECKSUMS:
   DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
@@ -148,9 +130,6 @@ SPEC CHECKSUMS:
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   flutter_local_notifications: ff50f8405aaa0ccdc7dcfb9022ca192e8ad9688f
   flutter_timezone: ac3da59ac941ff1c98a2e1f0293420e020120282
-  Google-Mobile-Ads-SDK: 14f57f2dc33532a24db288897e26494640810407
-  google_mobile_ads: fe0e2c1764ad95323dd0e3081d0bb2d58411f957
-  GoogleUserMessagingPlatform: befe603da6501006420c206222acd449bba45a9c
   image_cropper: 37d40f62177c101ff4c164906d259ea2c3aa70cf
   image_picker_ios: c560581cceedb403a6ff17f2f816d7fea1421fc1
   in_app_review: 436034b18594851a7328d7f1c2ed5ec235b79cfc
@@ -165,8 +144,7 @@ SPEC CHECKSUMS:
   SwiftyGif: 706c60cf65fa2bc5ee0313beece843c8eb8194d4
   TOCropViewController: 80b8985ad794298fb69d3341de183f33d1853654
   url_launcher_ios: 5334b05cef931de560670eeae103fd3e431ac3fe
-  webview_flutter_wkwebview: a4af96a051138e28e29f60101d094683b9f82188
 
-PODFILE CHECKSUM: 2b8a5c1f8f722a25eba4afd5ef0f3248915df0ca
+PODFILE CHECKSUM: 4a4489fd6d39cf0100102d9a9e2379c25ab18e9f
 
 COCOAPODS: 1.15.2
