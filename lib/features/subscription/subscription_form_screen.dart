@@ -72,7 +72,39 @@ class _SubscriptionFormScreenState
   late bool _isPaused;
   late bool _detailsExpanded;
 
+  /// 画面を開いた直後の入力内容。これと現在の内容を比べて「未保存の変更がある
+  /// か」を判定する（[_isDirty]）。表示だけの状態（詳細設定の開閉など）は含めない。
+  late final String _initialSignature;
+
+  /// 直近の [_isDirty]。入力欄の文字は setState を伴わずに変わるので、
+  /// 未保存かどうかが切り替わった瞬間だけ再ビルドして `canPop` を追従させる。
+  bool _wasDirty = false;
+
   bool get _isEdit => widget.existing != null;
+
+  /// 現在の入力内容を1本の文字列にまとめたもの。差分検出専用。
+  String get _signature => [
+        _name.text,
+        _amount.text,
+        _emoji.text,
+        _usage.text,
+        _usageUnit.text,
+        _memo.text,
+        _currency.name,
+        _cycle.name,
+        '$_intervalCount',
+        _intervalUnit.name,
+        _firstPayment.toIso8601String(),
+        '$_colorValue',
+        _categoryId ?? '',
+        _paymentMethodId ?? '',
+        _imagePath ?? '',
+        [for (final r in _notifyRules) r.toToken()].join(','),
+        '$_isPaused',
+      ].join('');
+
+  /// 保存していない変更があるか。閲覧専用のときは常に false。
+  bool get _isDirty => !widget.readOnly && _signature != _initialSignature;
 
   @override
   void initState() {
@@ -99,13 +131,71 @@ class _SubscriptionFormScreenState
     _isPaused = e?.isPaused ?? false;
     // Details start expanded only when the user opted into "常に表示".
     _detailsExpanded = ref.read(settingsProvider).alwaysShowDetails;
+
+    // 以降の変更を「未保存」と見なすための基準を取る。
+    _initialSignature = _signature;
+    for (final c in [_name, _amount, _emoji, _usage, _usageUnit, _memo]) {
+      c.addListener(_onFieldChanged);
+    }
+  }
+
+  /// 入力欄の変更で未保存かどうかが切り替わったときだけ再ビルドする。
+  void _onFieldChanged() {
+    final dirty = _isDirty;
+    if (dirty != _wasDirty && mounted) setState(() => _wasDirty = dirty);
   }
 
   String _trimAmount(double v) => groupedAmount(v);
 
+  /// 「保存せずに戻る」の確認。破棄してよければ true。
+  /// 保存し忘れを防ぐのが目的なので、既定の選択（右・強調）は「編集を続ける」。
+  Future<bool> _confirmDiscard() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(_isEdit ? '編集を保存しますか？' : '保存せずに戻りますか？',
+            style: AppType.display(19)),
+        content: Text(
+          _isEdit
+              ? '変更した内容はまだ保存されていません。このまま戻ると変更は取り消されます。'
+              : '入力した内容はまだ保存されていません。このまま戻ると入力は破棄されます。',
+          style: AppType.body(14, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('破棄して戻る',
+                style: AppType.body(15,
+                    weight: FontWeight.w700, color: AppColors.danger)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('編集を続ける',
+                style: AppType.body(15, weight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+    return ok ?? false;
+  }
+
+  /// 戻る操作の共通入口。未保存の変更があるときだけ確認をはさむ。
+  Future<void> _handleBack() async {
+    if (!_isDirty) {
+      Navigator.of(context).pop();
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    final discard = await _confirmDiscard();
+    if (!mounted) return;
+    if (discard) Navigator.of(context).pop();
+  }
+
   @override
   void dispose() {
     for (final c in [_name, _amount, _emoji, _usage, _usageUnit, _memo]) {
+      c.removeListener(_onFieldChanged);
       c.dispose();
     }
     super.dispose();
@@ -553,9 +643,21 @@ class _SubscriptionFormScreenState
       ),
     );
 
-    return Scaffold(
-      // Tap anywhere outside a text field to dismiss the keyboard.
-      body: GestureDetector(
+    // 未保存の入力があるうちは、システムの戻る操作（Android の戻る／iOS の
+    // スワイプバック）でそのまま閉じさせない。確認をはさんでから閉じる。
+    // ヘッダーの戻る矢印は [_handleBack] を通るので同じ確認が出る。
+    return PopScope(
+      canPop: !_isDirty,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        // await をまたいで context を触らないよう、先に Navigator を取っておく。
+        final navigator = Navigator.of(context);
+        final discard = await _confirmDiscard();
+        if (discard) navigator.pop();
+      },
+      child: Scaffold(
+        // Tap anywhere outside a text field to dismiss the keyboard.
+        body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         behavior: HitTestBehavior.opaque,
         child: SafeArea(
@@ -568,7 +670,7 @@ class _SubscriptionFormScreenState
                     : (_isEdit ? '編集' : '新規追加'),
                 leading: SoftIconButton(
                   icon: Icons.arrow_back_rounded,
-                  onTap: () => Navigator.of(context).pop(),
+                  onTap: _handleBack,
                 ),
               ),
               if (widget.readOnly)
@@ -696,6 +798,7 @@ class _SubscriptionFormScreenState
                 _SaveBar(onSave: _save, label: _isEdit ? '保存する' : '追加する'),
             ],
           ),
+        ),
         ),
       ),
     );
@@ -1795,7 +1898,12 @@ class _IconPreview extends StatelessWidget {
     } else if (imageFile != null) {
       content = ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: Image.file(imageFile, fit: BoxFit.cover),
+        // 下の Container が 72×72 なので、その実ピクセル数だけデコードする。
+        child: Image.file(
+          imageFile,
+          fit: BoxFit.cover,
+          cacheWidth: (72 * MediaQuery.devicePixelRatioOf(context)).round(),
+        ),
       );
     } else if (emoji.isNotEmpty) {
       content =
