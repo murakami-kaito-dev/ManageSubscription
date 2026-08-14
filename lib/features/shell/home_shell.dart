@@ -7,10 +7,12 @@ import '../../core/theme/app_typography.dart';
 import '../../core/widgets/pressable.dart';
 import '../analytics/analytics_screen.dart';
 import '../calendar/calendar_screen.dart';
+import '../cancellation/cancel_guide_screen.dart';
 import '../history/history_screen.dart';
 import '../home/home_screen.dart';
 import '../premium/limit_gate.dart';
-import 'banner_ad_slot.dart';
+// 広告は無効化中（ad_service.dart のヘッダー参照）。
+// import 'banner_ad_slot.dart';
 
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
@@ -27,6 +29,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     (icon: Icons.pie_chart_rounded, label: '分析'),
     (icon: Icons.calendar_today_rounded, label: 'カレンダー'),
     (icon: Icons.bar_chart_rounded, label: '支払い履歴'),
+    (icon: Icons.logout_rounded, label: '解約方法'),
   ];
 
   @override
@@ -41,12 +44,13 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             AnalyticsScreen(),
             CalendarScreen(),
             HistoryScreen(),
+            CancelGuideScreen(),
           ],
         ),
         bottomNavigationBar: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const BannerAdSlot(),
+            // const BannerAdSlot(),
             _SoftNavBar(
               index: _index,
               tabs: _tabs,

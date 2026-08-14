@@ -13,11 +13,13 @@
 - [architecture.md](architecture.md) — 技術スタック・レイヤ構成・主要 Provider・テーマ
 - [data-model.md](data-model.md) — DB スキーマとモデル（Subscription / Category / PaymentMethod / NotifyRule / 設定）
 - [billing.md](billing.md) — 支払いサイクルと日付計算のルール
-- [screens.md](screens.md) — 各画面の定義・仕様（ホーム/分析/カレンダー/履歴/設定/新規編集/ペイウォール ほか）
+- [screens.md](screens.md) — 各画面の定義・仕様（ホーム/分析/カレンダー/履歴/解約方法/設定/新規編集/ペイウォール ほか）
+- [feature-cancellation-guide.md](feature-cancellation-guide.md) — 「解約方法」タブ（公式解約ページへのリンク集）の方針・収録サービス・URL
 - [csv-import.md](csv-import.md) — CSV エクスポート/インポートの書式・バリデーション・ヘルプ
 - [monetization.md](monetization.md) — 料金プラン・無料体験・課金（RevenueCat）
 - [notifications.md](notifications.md) — 通知（OS ローカル通知＋アプリ内バナー）
 - [rating-share.md](rating-share.md) — アプリ評価・レビュー誘導・共有
+- [release-log.md](release-log.md) — バージョン／ビルド番号の履歴と配信状況（バージョンを上げたら必ず追記）
 
 ### 運用ガイド
 - [monetization_setup.md](monetization_setup.md) — 課金（App Store Connect / RevenueCat）本番化の全体像・役割分担
