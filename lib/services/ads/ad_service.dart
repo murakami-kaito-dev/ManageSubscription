@@ -1,3 +1,17 @@
+// 【広告は全面的に無効化（コメントアウト）】2026-08-14
+//
+// このアプリは広告を出さない方針。将来また入れる可能性があるので、削除ではなく
+// コメントアウトで残してある。復活させる手順は以下の5か所を戻すだけ:
+//   1. pubspec.yaml の `google_mobile_ads` の行
+//   2. このファイル全体
+//   3. lib/features/shell/banner_ad_slot.dart 全体
+//   4. lib/features/shell/home_shell.dart の import と `const BannerAdSlot()`
+//   5. lib/providers/core_providers.dart の import と adServiceProvider、
+//      lib/main.dart の import と AdService.init() 呼び出し
+// 戻したら `kAdsEnabled` を true にし、テスト用ではない本番の広告ユニットIDに
+// 差し替えること。ios/Runner/Info.plist の GADApplicationIdentifier も要更新。
+
+/*
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -58,3 +72,5 @@ class AdService {
     );
   }
 }
+
+*/

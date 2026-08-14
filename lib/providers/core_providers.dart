@@ -5,7 +5,7 @@ import 'package:sqflite/sqflite.dart';
 import '../data/repositories/category_repository.dart';
 import '../data/repositories/payment_method_repository.dart';
 import '../data/repositories/subscription_repository.dart';
-import '../services/ads/ad_service.dart';
+// import '../services/ads/ad_service.dart';
 import '../services/csv/csv_export_service.dart';
 import '../services/csv/csv_import_service.dart';
 import '../services/image/image_picker_service.dart';
@@ -28,7 +28,8 @@ final purchaseServiceProvider = Provider<PurchaseService>(
   (ref) => throw UnimplementedError('purchaseServiceProvider must be overridden'),
 );
 
-final adServiceProvider = Provider<AdService>((ref) => AdService.instance);
+// 広告は無効化中（ad_service.dart のヘッダー参照）。
+// final adServiceProvider = Provider<AdService>((ref) => AdService.instance);
 final notificationServiceProvider =
     Provider<NotificationService>((ref) => NotificationService.instance);
 final csvExportServiceProvider =
