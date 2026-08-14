@@ -8,6 +8,26 @@
 
 ---
 
+## 2.0.0 (build 12) — 2026-08-14 · App Store Connect（審査提出は保留）
+
+build 8〜11 の全機能を束ねたメジャーバージョン。機能追加は無く、以下の審査用対応のみ。
+
+- **`ios/Runner/PrivacyInfo.xcprivacy` を新規作成**（従来は**存在しなかった**）。
+  トラッキング無し／データ収集無し／Required Reason API は UserDefaults(CA92.1) と
+  FileTimestamp(C617.1) を申告。`project.pbxproj` の Resources ビルドフェーズにも登録した
+  （登録しないとバンドルに入らない）。`Payload/Runner.app/PrivacyInfo.xcprivacy` として
+  同梱されていることを確認済み
+- バージョン表記を 1.3.0 → 2.0.0（設定画面フッターも同時更新）
+
+**配信**: App Store Connect にアップロード（Delivery UUID `0967ca3f-da9a-4916-8986-f8898cf06099`）
+**状態**: **審査未提出**。理由は下記
+
+**⚠️ 提出前に必ず解消すること**:
+1. **サブスク購入の実機確認が未実施**（`CLAUDE.md` の禁忌事項1。「1つでも欠けたらリリースしない」）
+2. 広告SDKを外したため、App Store Connect の **IDFA/広告識別子の申告と App Privacy の回答を
+   見直す必要がある**（「使用しない」に変わるはず）
+3. 前回申請（2026-08-09）の審査状況が未確認。審査中なら先に取り下げが必要
+
 ## 1.3.0 (build 11) — 2026-08-14 · TestFlight
 
 - **画像のメモリ消費を約97%削減**。`Image` は `width`/`height` を指定しても元解像度のまま

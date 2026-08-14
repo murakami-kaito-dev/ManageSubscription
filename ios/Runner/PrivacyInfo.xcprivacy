@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- このアプリはトラッキングを一切行わない。広告SDK(AdMob)は依存ごと外してあり、
+	     ATT の許可も求めない。 -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+
+	<!-- 収集するデータは無し。サブスクの記録はすべて端末内の SQLite に保存され、
+	     外部に送信しない。為替レートの取得は公開APIへの読み取りのみで、
+	     ユーザーのデータを送らない。課金(RevenueCat)のSDKは自身の
+	     プライバシーマニフェストを同梱しているため、ここには記載しない。 -->
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+
+	<!-- 理由の申告が必要なAPI（Required Reason API）の用途申告。 -->
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<!-- UserDefaults: 設定（メイン通貨・テーマ色など）の保存に使用。
+			     CA92.1 = 本アプリ自身の情報にのみアクセスする用途。 -->
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+		<dict>
+			<!-- ファイルのタイムスタンプ: アイコン画像ファイルの読み書きに伴うもの。
+			     C617.1 = ユーザーに表示する目的で、ユーザー自身のファイルを扱う用途。 -->
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>C617.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>
