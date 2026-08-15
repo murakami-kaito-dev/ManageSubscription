@@ -30,13 +30,13 @@
   カテゴリー別のリスト。
 - 行をタップ → ボトムシート（「どこから解約するか」/「解約する前に」/「公式の解約ページを開く」）。
   ボタンで `url_launcher` により**外部ブラウザ**へ。開けなければスナックバー。
-- カテゴリー順: 登録先（App Store / Google Play）→ 動画 → 音楽 → 仕事・AI・クラウド → ゲーム → 読書・雑誌・生活 → このアプリ。
+- カテゴリー順: 登録先（App Store / Google Play）→ 動画 → 音楽 → 仕事・AI・クラウド → ゲーム → 読書・雑誌・生活 → 学び・教育 → フィットネス・健康 → このアプリ。
 
 ## 収録サービス（`kCancelGuideEntries`）
 **最重要**: 日本のサブスクは **App Store / Google Play 経由課金が多数**。その場合の解約先は
 サービスのサイトではなく **iOS設定 / Playストアのサブスク画面**。ここで迷う人が多いので**最上段**。
 
-計 **39件**（2026-08-14 時点）。カテゴリー順・定義順にそのまま画面に並ぶ。
+計 **46件**（2026-08-15 時点。会員数の定量根拠に基づき 7件追加）。カテゴリー順・定義順にそのまま画面に並ぶ。
 
 **登録先**
 | サービス | 解約入口 URL |
@@ -59,6 +59,8 @@
 | FOD | `https://fod.fujitv.co.jp/` |
 | TELASA | `https://www.telasa.jp/` |
 | WOWOW | `https://www.wowow.co.jp/support/cancel/`（Webだけで完結しない場合あり） |
+| DMM TV / DMM プレミアム | `https://www.dmm.com/my/-/subscription/`（App Store 経由は注意） |
+| ニコニコプレミアム | `https://premium.nicovideo.jp/` |
 
 **音楽**
 | サービス | 解約入口 URL |
@@ -99,6 +101,19 @@
 | Audible | `https://www.audible.co.jp/account/overview` |
 | 日経電子版 | `https://www.nikkei.com/my/` |
 | Uber One | `https://www.ubereats.com/jp` |
+| LYP プレミアム（旧 Yahoo! プレミアム） | `https://premium.yahoo.co.jp/`（登録経路で解約先が変わる） |
+| X Premium（旧 Twitter Blue） | `https://x.com/i/premium`（App Store 経由は注意） |
+
+**学び・教育**
+| サービス | 解約入口 URL |
+|---|---|
+| スタディサプリ | `https://studysapuri.jp/info/guide/cancellation/`（「利用停止」と「退会」は別） |
+| Duolingo（Super Duolingo） | `https://www.duolingo.com/help/cancel-my-super-duolingo-subscription`（App Store 経由は注意） |
+
+**フィットネス・健康**
+| サービス | 解約入口 URL |
+|---|---|
+| chocoZAP（チョコザップ） | `https://faq.chocozap.jp/chocozap_faq/qa/cancel`（最短解約は入会翌月末） |
 
 **このアプリ**
 | サービス | 解約入口 URL |
@@ -108,6 +123,10 @@
 URL は 2026-08-14 に到達確認済み（ログイン画面へのリダイレクトは正常）。
 Claude / Uber One は bot 遮断で HTTP 403 が返るが、実ブラウザでは正常に開く。
 サービス側の都合で変わるので、**リリース前に一度は実機で開いて確認する**。
+
+2026-08-15 追加の 7件（DMM TV / ニコニコプレミアム / LYP プレミアム / X Premium /
+スタディサプリ / Duolingo / chocoZAP）は、各サービスの**公式解約導線を Web で確認して採用**した
+（会員数の定量根拠に基づく選定）。**URL の実機到達確認は次のリリース前にまとめて行う**（未実施）。
 
 ## このアプリ（サブスク家計簿 Pro）の解約方法（必ず載せる）
 - プレミアム（月額/年額）は **App Store のサブスクリプションから解約**:

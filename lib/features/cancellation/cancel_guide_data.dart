@@ -20,6 +20,8 @@ enum CancelCategory {
   work('仕事・AI・クラウド', Icons.cloud_rounded),
   game('ゲーム', Icons.sports_esports_rounded),
   reading('読書・雑誌・生活', Icons.menu_book_rounded),
+  education('学び・教育', Icons.school_rounded),
+  fitness('フィットネス・健康', Icons.fitness_center_rounded),
   thisApp('このアプリ（サブスク家計簿）', Icons.savings_rounded);
 
   const CancelCategory(this.label, this.icon);
@@ -208,6 +210,25 @@ const List<CancelGuideEntry> kCancelGuideEntries = [
     caution: '解約は当月末など締め日の扱いがあり、Web だけで完結しない場合があります。'
         '案内ページの手順に従ってください。',
     aliases: ['ワウワウ'],
+  ),
+  CancelGuideEntry(
+    id: 'dmm_tv',
+    name: 'DMM TV / DMM プレミアム',
+    category: CancelCategory.video,
+    url: 'https://www.dmm.com/my/-/subscription/',
+    route: 'DMM アカウントでログイン → 月額サービス（会員登録内容）→ DMM プレミアムの解約。',
+    caution: 'App Store / Google Play のアプリ内課金で登録した場合は、そちらから解約します。'
+        '「解約手続き中」でも有効期限までは視聴できます。',
+    aliases: ['ディーエムエム', 'DMMプレミアム', 'DMMTV'],
+  ),
+  CancelGuideEntry(
+    id: 'niconico_premium',
+    name: 'ニコニコプレミアム',
+    category: CancelCategory.video,
+    url: 'https://premium.nicovideo.jp/',
+    route: 'niconico にログイン → アカウント設定 → プレミアム会員 → 解約。',
+    caution: 'スマホのアプリ内課金や、まとめて支払いなどの登録経路によって解約先が変わることがあります。',
+    aliases: ['ニコニコ動画', 'niconico', 'ニコ動', 'ドワンゴ'],
   ),
 
   // ── 音楽 ────────────────────────────────────────────────────────────────
@@ -430,6 +451,58 @@ const List<CancelGuideEntry> kCancelGuideEntries = [
     route: 'Uber Eats アプリまたはブラウザ → アカウント → Uber One → メンバーシップを終了。',
     caution: 'アプリ内課金で登録した場合は、App Store / Google Play から解約します。',
     aliases: ['ウーバー', 'ウーバーイーツ', 'Uber Eats', '出前'],
+  ),
+  CancelGuideEntry(
+    id: 'lyp_premium',
+    name: 'LYP プレミアム（旧 Yahoo! プレミアム）',
+    category: CancelCategory.reading,
+    url: 'https://premium.yahoo.co.jp/',
+    route: 'Yahoo! JAPAN ID でログイン →「LYP プレミアム会員ページ」→ 解約手続き。',
+    caution: 'LINE / ソフトバンク・ワイモバイルまとめて支払い / App Store など、'
+        '登録した経路によって解約先が変わります。LINE アプリからは解約できない場合があります。',
+    aliases: ['エルワイピー', 'Yahoo', 'ヤフー', 'ヤフープレミアム', 'PayPay', 'LINE'],
+  ),
+  CancelGuideEntry(
+    id: 'x_premium',
+    name: 'X Premium（旧 Twitter Blue）',
+    category: CancelCategory.reading,
+    url: 'https://x.com/i/premium',
+    route: 'ブラウザで X にログイン → 設定 → プレミアム → サブスクリプションの管理 → 解約。',
+    caution: 'iPhone / Android のアプリ内課金で登録した場合は、App Store / Google Play から解約します。',
+    aliases: ['エックス', 'Twitter', 'ツイッター', 'Twitter Blue', 'ツイッターブルー', 'Grok'],
+  ),
+
+  // ── 学び・教育 ──────────────────────────────────────────────────────────
+  CancelGuideEntry(
+    id: 'studysapuri',
+    name: 'スタディサプリ',
+    category: CancelCategory.education,
+    url: 'https://studysapuri.jp/info/guide/cancellation/',
+    route: 'サポート Web にログイン → 退会 / 利用停止の手続き。',
+    caution: '「利用停止」と「退会」は別の手続きです。講座（小中高・大学受験・ENGLISH）や'
+        '登録経路（App Store など）によって手続きが異なります。',
+    aliases: ['スタサプ', 'studysapuri', 'リクルート', '受験'],
+  ),
+  CancelGuideEntry(
+    id: 'duolingo',
+    name: 'Duolingo（Super Duolingo）',
+    category: CancelCategory.education,
+    url: 'https://www.duolingo.com/help/cancel-my-super-duolingo-subscription',
+    route: 'ブラウザでログイン → 設定 → サブスクリプション（Super）→ 解約。',
+    caution: 'iPhone / Android のアプリ内課金で登録した場合は、App Store / Google Play から解約します。',
+    aliases: ['デュオリンゴ', 'ドゥオリンゴ', 'Super Duolingo', '語学', '英語'],
+  ),
+
+  // ── フィットネス・健康 ──────────────────────────────────────────────────
+  CancelGuideEntry(
+    id: 'chocozap',
+    name: 'chocoZAP（チョコザップ）',
+    category: CancelCategory.fitness,
+    url: 'https://faq.chocozap.jp/chocozap_faq/qa/cancel',
+    route: 'chocoZAP アプリ → メニュー → 退会の手続き（マイページ → 退会の手続き からも可）。',
+    caution: '最短で解約できるのは入会月の翌月末です。月額分は支払った月の末日まで使えます。'
+        '料金の未納があるとアプリから退会できません。',
+    aliases: ['チョコザップ', 'ちょこざっぷ', 'RIZAP', 'ライザップ', 'ジム'],
   ),
 
   // ── このアプリ（隠さず載せる） ───────────────────────────────────────────
