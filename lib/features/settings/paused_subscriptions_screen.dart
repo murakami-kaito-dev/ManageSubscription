@@ -10,6 +10,7 @@ import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/subscription_avatar.dart';
 import '../../core/widgets/soft_header.dart';
 import '../../core/utils/currency.dart';
+import '../../providers/settings_provider.dart';
 import '../../providers/subscription_providers.dart';
 
 class PausedSubscriptionsScreen extends ConsumerWidget {
@@ -20,6 +21,7 @@ class PausedSubscriptionsScreen extends ConsumerWidget {
     final paused = (ref.watch(subscriptionsProvider).valueOrNull ?? const [])
         .where((s) => s.isPaused)
         .toList();
+    final main = ref.watch(settingsProvider.select((s) => s.mainCurrency));
 
     return Scaffold(
       body: SafeArea(
@@ -47,7 +49,6 @@ class PausedSubscriptionsScreen extends ConsumerWidget {
                       separatorBuilder: (_, __) => const Gap(AppSpacing.md),
                       itemBuilder: (context, i) {
                         final s = paused[i];
-                        final fmt = CurrencyFormatter(s.currency);
                         return SoftCard(
                           child: Row(
                             children: [
@@ -58,9 +59,16 @@ class PausedSubscriptionsScreen extends ConsumerWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(s.name, style: AppType.body(15.5, weight: FontWeight.w700)),
-                                    Text('${fmt.format(s.amount)} /${s.periodLabel}',
+                                    Text(
+                                        '${CurrencyFormatter(main).format(s.amountIn(main))} /${s.periodLabel}',
                                         style: AppType.body(12,
                                             color: AppColors.textSecondary)),
+                                    if (s.currency != main)
+                                      Text(
+                                          CurrencyFormatter(s.currency)
+                                              .format(s.amount),
+                                          style: AppType.body(11,
+                                              color: AppColors.textMuted)),
                                   ],
                                 ),
                               ),

@@ -80,6 +80,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   // ── Monthly view ─────────────────────────────────────────────────────────
   Widget _buildMonthView(bool isPremium) {
     final fmt = ref.watch(mainCurrencyFormatterProvider);
+    final main = ref.watch(settingsProvider.select((s) => s.mainCurrency));
     final data = ref.watch(monthlyHistoryProvider(_year));
     final payments = ref.watch(monthPaymentsProvider(DateTime(_year, _month)));
     // Split the month's payments into what's already been billed and what's
@@ -185,7 +186,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
               child: _PaymentRow(
                 sub: p.sub,
                 subtitle: JpDate.short(p.date),
-                amount: CurrencyFormatter(p.sub.currency).format(p.sub.amount),
+                amount: fmt.format(p.sub.amountIn(main)),
+                original: p.sub.currency != main
+                    ? CurrencyFormatter(p.sub.currency).format(p.sub.amount)
+                    : null,
               ),
             ),
         // ── 支払い予定（未払い＝半透明） ──
@@ -199,7 +203,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
               child: _PaymentRow(
                 sub: p.sub,
                 subtitle: JpDate.short(p.date),
-                amount: CurrencyFormatter(p.sub.currency).format(p.sub.amount),
+                amount: fmt.format(p.sub.amountIn(main)),
+                original: p.sub.currency != main
+                    ? CurrencyFormatter(p.sub.currency).format(p.sub.amount)
+                    : null,
                 dimmed: true,
               ),
             ),
@@ -419,11 +426,17 @@ class _PaymentRow extends StatelessWidget {
     required this.sub,
     required this.subtitle,
     required this.amount,
+    this.original,
     this.dimmed = false,
   });
   final Subscription sub;
   final String subtitle;
+
+  /// メイン通貨に換算済みの整形済み文字列（主表示）。
   final String amount;
+
+  /// 元通貨での額（メイン通貨と違うときだけ小さく併記）。null なら非表示。
+  final String? original;
 
   /// Upcoming (not-yet-billed) rows render half-transparent to signal they
   /// haven't been paid yet.
@@ -453,7 +466,17 @@ class _PaymentRow extends StatelessWidget {
               ],
             ),
           ),
-          Text(amount, style: AppType.display(16)),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(amount, style: AppType.display(16)),
+              if (original != null)
+                Text(original!,
+                    style: AppType.body(11.5,
+                        weight: FontWeight.w600, color: AppColors.textMuted)),
+            ],
+          ),
         ],
       ),
     );

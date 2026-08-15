@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/utils/currency.dart';
 import '../../../core/utils/dates.dart';
+import '../../../core/widgets/converted_amount.dart';
 import '../../../core/widgets/soft_card.dart';
 import '../../../core/widgets/soft_progress_bar.dart';
 import '../../../core/widgets/subscription_avatar.dart';
 import '../../../data/models/subscription.dart';
+import '../../../providers/settings_provider.dart';
 
-class SubscriptionTile extends StatelessWidget {
+class SubscriptionTile extends ConsumerWidget {
   const SubscriptionTile({super.key, required this.sub, this.onTap});
 
   final Subscription sub;
@@ -25,8 +27,8 @@ class SubscriptionTile extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final fmt = CurrencyFormatter(sub.currency);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final main = ref.watch(settingsProvider.select((s) => s.mainCurrency));
     final dateStr = JpDate.short(sub.nextPaymentDate);
     final accent = sub.color;
 
@@ -72,20 +74,8 @@ class SubscriptionTile extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    RichText(
-                      text: TextSpan(children: [
-                        TextSpan(
-                          text: fmt.format(sub.amount),
-                          style: AppType.display(20, weight: FontWeight.w800),
-                        ),
-                        TextSpan(
-                          text: ' /${sub.periodLabel}',
-                          style: AppType.body(12,
-                              weight: FontWeight.w600,
-                              color: AppColors.textMuted),
-                        ),
-                      ]),
-                    ),
+                    ConvertedAmount(
+                        sub: sub, main: main, amountSize: 20, periodSuffix: true),
                     const Gap(2),
                     Text(
                       _countdownLabel(),

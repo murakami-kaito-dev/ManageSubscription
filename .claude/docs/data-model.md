@@ -27,6 +27,13 @@
 
 派生プロパティ: `recurrence` / `periodLabel`（月・年・週・`N単位`）/ `nextPaymentDate` / `daysUntilNextPayment` / `periodProgress` / `monthlyAmount` / `yearlyAmount` / `amountIn(currency)` / `costPerUse` / `displayGlyph`。
 
+**通貨の保存と表示（重要）**: 額は**各サブスクの通貨建てで保存**（編集画面もその通貨のまま）。一方、
+**一覧・タイル・カレンダー・履歴・停止中の「表示額」は、設定の"メイン通貨"に換算して出す**
+（合計・分析と一致させるため）。換算は `Subscription.amountIn(通貨)` ＝ `CurrencyRates`。共通表示は
+`ConvertedAmount`（`lib/core/widgets/converted_amount.dart`。外貨のときだけ元の額を小さく併記）。
+為替は起動時に `RatesService`（open.er-api.com）が当日レートを取得、オフライン時はフォールバック
+（USD=155 等）を使うため、外貨の円換算値は日々わずかに変動する。
+
 ### BillingCycle / IntervalUnit
 - `BillingCycle { monthly, yearly, weekly, custom }`
 - `IntervalUnit { day, week, month }`（shortLabel: 日/週/ヶ月）

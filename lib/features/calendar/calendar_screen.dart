@@ -9,6 +9,7 @@ import '../../core/theme/app_typography.dart';
 import '../../core/utils/billing.dart';
 import '../../core/utils/currency.dart';
 import '../../core/utils/dates.dart';
+import '../../core/widgets/converted_amount.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/subscription_avatar.dart';
 import '../../core/widgets/soft_header.dart';
@@ -251,8 +252,7 @@ class _PaymentRow extends StatelessWidget {
           SubscriptionAvatar(sub: sub, size: 38, radius: 12),
           const Gap(AppSpacing.md),
           Expanded(child: Text(sub.name, style: AppType.body(15, weight: FontWeight.w700))),
-          Text(CurrencyFormatter(sub.currency).format(sub.amount),
-              style: AppType.display(16)),
+          ConvertedAmount(sub: sub, main: currency),
         ],
       ),
     );
