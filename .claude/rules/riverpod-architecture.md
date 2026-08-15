@@ -1,4 +1,11 @@
-# Skill: Riverpod + Feature-First Architecture
+---
+paths:
+  - "lib/**/*.dart"
+---
+
+# Riverpod + Feature-First Architecture（このアプリの状態管理・レイヤ規約）
+
+> `lib/**/*.dart` を編集する時に適用されるパス限定ルール（旧 `.claude/skills/riverpod-architecture` から移設）。
 
 ## 概要
 このアプリ（サブスク管理）の状態管理・レイヤリングの統一ルール。flutter_riverpod を用いた、テスト可能で破綻しにくい構成を定義する。
