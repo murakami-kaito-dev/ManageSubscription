@@ -4,6 +4,15 @@
 repo: github.com/murakami-kaito-dev/ManageSubscription）。Flutter 単一コードベース、UI は日本語固定。
 このファイルは**毎セッション自動で読み込まれる恒久ルール**。ユーザーが毎回指示しなくても以下を守ること。
 
+## 情報のありか（新規セッションの初動でまず把握する地図）
+このプロジェクトの全体像は下記を辿れば掴める（＝新規参画時に見る順番）：
+- **このファイル `CLAUDE.md`** … 固有ルール・不変条件・品質ゲート・禁忌
+- **ドキュメント索引** [.claude/docs/README.md](.claude/docs/README.md)（アーキテクチャ/画面/データ/課金/通知 等の入口）
+- **リリース履歴** [.claude/docs/release-log.md](.claude/docs/release-log.md)（どのビルドで何を出したか・状態）
+- **`.claude/rules/`**（パス限定ルール。例: `lib/**/*.dart` の Riverpod 設計）／**プロジェクト Skill** `app-store-release`（このアプリのストア配信）
+- **自動メモリ**（`~/.claude/projects/<repo>/memory/`）… これまでの経緯・決定・学び
+- Claude 運用の共通ルール（Git・秘密・タグ・記録・越境禁止など）は **グローバル `~/.claude/CLAUDE.md`** と各 Skill を参照
+
 ## ドキュメント
 - ドキュメントの置き場は **`.claude/docs/` だけ**。ここ以外に仕様書・READMEを作らない。
 - **実装・修正をしたら、必ず関連ドキュメントも同じ変更で更新する**（後回しにしない）。
@@ -42,14 +51,13 @@ repo: github.com/murakami-kaito-dev/ManageSubscription）。Flutter 単一コー
   fire-and-forget にしてある（理由と全体像は [architecture.md](.claude/docs/architecture.md) の「起動コストとスケール」）。
 
 ## Git / コミット
-- **こまめに、意味の分かるメッセージでコミット**する。デフォルトブランチ直コミットは避け、必要なら先にブランチを切る。
-- コミットメッセージの末尾に必ず付与:
-  ```
-  Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
-  ```
-- push はユーザーに言われたときだけ。
+- Git 運用は**個人共通ルール（`~/.claude/CLAUDE.md`）と `git-workflow` スキルに従う**。
+  （要点：ソロ開発なので通常は `main` 直コミット可／commit・push は指示されたときだけ／
+  コミット末尾に `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`／秘密はコミット禁止・
+  `git commit` 前にグローバルフックでも機械ブロック／節目で `vX.Y.Z` タグ。）
+- **このプロジェクト固有の補足**は下記「秘密情報」を参照。
 
-## 秘密情報（コミット禁止・.gitignore 済み）
+## 秘密情報（このプロジェクト固有・コミット禁止・.gitignore 済み）
 - `ios/AuthKey_*.p8`（ASC APIキー）、`ios/AppStoreConnect*.json`、`ios/SubscriptionKey_*.p8`
   （RevenueCat用 In-App Purchase Key）、`ios/*Issuer*.json` などの資格情報は**絶対にコミット/共有・中身を読まない**。
 
