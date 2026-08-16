@@ -14,7 +14,29 @@
 - `data/` — `database/app_database.dart`（スキーマ+シード）、`models/`、`repositories/`
 - `providers/` — `core_providers`（DB/prefs/サービス）、`subscription_providers`、`analytics_providers`、`settings_provider`、`premium_provider`
 - `features/` — 画面ごと（home / subscription（編集/追加）/ analytics / calendar / history / csv（取込UI）/ settings / premium / rating / notifications / shell）
-- `services/` — ads / csv / currency / image / notifications / purchases / rating
+- `services/` — ads / csv / currency / image / notifications / purchases / rating / widget
+
+## ホーム画面ウィジェット（iOS WidgetKit）
+- **データの流れ**: `widgetSyncProvider`（`app.dart` で watch）が `subscriptionsProvider` と
+  メイン通貨を `ref.listen`（`fireImmediately: true`）→ 変化のたびに
+  `buildWidgetPayload()`（`services/widget/widget_payload.dart`・純関数・テスト有）で
+  JSON を組み立て → `WidgetBridge.update()`（`services/widget/widget_bridge.dart`、
+  MethodChannel `submana/widget`・専用パッケージ不使用）→ ネイティブ
+  （`ios/Runner/AppDelegate.swift`）が **App Group** `group.com.submana.app` の
+  UserDefaults に保存し `WidgetCenter.reloadTimelines`。
+- **表示ルールはアプリと同一**: 合計=停止中を除く `monthlyAmountIn(メイン通貨)` 総和、
+  アイテム額もメイン通貨換算。日付・「あと◯日」は **Swift 側がタイムライン
+  （今＋7日分の深夜0時）で毎日再計算**するので、アプリを開かない日もラベルが進む。
+- **ネイティブ側**: `ios/SubmanaWidget/`（SwiftUI・systemSmall/Medium。ベース配色は
+  claymorphism パレットの固定移植、**アクセント色は設定のテーマ色に追従**——ペイロードに
+  `accent`/`accentDeep`（hex）を載せ、deep の導出は `AppAccent.from` と同一ロジック）。Xcode ターゲット `SubmanaWidget`
+  （bundle id `com.submana.app.widget`、Info.plist の版数は `$(FLUTTER_BUILD_NAME)/
+  $(FLUTTER_BUILD_NUMBER)`＝アプリと自動同期）。App Group entitlements は
+  `Runner/Runner.entitlements` と `SubmanaWidget/SubmanaWidget.entitlements`。
+  拡張にも `PrivacyInfo.xcprivacy`（UserDefaults CA92.1）を同梱。
+- **⚠️ リリース時の一回だけの署名作業**: 新 bundle id `com.submana.app.widget` と
+  App Group の Developer Portal 登録が必要（`xcodebuild -allowProvisioningUpdates`
+  ＋ASC APIキー、または Xcode を一度開いて自動署名に解決させる）。
 
 ## 主要 Provider（この名前で参照される）
 - `databaseProvider` / `prefsProvider` / `purchaseServiceProvider` — main() で override
@@ -26,6 +48,7 @@
 - `settingsProvider`（`Notifier<AppSettings>`）— 通貨/テーマ色/通知ON/表示設定/並べ替え/停止表示
 - `premiumProvider`（bool = 有料 or 試用中 or dev）/ `entitlementProvider`（プラン+試用残日数）
 - サービス: `notificationServiceProvider` / `csvExportServiceProvider` / `csvImportServiceProvider` / `imagePickerServiceProvider` / `ratingServiceProvider` / `adServiceProvider`
+- `widgetSyncProvider` — ホーム画面ウィジェットへの同期（上記「ホーム画面ウィジェット」参照）
 
 ## テーマ
 - `AppAccent`（primary/deep/soft）はユーザー選択のテーマ色から算出。`AppAccent.of(context)` で参照

@@ -6,6 +6,7 @@ import 'core/theme/app_theme.dart';
 import 'features/notifications/foreground_reminder_host.dart';
 import 'features/shell/home_shell.dart';
 import 'providers/settings_provider.dart';
+import 'providers/widget_sync_provider.dart';
 
 class ManageSubscriptionApp extends ConsumerWidget {
   const ManageSubscriptionApp({super.key});
@@ -14,6 +15,9 @@ class ManageSubscriptionApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Theme color is free for everyone; apply the stored accent directly.
     final accent = ref.watch(settingsProvider.select((s) => s.accent));
+
+    // Keep the home-screen widget in sync with the library and main currency.
+    ref.watch(widgetSyncProvider);
 
     return MaterialApp(
       title: 'サブスク家計簿',
