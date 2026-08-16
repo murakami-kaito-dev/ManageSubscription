@@ -136,6 +136,7 @@ func dateLabel(epochMs epoch: Double) -> String {
 
 struct TotalBlock: View {
   let payload: WidgetPayload
+  var amountSize: CGFloat = 24
 
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
@@ -143,7 +144,7 @@ struct TotalBlock: View {
         .font(.system(size: 11, weight: .semibold, design: .rounded))
         .foregroundColor(Palette.textSecondary)
       Text(payload.totalLabel)
-        .font(.system(size: 24, weight: .heavy, design: .rounded))
+        .font(.system(size: amountSize, weight: .heavy, design: .rounded))
         .foregroundColor(Palette.textPrimary)
         .minimumScaleFactor(0.5)
         .lineLimit(1)
@@ -257,17 +258,20 @@ struct SubmanaWidgetView: View {
     .widgetBackground(Palette.canvas)
   }
 
+  // 正方形でも medium と同じく最大4件を出す。縦に収めるため合計をやや小さく
+  // (22pt) し、「次の支払い」見出しは省略（ドット行だけで自明）。
+  // 行の中身（名前＋あと◯日）は compact ItemRow のまま。
   private func small(_ p: WidgetPayload) -> some View {
-    VStack(alignment: .leading, spacing: 8) {
-      TotalBlock(payload: p)
-      Spacer(minLength: 0)
-      if let first = p.items.first {
+    VStack(alignment: .leading, spacing: 4) {
+      TotalBlock(payload: p, amountSize: 22)
+      Spacer(minLength: 2)
+      if !p.items.isEmpty {
         VStack(alignment: .leading, spacing: 2) {
-          Text("次の支払い")
-            .font(.system(size: 9, weight: .semibold, design: .rounded))
-            .foregroundColor(Palette.textSecondary)
-          ItemRow(item: first, entryDate: entry.date, compact: true,
-                  accentColor: p.accentColor, accentDeepColor: p.accentDeepColor)
+          ForEach(0..<min(p.items.count, 4), id: \.self) { i in
+            ItemRow(item: p.items[i], entryDate: entry.date, compact: true,
+                    accentColor: p.accentColor,
+                    accentDeepColor: p.accentDeepColor)
+          }
         }
       }
     }
