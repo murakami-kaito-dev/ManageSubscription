@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -218,8 +219,12 @@ class _EntryRow extends StatelessWidget {
             horizontal: AppSpacing.lg, vertical: AppSpacing.lg),
         child: Row(
           children: [
-            Icon(entry.category.icon,
-                size: 22, color: AppAccent.of(context).deep),
+            // サービスごとのプリセットアイコン（スケッチ風・ロゴ非使用）。
+            SvgPicture.asset(
+              'assets/preset_icons/${entry.id}.svg',
+              width: 30,
+              height: 30,
+            ),
             const Gap(AppSpacing.md),
             Expanded(child: Text(entry.name, style: AppType.body(15))),
             const Icon(Icons.chevron_right_rounded,
@@ -294,7 +299,17 @@ class _CancelGuideSheet extends StatelessWidget {
               ),
             ),
             const Gap(AppSpacing.lg),
-            Text(entry.name, style: AppType.display(20)),
+            Row(
+              children: [
+                SvgPicture.asset(
+                  'assets/preset_icons/${entry.id}.svg',
+                  width: 40,
+                  height: 40,
+                ),
+                const Gap(AppSpacing.md),
+                Expanded(child: Text(entry.name, style: AppType.display(20))),
+              ],
+            ),
             const Gap(AppSpacing.lg),
             _Block(
               icon: Icons.alt_route_rounded,

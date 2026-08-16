@@ -139,6 +139,9 @@ Claude / Uber One は bot 遮断で HTTP 403 が返るが、実ブラウザで�
 
 ## メンテナンス
 - 追加するときは `kCancelGuideEntries` に 1 エントリ足すだけ（カテゴリー順・定義順に並ぶ）。
+  **併せて `tool/gen_preset_icons.py` にモチーフ×色を追加して SVG を再生成する**
+  （各行・詳細シート・アイテムの「アイコンから選ぶ」が `assets/preset_icons/<id>.svg` を参照。
+  対応漏れは `test/preset_icons_test.dart` が検出する）。
   「本当に契約者が多い順」で足す。網羅は目的にしない。
 - `test/cancel_guide_test.dart` が id 重複・URL 形式・空文言・空セクション・検索を守る
   （リンク先が生きているかはテストでは分からない。手で開いて確認）。
