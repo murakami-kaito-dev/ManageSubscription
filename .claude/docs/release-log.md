@@ -8,7 +8,7 @@
 
 ---
 
-## 2.1.0 (build 14) — 2026-08-16 · 申請準備中
+## 2.1.0 (build 14) — 2026-08-16 · App Store Connect（審査中）
 
 - **ホーム画面ウィジェット（iOS WidgetKit）を新規追加**。small=今月の合計＋次の支払い1件、
   medium=上段に今月の合計・下段に支払い日が近い順4件（名前/M月d日/あと◯日/金額を全幅表示）。
@@ -19,8 +19,10 @@
 - 新ターゲット `SubmanaWidget`（bundle id `com.submana.app.widget`）・App Group
   `group.com.submana.app` を導入（Developer Portal 登録は実機ビルド時に解決済み）
 
-**配信**: （申請フローの進行に合わせて更新する）
-**状態**: 実装完了（analyze 0 / test 緑 / シミュレータビルド成功）
+**配信**: App Store Connect にアップロード（Delivery UUID `9141b4db-a4dc-499a-98cc-c15ce8c5494a`）。
+ビルド処理 VALID → バージョン 2.1.0 作成 → What's New（開発者確認済み文面）＋プロモ引き継ぎ →
+build 14 紐付け → 審査提出（reviewSubmission `4dc2a473…`）。タグ `v2.1.0` = `6ab3179`
+**状態**: **WAITING_FOR_REVIEW（審査中）**。`releaseType=AFTER_APPROVAL`（承認後に自動配信）
 **⚠️ 禁忌チェック**: 購入経路コードは 2.0.0 から無変更（公開中の版と同一）。デバッグ導線
 `kDebugMode` ガード済・共有リンク `6799400490` 確認済
 
