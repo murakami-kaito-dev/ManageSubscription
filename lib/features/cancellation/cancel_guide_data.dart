@@ -212,6 +212,16 @@ const List<CancelGuideEntry> kCancelGuideEntries = [
     aliases: ['ワウワウ'],
   ),
   CancelGuideEntry(
+    id: 'skyperfectv',
+    name: 'スカパー！',
+    category: CancelCategory.video,
+    url: 'https://faq.skyperfectv.co.jp/faq/show/100?site_domain=skyperfectv',
+    route: 'Myスカパー！にログイン →「放送サービス解約」→ 解約するカードを選択。',
+    caution: '加入した当月は解約できません。解約日は手続き完了月の末日です。'
+        'Myスカパー！の ID がない場合は自動音声ダイヤルでの手続きになります。',
+    aliases: ['スカパー', 'skyperfect', 'スカイパーフェクト', '衛星放送', 'CS'],
+  ),
+  CancelGuideEntry(
     id: 'dmm_tv',
     name: 'DMM TV / DMM プレミアム',
     category: CancelCategory.video,
@@ -503,6 +513,17 @@ const List<CancelGuideEntry> kCancelGuideEntries = [
     caution: '最短で解約できるのは入会月の翌月末です。月額分は支払った月の末日まで使えます。'
         '料金の未納があるとアプリから退会できません。',
     aliases: ['チョコザップ', 'ちょこざっぷ', 'RIZAP', 'ライザップ', 'ジム'],
+  ),
+  CancelGuideEntry(
+    id: 'anytime_fitness',
+    name: 'エニタイムフィットネス',
+    category: CancelCategory.fitness,
+    url: 'https://www.anytimefitness.co.jp/faq/',
+    route: '退会は Web ではできません。所属店舗（ホームクラブ）の店頭で、'
+        'スタッフアワー内に手続きします。',
+    caution: '退会締め日（多くの店舗は月の10日前後）を過ぎると翌月末退会になります。'
+        '公式が注意喚起している「解約代行」をうたう外部サイトは使わないでください。',
+    aliases: ['エニタイム', 'anytime', 'ジム', 'フィットネス'],
   ),
 
   // ── このアプリ（隠さず載せる） ───────────────────────────────────────────

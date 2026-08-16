@@ -36,7 +36,9 @@
 **最重要**: 日本のサブスクは **App Store / Google Play 経由課金が多数**。その場合の解約先は
 サービスのサイトではなく **iOS設定 / Playストアのサブスク画面**。ここで迷う人が多いので**最上段**。
 
-計 **46件**（2026-08-15 時点。会員数の定量根拠に基づき 7件追加）。カテゴリー順・定義順にそのまま画面に並ぶ。
+計 **48件**（2026-08-16 時点。会員数の定量根拠に基づき追加: 2026-08-15 に7件、
+2026-08-16 にスカパー！[加入約256万件]・エニタイムフィットネス[会員100万人超] の2件）。
+カテゴリー順・定義順にそのまま画面に並ぶ。
 
 **登録先**
 | サービス | 解約入口 URL |
@@ -59,6 +61,7 @@
 | FOD | `https://fod.fujitv.co.jp/` |
 | TELASA | `https://www.telasa.jp/` |
 | WOWOW | `https://www.wowow.co.jp/support/cancel/`（Webだけで完結しない場合あり） |
+| スカパー！ | `https://faq.skyperfectv.co.jp/faq/show/100?site_domain=skyperfectv`（Myスカパー！から。加入当月は解約不可） |
 | DMM TV / DMM プレミアム | `https://www.dmm.com/my/-/subscription/`（App Store 経由は注意） |
 | ニコニコプレミアム | `https://premium.nicovideo.jp/` |
 
@@ -114,6 +117,7 @@
 | サービス | 解約入口 URL |
 |---|---|
 | chocoZAP（チョコザップ） | `https://faq.chocozap.jp/chocozap_faq/qa/cancel`（最短解約は入会翌月末） |
+| エニタイムフィットネス | `https://www.anytimefitness.co.jp/faq/`（**Web退会不可・所属店舗の店頭のみ**。解約代行サイトに注意） |
 
 **このアプリ**
 | サービス | 解約入口 URL |
