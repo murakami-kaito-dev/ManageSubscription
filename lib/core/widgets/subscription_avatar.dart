@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../data/models/subscription.dart';
 import '../theme/app_typography.dart';
 import '../utils/image_paths.dart';
+import '../utils/preset_icons.dart';
 
 /// The single source of truth for how a subscription is shown as a small
 /// avatar, identically on every tab (home / analytics / calendar / history):
@@ -35,7 +37,9 @@ class SubscriptionAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final file = ImagePaths.resolve(sub.imagePath);
+    // プリセットアイコン（preset:<id>）はアセットのSVGを描く。ユーザー画像より先に判定。
+    final presetAsset = PresetIcons.assetOf(sub.imagePath);
+    final file = presetAsset == null ? ImagePaths.resolve(sub.imagePath) : null;
     final hasImage = file != null && file.existsSync();
 
     // Derive a soft background tint and a darker glyph color from the item's
@@ -59,7 +63,7 @@ class SubscriptionAvatar extends StatelessWidget {
       // corners can never poke outside the frame.
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: hasImage ? null : soft,
+        color: (hasImage || presetAsset != null) ? null : soft,
         borderRadius: BorderRadius.circular(radius),
       ),
       // The colored ring is painted ON TOP of the (already-clipped) content, so
@@ -68,25 +72,32 @@ class SubscriptionAvatar extends StatelessWidget {
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: base, width: ring.toDouble()),
       ),
-      child: hasImage
-          ? Image.file(
-              file,
-              fit: BoxFit.cover,
+      child: presetAsset != null
+          ? SvgPicture.asset(
+              presetAsset,
               width: size,
               height: size,
-              // 正方形にクロップ済みなので幅だけ指定すれば縦横比は保たれる。
-              cacheWidth:
-                  (_decodeSize * MediaQuery.devicePixelRatioOf(context))
-                      .round(),
+              fit: BoxFit.cover,
             )
-          : (sub.emoji != null && sub.emoji!.trim().isNotEmpty
-              ? Text(sub.emoji!.trim(),
-                  style: TextStyle(fontSize: size * 0.48))
-              : Text(
-                  sub.displayGlyph.toUpperCase(),
-                  style: AppType.display(size * 0.44,
-                      weight: FontWeight.w800, color: deep),
-                )),
+          : hasImage
+              ? Image.file(
+                  file,
+                  fit: BoxFit.cover,
+                  width: size,
+                  height: size,
+                  // 正方形にクロップ済みなので幅だけ指定すれば縦横比は保たれる。
+                  cacheWidth:
+                      (_decodeSize * MediaQuery.devicePixelRatioOf(context))
+                          .round(),
+                )
+              : (sub.emoji != null && sub.emoji!.trim().isNotEmpty
+                  ? Text(sub.emoji!.trim(),
+                      style: TextStyle(fontSize: size * 0.48))
+                  : Text(
+                      sub.displayGlyph.toUpperCase(),
+                      style: AppType.display(size * 0.44,
+                          weight: FontWeight.w800, color: deep),
+                    )),
     );
   }
 }

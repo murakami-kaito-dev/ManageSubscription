@@ -45,6 +45,8 @@ repo: github.com/murakami-kaito-dev/ManageSubscription）。Flutter 単一コー
   - サブスク総数 **100件**（`PremiumLimits.hardMaxSubscriptions`、全ユーザー共通のハード上限・サイレント制限）
   - 初回支払日 2000〜2100 年 / custom interval 1〜999
 - アイコン画像は**ファイル名のみ**保存（`ImagePaths`）。絶対パス保存は禁止。
+  プリセットアイコンは **`preset:<id>`** 形式で保存（`PresetIcons`。id は解約ガイドと1:1、
+  アセットは `tool/gen_preset_icons.py` で生成）。
 
 ## 起動パフォーマンス
 - **重い O(件数) 処理を `runApp` の前で await しない**。通知の再スケジュールは `main.dart` で

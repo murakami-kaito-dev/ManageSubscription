@@ -19,7 +19,7 @@
 | memo | TEXT? | メモ |
 | usage_count / usage_unit | REAL/TEXT | コスパ計算用（月あたり利用回数・単位） |
 | is_paused | INT | 0/1 停止中 |
-| image_path | TEXT? | アイコン画像の**ファイル名のみ**（[image 保存](#アイコン画像の保存)） |
+| image_path | TEXT? | アイコン画像の**ファイル名のみ**、または**プリセット参照 `preset:<id>`**（[image 保存](#アイコン画像の保存)。プリセットは `PresetIcons`／`assets/preset_icons/<id>.svg`、id は解約ガイドの `CancelGuideEntry.id` と1:1） |
 | notify_days | TEXT | 通知ルール（`NotifyRule.encode`） |
 | sort_order | INT | 手動並べ替え順 |
 | interval_count / interval_unit | INT/TEXT | cycle=custom のときの「N 日/週/ヶ月」 |

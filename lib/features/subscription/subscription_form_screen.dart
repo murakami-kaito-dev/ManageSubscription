@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
@@ -8,6 +9,7 @@ import '../../core/premium_limits.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/amount_input.dart';
 import '../../core/utils/image_paths.dart';
+import '../../core/utils/preset_icons.dart';
 import '../../core/utils/text_input.dart';
 import '../../core/widgets/delete_dialog.dart';
 import '../../core/theme/app_shadows.dart';
@@ -32,6 +34,7 @@ import '../premium/premium_screen.dart';
 import '../settings/category_settings_screen.dart';
 import '../settings/payment_method_settings_screen.dart';
 import 'widgets/cospa_preview.dart';
+import 'widgets/preset_icon_sheet.dart';
 
 class SubscriptionFormScreen extends ConsumerStatefulWidget {
   const SubscriptionFormScreen(
@@ -374,6 +377,11 @@ class _SubscriptionFormScreenState
     }
   }
 
+  Future<void> _choosePresetIcon() async {
+    final key = await showPresetIconSheet(context);
+    if (key != null && mounted) setState(() => _imagePath = key);
+  }
+
   void _chooseImageSource() {
     showModalBottomSheet<void>(
       context: context,
@@ -383,6 +391,16 @@ class _SubscriptionFormScreenState
           mainAxisSize: MainAxisSize.min,
           children: [
             const Gap(AppSpacing.md),
+            ListTile(
+              leading: Icon(Icons.auto_awesome_rounded,
+                  color: AppAccent.of(context).deep),
+              title: const Text('アイコンから選ぶ'),
+              subtitle: const Text('主要サービスのオリジナルアイコン'),
+              onTap: () {
+                Navigator.pop(context);
+                _choosePresetIcon();
+              },
+            ),
             ListTile(
               leading: Icon(Icons.photo_library_rounded,
                   color: AppAccent.of(context).deep),
@@ -511,7 +529,9 @@ class _SubscriptionFormScreenState
                   children: [
                     Text(
                       _imagePath != null
-                          ? '画像を設定中'
+                          ? (PresetIcons.isPreset(_imagePath)
+                              ? 'アイコンを設定中'
+                              : '画像を設定中')
                           : (_emoji.text.trim().isNotEmpty
                               ? '入力した文字を表示中'
                               : '未設定（※名前の頭文字を表示中）'),
@@ -1889,12 +1909,20 @@ class _IconPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = Color(colorValue);
-    final imageFile = ImagePaths.resolve(imagePath);
-    final bool isSet = imageFile != null || emoji.isNotEmpty;
+    final presetAsset = PresetIcons.assetOf(imagePath);
+    final imageFile =
+        presetAsset == null ? ImagePaths.resolve(imagePath) : null;
+    final bool isSet =
+        presetAsset != null || imageFile != null || emoji.isNotEmpty;
 
     Widget content;
     if (busy) {
       content = const Center(child: CircularProgressIndicator(strokeWidth: 2));
+    } else if (presetAsset != null) {
+      content = ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: SvgPicture.asset(presetAsset, width: 72, height: 72),
+      );
     } else if (imageFile != null) {
       content = ClipRRect(
         borderRadius: BorderRadius.circular(20),
@@ -1924,7 +1952,9 @@ class _IconPreview extends StatelessWidget {
         width: 72,
         height: 72,
         decoration: BoxDecoration(
-          color: imageFile != null ? null : color.withOpacity(0.16),
+          color: (imageFile != null || presetAsset != null)
+              ? null
+              : color.withOpacity(0.16),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSet ? color.withOpacity(0.5) : AppColors.textMuted,
