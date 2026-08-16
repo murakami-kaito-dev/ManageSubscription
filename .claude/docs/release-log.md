@@ -8,15 +8,17 @@
 
 ---
 
-## 2.1.0 (build 15) — 2026-08-16 · 再提出準備中
+## 2.1.0 (build 15) — 2026-08-16 · App Store Connect（審査中・再提出）
 
 build 14 の審査提出後に「正方形(small)ウィジェットは1件しか出ない」改善要望が出たため、
 **build 14 の審査は取り下げ**、修正を込めて同じ 2.1.0 の build 15 として再提出する。
 
 - **fix**: small ウィジェットでも支払い予定を最大4件表示（合計22pt化・見出し省略で4行確保）
 
-**配信**: （再提出フローの進行に合わせて更新）
-**状態**: 準備中（build 14 分は下記参照）
+**配信**: App Store Connect にアップロード（Delivery UUID `acd63e58-aab5-4f80-b2a7-e14f05001ab1`）。
+ビルド処理 VALID → 既存バージョン 2.1.0（文面は build 14 提出時のまま）に build 15 を紐付け →
+再提出（reviewSubmission `affea3c9…`）。タグ `v2.1.0` = `8a875e0`（付け直し）
+**状態**: **WAITING_FOR_REVIEW（審査中）**。`releaseType=AFTER_APPROVAL`（承認後に自動配信）
 
 ## 2.1.0 (build 14) — 2026-08-16 · App Store Connect（審査取り下げ）
 
