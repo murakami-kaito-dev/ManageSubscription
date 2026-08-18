@@ -55,3 +55,6 @@ app.*.map.json
 
 # ローカルのビルドコマンド早見表（管理外）
 ビルドコマンド.txt
+
+# Claude Code セッションのローカル状態（管理外）
+.claude/scheduled_tasks.lock
