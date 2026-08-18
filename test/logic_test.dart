@@ -163,10 +163,10 @@ void main() {
       expect(PremiumLimits.canAttachImage(false), isTrue);
     });
 
-    test('notify-rule limit is unlimited for everyone', () {
-      expect(PremiumLimits.notifyRuleLimit(false),
-          PremiumLimits.notifyRuleLimit(true));
-      expect(PremiumLimits.notifyRuleLimit(false), greaterThan(1));
+    test('notify-rule cap is 5 and is not a premium gate', () {
+      // The cap applies to everyone, so it's a plain constant with no
+      // isPremium parameter — several rules are allowed, but not unlimited.
+      expect(PremiumLimits.maxNotifyRules, 5);
     });
   });
 }

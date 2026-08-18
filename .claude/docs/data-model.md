@@ -44,7 +44,11 @@
 無料枠の上限は `PremiumLimits`（カテゴリ**5** / 支払い方法**5**、プレミアムは無制限）。
 
 ## NotifyRule
-`NotifyRule(daysBefore, hour=9, minute=0)`。「支払日の N 日前 HH:MM」。`encode/decode` で TEXT 保存。**通知ルールは全ユーザー無制限**（`PremiumLimits.notifyRuleLimit` は誰でも `maxNotifyRules`=99）。
+`NotifyRule(daysBefore, hour=9, minute=0)`。「支払日の N 日前 HH:MM」。`encode/decode` で TEXT 保存。
+**1サブスクにつき最大5件**（`PremiumLimits.maxNotifyRules`）。**プレミアム制限ではなく全ユーザー共通の上限**
+（課金しても増えない）ため `isPremium` を取る関数ではなく定数。6件目の追加を試みるとフォームがダイアログで
+上限を知らせる（ペイウォールは出さない）。上限を下げる前に作られた6件以上のデータは**そのまま保持・通知も従来どおり**
+発火し、追加のみブロックされる。
 
 ## AppSettings（SharedPreferences）
 `settingsProvider`。主なキー: メイン通貨、テーマ色(accent int)、詳細常時表示、停止中表示、並べ替えモード(`SortMode`)。※通知ON(`settings_notify`)は廃止（通知は各アイテムの `NotifyRule` が真実の源）。

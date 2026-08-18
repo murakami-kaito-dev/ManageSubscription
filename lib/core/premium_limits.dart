@@ -6,8 +6,12 @@ class PremiumLimits {
   static const int maxSubscriptions = 8;
   static const int maxCategories = 5;
   static const int maxPaymentMethods = 5;
-  // Notification rules are free & unlimited for everyone now.
-  static const int maxNotifyRules = 99;
+
+  /// Reminder rules per subscription. NOT a premium gate — this cap applies to
+  /// EVERYONE (free and premium alike). It exists because more than a handful
+  /// of reminders for one payment is noise, and every rule is an extra OS
+  /// notification to schedule at startup.
+  static const int maxNotifyRules = 5;
 
   /// Hard ceiling on total subscriptions for EVERYONE (incl. premium/trial).
   /// A large number of items makes startup notification rescheduling and list
@@ -25,8 +29,7 @@ class PremiumLimits {
       isPremium || current < maxCategories;
   static bool canAddPaymentMethod(bool isPremium, int current) =>
       isPremium || current < maxPaymentMethods;
-  // Notification rules: free & unlimited for everyone.
-  static int notifyRuleLimit(bool isPremium) => maxNotifyRules;
+  // Notification rules have no premium gate — use [maxNotifyRules] directly.
 
   // Pure premium-only capabilities.
   static bool canExportCsv(bool isPremium) => isPremium;

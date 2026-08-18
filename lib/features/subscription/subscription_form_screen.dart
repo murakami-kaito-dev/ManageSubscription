@@ -351,6 +351,30 @@ class _SubscriptionFormScreenState
     }
   }
 
+  /// Tapping 追加 when the per-subscription reminder cap is already reached.
+  /// Not a premium upsell — the cap is the same for everyone.
+  Future<void> _showNotifyLimitDialog() async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text('通知はこれ以上追加できません', style: AppType.display(19)),
+        content: Text(
+          '1つのサブスクに設定できる通知は${PremiumLimits.maxNotifyRules}件までです。'
+          '追加したい場合は、既存の通知を削除してください。',
+          style: AppType.body(14, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('OK',
+                style: AppType.body(15, weight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _editNotifyRule(int index) async {
     final rule = await showDialog<NotifyRule>(
       context: context,
@@ -502,7 +526,6 @@ class _SubscriptionFormScreenState
 
   @override
   Widget build(BuildContext context) {
-    final isPremium = ref.watch(premiumProvider);
     final categories = ref.watch(categoriesProvider).valueOrNull ?? const [];
     final methods = ref.watch(paymentMethodsProvider).valueOrNull ?? const [];
     final alwaysShow = ref.watch(settingsProvider).alwaysShowDetails;
@@ -737,15 +760,12 @@ class _SubscriptionFormScreenState
                       const SectionHeader('支払い日前の通知'),
                       _NotifyRulesEditor(
                         rules: _notifyRules,
-                        limit: PremiumLimits.notifyRuleLimit(isPremium),
+                        limit: PremiumLimits.maxNotifyRules,
                         onAdd: _addNotifyRule,
                         onEdit: _editNotifyRule,
                         onRemove: (i) =>
                             setState(() => _notifyRules.removeAt(i)),
-                        onNeedPremium: () => ScaffoldMessenger.of(context)
-                            .showSnackBar(const SnackBar(
-                                content: Text(
-                                    '通知は${PremiumLimits.maxNotifyRules}件までです。'))),
+                        onLimitReached: _showNotifyLimitDialog,
                       ),
                       const SectionHeader('メモ'),
                       _fieldCard(
@@ -1529,7 +1549,9 @@ class _ChipPicker extends StatelessWidget {
 }
 
 /// Lists "N days before at HH:MM" reminder rules with add/edit/remove, like a
-/// calendar app. The add button respects the free-tier limit.
+/// calendar app. The add button respects [limit] (the same cap for everyone —
+/// see PremiumLimits.maxNotifyRules), calling [onLimitReached] instead of
+/// [onAdd] once it's hit.
 class _NotifyRulesEditor extends StatelessWidget {
   const _NotifyRulesEditor({
     required this.rules,
@@ -1537,14 +1559,14 @@ class _NotifyRulesEditor extends StatelessWidget {
     required this.onAdd,
     required this.onEdit,
     required this.onRemove,
-    required this.onNeedPremium,
+    required this.onLimitReached,
   });
   final List<NotifyRule> rules;
   final int limit;
   final VoidCallback onAdd;
   final ValueChanged<int> onEdit;
   final ValueChanged<int> onRemove;
-  final VoidCallback onNeedPremium;
+  final VoidCallback onLimitReached;
 
   @override
   Widget build(BuildContext context) {
@@ -1602,7 +1624,7 @@ class _NotifyRulesEditor extends StatelessWidget {
             ),
           const Gap(AppSpacing.xs),
           Pressable(
-            onTap: rules.length >= limit ? onNeedPremium : onAdd,
+            onTap: rules.length >= limit ? onLimitReached : onAdd,
             scale: 0.98,
             child: Container(
               width: double.infinity,
