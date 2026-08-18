@@ -8,6 +8,24 @@
 
 ---
 
+## 2.2.0 (build 16) — 2026-08-18 · TestFlight
+
+- **アプリアイコンにバッジ（未確認リマインダー件数）を表示**（iOS）。通知が届くたびに
+  1,2,3… と増え、アプリを開くと消える。仕組みは [notifications.md](notifications.md) の
+  「アプリアイコンのバッジ」（発火時刻順の累積連番を `badgeNumber` に焼き込み＋
+  起動/復帰/データ変更時に 0 化・振り直し。ネイティブ橋 `submana/badge`）
+- fix: iOS 通知の添付画像コピーをサブスク単位→通知単位に（attachment がスケジュール時に
+  ファイル所有権を奪うため、同一サブスク複数ルール時に2件目の画像が壊れる潜在バグ）
+- 発火計算 `computeUpcomingReminders` を `data/models/reminder_fire.dart` へ移動し
+  アプリ内バナーと OS 通知で共用
+
+**配信**: TestFlight にアップロード（Delivery UUID `1810263f-bef4-420e-a522-f9b6dc97168d`）。
+検証・アップロードとも `SUCCEEDED with no errors`
+**状態**: 審査未提出
+**メモ**: 当初 2.1.0+16 で上げようとしたが、**2.1.0 は承認済みのためトレインが閉鎖**
+（409 Invalid Pre-Release Train）→ マーケティングバージョンを 2.2.0 に上げて解決。
+教訓: **承認済みバージョンと同じ `CFBundleShortVersionString` では TestFlight にも上げられない**
+
 ## 2.1.0 (build 15) — 2026-08-16 · App Store（★現行の公開版）
 
 build 14 の審査提出後に「正方形(small)ウィジェットは1件しか出ない」改善要望が出たため、
