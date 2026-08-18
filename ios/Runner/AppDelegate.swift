@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import UserNotifications
 #if canImport(WidgetKit)
 import WidgetKit
 #endif
@@ -34,6 +35,24 @@ import WidgetKit
           WidgetCenter.shared.reloadTimelines(ofKind: kind)
         }
         #endif
+        result(nil)
+      }
+
+      // App-icon badge bridge: the Dart side (NotificationService.clearBadge)
+      // asks us to reset the badge whenever the app comes to the foreground.
+      // Same hand-rolled-channel approach as above — no plugin dependency.
+      let badgeChannel = FlutterMethodChannel(
+        name: "submana/badge", binaryMessenger: controller.binaryMessenger)
+      badgeChannel.setMethodCallHandler { call, result in
+        guard call.method == "clear" else {
+          result(FlutterMethodNotImplemented)
+          return
+        }
+        if #available(iOS 16.0, *) {
+          UNUserNotificationCenter.current().setBadgeCount(0)
+        } else {
+          UIApplication.shared.applicationIconBadgeNumber = 0
+        }
         result(nil)
       }
     }

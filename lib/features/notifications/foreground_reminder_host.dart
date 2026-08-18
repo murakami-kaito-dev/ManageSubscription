@@ -10,8 +10,8 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/currency.dart';
 import '../../core/widgets/subscription_avatar.dart';
-import '../../data/models/notify_rule.dart';
-import '../../data/models/subscription.dart';
+import '../../data/models/reminder_fire.dart';
+import '../../providers/core_providers.dart';
 import '../../providers/subscription_providers.dart';
 
 /// Guarantees that a payment reminder is shown **while the app is open**.
@@ -57,7 +57,14 @@ class _ForegroundReminderHostState extends ConsumerState<ForegroundReminderHost>
     // Timers don't run reliably in the background; recompute on resume so a
     // reminder that came due while away is picked up (or correctly skipped as
     // already-past — the OS notification handled it while backgrounded).
-    if (state == AppLifecycleState.resumed) _scheduleNext();
+    if (state == AppLifecycleState.resumed) {
+      _scheduleNext();
+      // The user is back in the app: clear the icon badge and reschedule so the
+      // pending notifications' baked-in badge numbers restart from 1 (delivered
+      // ones are past their fire-time and simply drop out). Fire-and-forget.
+      final subs = ref.read(subscriptionsProvider).valueOrNull ?? const [];
+      ref.read(notificationServiceProvider).rescheduleAll(subs);
+    }
   }
 
   /// All reminder fire-times still in the future, soonest first. Driven purely
@@ -116,36 +123,6 @@ class _ForegroundReminderHostState extends ConsumerState<ForegroundReminderHost>
       ],
     );
   }
-}
-
-/// One reminder occurrence: subscription [sub] fires at [fireAt] for the payment
-/// due on [due], per [rule].
-class ReminderFire {
-  ReminderFire(this.sub, this.rule, this.fireAt, this.due);
-  final Subscription sub;
-  final NotifyRule rule;
-  final DateTime fireAt;
-  final DateTime due;
-  String get key => '${sub.id}|${fireAt.toIso8601String()}';
-}
-
-/// Pure computation of the reminder occurrences still in the future (relative to
-/// [now]), soonest first. Paused subscriptions are excluded. Extracted so the
-/// fire-time math is unit-testable.
-List<ReminderFire> computeUpcomingReminders(
-    List<Subscription> subs, DateTime now) {
-  final out = <ReminderFire>[];
-  for (final s in subs) {
-    if (s.isPaused) continue;
-    final due = s.nextPaymentDate;
-    for (final r in s.notifyRules) {
-      final fireAt = DateTime(due.year, due.month, due.day, r.hour, r.minute)
-          .subtract(Duration(days: r.daysBefore));
-      if (fireAt.isAfter(now)) out.add(ReminderFire(s, r, fireAt, due));
-    }
-  }
-  out.sort((a, b) => a.fireAt.compareTo(b.fireAt));
-  return out;
 }
 
 /// The floating top banner: slides in, auto-dismisses after a few seconds, and

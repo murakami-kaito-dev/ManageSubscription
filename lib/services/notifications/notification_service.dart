@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:path/path.dart' as p;
@@ -11,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/utils/currency.dart';
 import '../../core/utils/image_paths.dart';
+import '../../data/models/reminder_fire.dart';
 import '../../data/models/subscription.dart';
 
 /// Local reminders before a payment date. Fully on-device; no server.
@@ -102,10 +104,35 @@ class NotificationService {
     }
   }
 
+  /// Hand-rolled channel to the native side (`AppDelegate.swift`) for clearing
+  /// the app-icon badge — flutter_local_notifications has no "set badge to 0"
+  /// API, and this app keeps plugin dependencies minimal (same approach as
+  /// `submana/widget`).
+  static const _badgeChannel = MethodChannel('submana/badge');
+
+  /// Clears the app-icon badge (iOS; no-op elsewhere). Called from
+  /// [rescheduleAll], which runs whenever the app is in (or returns to) the
+  /// foreground — so the badge always means "reminders delivered since the app
+  /// was last open", and opening the app wipes it.
+  Future<void> clearBadge() async {
+    if (!Platform.isIOS) return;
+    try {
+      await _badgeChannel.invokeMethod<void>('clear');
+    } catch (e) {
+      debugPrint('badge clear skipped: $e');
+    }
+  }
+
   /// Builds the platform details for one reminder. When the subscription has a
   /// custom **image** (not an emoji/letter), it's used as the notification's
   /// icon: an Android large icon and an iOS attachment thumbnail.
-  Future<NotificationDetails> _detailsFor(Subscription s) async {
+  ///
+  /// [badgeNumber] is the app-icon badge value baked into this notification:
+  /// local notifications can't increment the badge at delivery time, so the
+  /// scheduler assigns cumulative values in fire order (1st future reminder →
+  /// 1, 2nd → 2, …) and the badge is reset to 0 whenever the app is opened.
+  Future<NotificationDetails> _detailsFor(Subscription s,
+      {required int badgeNumber}) async {
     final file = ImagePaths.resolve(s.imagePath);
     final stablePath = (file != null && file.existsSync()) ? file.path : null;
 
@@ -117,8 +144,12 @@ class NotificationService {
     if (stablePath != null) {
       try {
         final tmp = await getTemporaryDirectory();
+        // One copy PER NOTIFICATION (not per subscription): iOS moves each
+        // attachment into its own store when the request is added, so sharing
+        // a copy between two reminders of the same subscription would break
+        // the second one.
         final dest = p.join(tmp.path,
-            'notif_${s.id}_${DateTime.now().millisecondsSinceEpoch}.png');
+            'notif_${s.id}_${badgeNumber}_${DateTime.now().millisecondsSinceEpoch}.png');
         await File(stablePath).copy(dest);
         iosAttachmentPath = dest;
       } catch (e) {
@@ -150,6 +181,7 @@ class NotificationService {
         presentBanner: false,
         presentSound: true,
         presentBadge: true,
+        badgeNumber: badgeNumber,
         attachments: iosAttachmentPath != null
             ? [DarwinNotificationAttachment(iosAttachmentPath)]
             : null,
@@ -165,31 +197,33 @@ class NotificationService {
   Future<void> rescheduleAll(List<Subscription> subs) async {
     if (!_ready) return;
     try {
+      // rescheduleAll only runs while the app is in the foreground (launch,
+      // resume, or a data edit), i.e. the user has just "seen" the app — so
+      // this doubles as the badge reset point: wipe the icon badge, then bake
+      // cumulative badge numbers (1, 2, 3, … in fire order) into the newly
+      // scheduled reminders so each delivery shows the count of reminders
+      // since the app was last open.
+      await clearBadge();
       await _plugin.cancelAll();
-      var id = 0;
-      final now = tz.TZDateTime.now(tz.local);
-      for (final s in subs) {
-        if (s.isPaused) continue;
-        if (s.notifyRules.isEmpty) continue;
-        final due = s.nextPaymentDate;
-        final amount = CurrencyFormatter(s.currency).format(s.amount);
-        // Build details (incl. the disposable iOS attachment copy) once per sub.
-        final details = await _detailsFor(s);
-        for (final rule in s.notifyRules) {
-          final fireDate = due.subtract(Duration(days: rule.daysBefore));
-          final scheduled = tz.TZDateTime(tz.local, fireDate.year,
-              fireDate.month, fireDate.day, rule.hour, rule.minute);
-          if (!scheduled.isAfter(now)) continue;
-          await _schedule(
-            id++,
-            '${s.name} の支払い',
-            rule.daysBefore == 0
-                ? '本日 ${due.month}月${due.day}日に $amount の支払いがあります'
-                : '${due.month}月${due.day}日（${rule.daysBefore}日後）に $amount の支払いがあります',
-            scheduled,
-            details,
-          );
-        }
+      // Chronological order (soonest first) — shared with the in-app banner
+      // logic so both agree on what fires when.
+      final fires = computeUpcomingReminders(subs, DateTime.now());
+      for (var i = 0; i < fires.length; i++) {
+        final f = fires[i];
+        final due = f.due;
+        final amount = CurrencyFormatter(f.sub.currency).format(f.sub.amount);
+        final details = await _detailsFor(f.sub, badgeNumber: i + 1);
+        final scheduled = tz.TZDateTime(tz.local, f.fireAt.year, f.fireAt.month,
+            f.fireAt.day, f.fireAt.hour, f.fireAt.minute);
+        await _schedule(
+          i,
+          '${f.sub.name} の支払い',
+          f.rule.daysBefore == 0
+              ? '本日 ${due.month}月${due.day}日に $amount の支払いがあります'
+              : '${due.month}月${due.day}日（${f.rule.daysBefore}日後）に $amount の支払いがあります',
+          scheduled,
+          details,
+        );
       }
     } catch (e) {
       debugPrint('reschedule skipped: $e');

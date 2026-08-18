@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:manage_subscription/core/utils/billing.dart';
 import 'package:manage_subscription/data/models/notify_rule.dart';
 import 'package:manage_subscription/data/models/subscription.dart';
-import 'package:manage_subscription/features/notifications/foreground_reminder_host.dart';
+import 'package:manage_subscription/data/models/reminder_fire.dart';
 
 Subscription sub({
   required String id,
@@ -66,5 +66,24 @@ void main() {
     final sooner = sub(id: 'sooner', firstPayment: DateTime(now.year + 1, 1, 1));
     final fires = computeUpcomingReminders([later, sooner], now);
     expect(fires.map((f) => f.sub.id).toList(), ['sooner', 'later']);
+  });
+
+  test('interleaves multiple rules across subscriptions chronologically', () {
+    // The iOS icon-badge numbers are assigned from this global order
+    // (1st fire → badge 1, 2nd → 2, …), so rules of different subscriptions
+    // must interleave by fire-time, not group by subscription.
+    final a = sub(
+        id: 'A',
+        firstPayment: DateTime(now.year + 1, 6, 10),
+        rules: const [
+          NotifyRule(daysBefore: 7, hour: 9), // 6/3
+          NotifyRule(daysBefore: 0, hour: 9), // 6/10
+        ]);
+    final b = sub(
+        id: 'B',
+        firstPayment: DateTime(now.year + 1, 6, 5),
+        rules: const [NotifyRule(daysBefore: 0, hour: 9)]); // 6/5
+    final fires = computeUpcomingReminders([a, b], now);
+    expect(fires.map((f) => f.sub.id).toList(), ['A', 'B', 'A']);
   });
 }
