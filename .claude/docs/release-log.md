@@ -8,6 +8,29 @@
 
 ---
 
+## 2.2.0 (build 17) — 2026-08-18 · App Store Connect（審査中）
+
+build 16 の内容に、通知ルール上限の整理を加えて申請した版。**ユーザー向けの目玉は
+「通知バッジ」＋「プリセットアイコン48種」**（アイコン48種は v2.1.0 提出後・build 16 で
+初めてビルドに載ったもので、**公開中の 2.1.0 には入っていない**）。
+
+- 通知バッジ（build 16 と同じ。[notifications.md](notifications.md) 参照）
+- プリセットアイコン48種・「アイコンから選ぶ」・解約ガイドのアイコン表示（build 16 と同じ）
+- **通知ルールの上限を 99 → 5 件**に変更し、`notifyRuleLimit(bool isPremium)`（引数を
+  使っていない紛らわしい API）を削除して定数参照に整理。6件目はダイアログで通知
+  （プレミアム制限ではない。ストア文面には記載しない方針）
+
+**配信**: App Store Connect にアップロード（Delivery UUID `05a94f1c-ef80-447e-8098-af3db2caaf67`）。
+ビルド処理 VALID → バージョン 2.2.0 作成 → What's New／プロモーションテキストを新機能向けに
+差し替え（説明文・キーワード・サポートURL は 2.1.0 から引き継ぎ）→ build 17 紐付け →
+審査提出（reviewSubmission `0daaf64f…`）。タグ `v2.2.0`
+**状態**: **WAITING_FOR_REVIEW（審査中）**。`releaseType=AFTER_APPROVAL`（承認後に自動配信）
+**⚠️ 禁忌チェック**: 購入経路コードは 2.1.0 から差分ゼロ（公開中の版と同一）。デバッグ導線は
+`kDebugMode` ガード済（`settings_screen.dart`）。共有リンク `6799400490` 確認済。
+analyze 0 / test 86件グリーン / プライバシーマニフェスト同梱を IPA 内で確認
+**メモ**: 初回の `flutter build ipa` が `CompileAssetCatalogVariant` で失敗したが、
+再実行で成功（アセット無変更・ディスク残 12GiB と逼迫気味だったための一過性と判断）
+
 ## 2.2.0 (build 16) — 2026-08-18 · TestFlight
 
 - **アプリアイコンにバッジ（未確認リマインダー件数）を表示**（iOS）。通知が届くたびに
