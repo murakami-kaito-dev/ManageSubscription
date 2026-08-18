@@ -28,6 +28,7 @@ import '../../data/models/payment_method.dart';
 import '../../data/models/subscription.dart';
 import '../../providers/core_providers.dart';
 import '../../providers/premium_provider.dart';
+import '../../providers/session_restore_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/subscription_providers.dart';
 import '../premium/premium_screen.dart';
@@ -38,7 +39,7 @@ import 'widgets/preset_icon_sheet.dart';
 
 class SubscriptionFormScreen extends ConsumerStatefulWidget {
   const SubscriptionFormScreen(
-      {super.key, this.existing, this.readOnly = false});
+      {super.key, this.existing, this.readOnly = false, this.draft});
   final Subscription? existing;
 
   /// Preview-only: everything is shown (incl. 詳細設定) but non-interactive and
@@ -46,13 +47,17 @@ class SubscriptionFormScreen extends ConsumerStatefulWidget {
   /// the over-limit gate.
   final bool readOnly;
 
+  /// OS に kill される前に保存された編集途中の下書き（[SessionRestore]）。
+  /// 渡されると、existing / 既定値の上に下書きの内容を重ねて復元する。
+  final Map<String, dynamic>? draft;
+
   @override
   ConsumerState<SubscriptionFormScreen> createState() =>
       _SubscriptionFormScreenState();
 }
 
 class _SubscriptionFormScreenState
-    extends ConsumerState<SubscriptionFormScreen> {
+    extends ConsumerState<SubscriptionFormScreen> with WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
   late final TextEditingController _amount;
@@ -136,9 +141,82 @@ class _SubscriptionFormScreenState
     _detailsExpanded = ref.read(settingsProvider).alwaysShowDetails;
 
     // 以降の変更を「未保存」と見なすための基準を取る。
+    // ※下書きを適用する「前」に取る＝復元直後から「未保存の変更あり」扱いになり、
+    //   もう一度背面に回ってもまた下書きが保存される。
     _initialSignature = _signature;
     for (final c in [_name, _amount, _emoji, _usage, _usageUnit, _memo]) {
       c.addListener(_onFieldChanged);
+    }
+
+    final d = widget.draft;
+    if (d != null) _applyDraft(d);
+
+    // dispose 時に ref は使えない（ツリー破棄後の ref 使用は Riverpod が禁止）ため、
+    // ここでサービス参照を確保しておく。
+    _sessionRestore = ref.read(sessionRestoreProvider);
+
+    // 背面に回った瞬間に下書きを保存するため、ライフサイクルを監視する。
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  late final SessionRestore _sessionRestore;
+
+  // ── セッション復元（OS kill からの復帰）────────────────────────────────
+
+  /// 現在の入力を下書きとして書き出せる形にする。
+  Map<String, dynamic> _draftSnapshot() => {
+        'existingId': widget.existing?.id,
+        'name': _name.text,
+        'amount': _amount.text,
+        'emoji': _emoji.text,
+        'usage': _usage.text,
+        'usageUnit': _usageUnit.text,
+        'memo': _memo.text,
+        'currency': _currency.code,
+        'cycle': _cycle.name,
+        'intervalCount': _intervalCount,
+        'intervalUnit': _intervalUnit.name,
+        'firstPayment': _firstPayment.toIso8601String(),
+        'colorValue': _colorValue,
+        'categoryId': _categoryId,
+        'paymentMethodId': _paymentMethodId,
+        'imagePath': _imagePath,
+        'notifyRules': NotifyRule.encode(_notifyRules),
+        'isPaused': _isPaused,
+      };
+
+  void _applyDraft(Map<String, dynamic> d) {
+    _name.text = d['name'] as String? ?? _name.text;
+    _amount.text = d['amount'] as String? ?? _amount.text;
+    _emoji.text = d['emoji'] as String? ?? _emoji.text;
+    _usage.text = d['usage'] as String? ?? _usage.text;
+    _usageUnit.text = d['usageUnit'] as String? ?? _usageUnit.text;
+    _memo.text = d['memo'] as String? ?? _memo.text;
+    _currency = AppCurrencyX.fromCode(d['currency'] as String?);
+    _cycle = BillingCycle.values.asNameMap()[d['cycle']] ?? _cycle;
+    _intervalCount = d['intervalCount'] as int? ?? _intervalCount;
+    _intervalUnit =
+        IntervalUnit.values.asNameMap()[d['intervalUnit']] ?? _intervalUnit;
+    _firstPayment =
+        DateTime.tryParse(d['firstPayment'] as String? ?? '') ?? _firstPayment;
+    _colorValue = d['colorValue'] as int? ?? _colorValue;
+    _categoryId = d['categoryId'] as String?;
+    _paymentMethodId = d['paymentMethodId'] as String?;
+    _imagePath = d['imagePath'] as String?;
+    _notifyRules = NotifyRule.decode(d['notifyRules'] as String?);
+    _isPaused = d['isPaused'] as bool? ?? _isPaused;
+    // 下書きがある＝入力途中だったので、詳細設定も開いて見えるようにする。
+    _detailsExpanded = true;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // kill は背面でしか起きないので、背面に回る瞬間に未保存の入力を退避する。
+    if ((state == AppLifecycleState.paused ||
+            state == AppLifecycleState.inactive) &&
+        !widget.readOnly &&
+        _isDirty) {
+      ref.read(sessionRestoreProvider).saveDraft(_draftSnapshot());
     }
   }
 
@@ -197,6 +275,11 @@ class _SubscriptionFormScreenState
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    // dispose が走る＝ユーザーが自分で画面を閉じた（保存 or 破棄）。
+    // kill されたときは dispose は走らないので、下書きは残って復元される。
+    // ※ここで ref は使わない（initState で確保した参照を使う）。
+    _sessionRestore.clearDraft();
     for (final c in [_name, _amount, _emoji, _usage, _usageUnit, _memo]) {
       c.removeListener(_onFieldChanged);
       c.dispose();
@@ -1244,8 +1327,10 @@ class _NumberWheelSheetState extends State<_NumberWheelSheet> {
                       perspective: 0.004,
                       diameterRatio: 1.3,
                       physics: const FixedExtentScrollPhysics(),
-                      onSelectedItemChanged: (i) =>
-                          setState(() => _value = i + 1),
+                      onSelectedItemChanged: (i) {
+                        HapticFeedback.selectionClick();
+                        setState(() => _value = i + 1);
+                      },
                       childDelegate: ListWheelChildBuilderDelegate(
                         childCount: widget.max,
                         builder: (context, i) {
@@ -1764,6 +1849,7 @@ class _DaysBeforeWheelState extends State<_DaysBeforeWheel> {
               diameterRatio: 1.3,
               physics: const FixedExtentScrollPhysics(),
               onSelectedItemChanged: (i) {
+                HapticFeedback.selectionClick();
                 setState(() => _value = i);
                 widget.onChanged(i);
               },
@@ -1891,7 +1977,11 @@ class _WheelTimePickerState extends State<_WheelTimePicker> {
       perspective: 0.004,
       diameterRatio: 1.3,
       physics: const FixedExtentScrollPhysics(),
-      onSelectedItemChanged: onSelected,
+      // ホイールが1目盛り動くごとに選択ハプティック（カリカリ感）を鳴らす。
+      onSelectedItemChanged: (i) {
+        HapticFeedback.selectionClick();
+        onSelected(i);
+      },
       childDelegate: ListWheelChildBuilderDelegate(
         childCount: count,
         builder: (context, i) {

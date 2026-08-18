@@ -49,6 +49,12 @@
 - `premiumProvider`（bool = 有料 or 試用中 or dev）/ `entitlementProvider`（プラン+試用残日数）
 - サービス: `notificationServiceProvider` / `csvExportServiceProvider` / `csvImportServiceProvider` / `imagePickerServiceProvider` / `ratingServiceProvider` / `adServiceProvider`
 - `widgetSyncProvider` — ホーム画面ウィジェットへの同期（上記「ホーム画面ウィジェット」参照）
+- `sessionRestoreProvider`（`SessionRestore`）— **jetsam 対策のセッション復元**。iOS は背面アプリを
+  メモリ圧力で数分でも kill する（防止不可）ため、「最後に開いていたタブ」と「編集フォームの
+  下書き」を SharedPreferences（`restore_*`）に退避し、**30分以内の再起動でだけ**復元する。
+  タブ＝`HomeShell`（タップ時保存・起動時復元・背面時に鮮度スタンプ）。下書き＝フォームが
+  背面に回る瞬間（`didChangeAppLifecycleState`）に保存し、`dispose`（＝ユーザーが自分で
+  閉じた）と鮮度切れで破棄。復元時は `HomeShell` が post-frame でフォームを draft 付きで push。
 
 ## テーマ
 - `AppAccent`（primary/deep/soft）はユーザー選択のテーマ色から算出。`AppAccent.of(context)` で参照

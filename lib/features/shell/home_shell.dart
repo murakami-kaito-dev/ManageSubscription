@@ -5,12 +5,16 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_shadows.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/widgets/pressable.dart';
+import '../../data/models/subscription.dart';
+import '../../providers/session_restore_provider.dart';
+import '../../providers/subscription_providers.dart';
 import '../analytics/analytics_screen.dart';
 import '../calendar/calendar_screen.dart';
 import '../cancellation/cancel_guide_screen.dart';
 import '../history/history_screen.dart';
 import '../home/home_screen.dart';
 import '../premium/limit_gate.dart';
+import '../subscription/subscription_form_screen.dart';
 // 広告は無効化中（ad_service.dart のヘッダー参照）。
 // import 'banner_ad_slot.dart';
 
@@ -21,8 +25,11 @@ class HomeShell extends ConsumerStatefulWidget {
   ConsumerState<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends ConsumerState<HomeShell> {
-  int _index = 0;
+class _HomeShellState extends ConsumerState<HomeShell>
+    with WidgetsBindingObserver {
+  // OS に kill された直後の再起動なら、最後に開いていたタブから再開する。
+  late int _index =
+      ref.read(sessionRestoreProvider).restoredTab(tabCount: _tabs.length);
 
   static const _tabs = [
     (icon: Icons.home_rounded, label: 'ホーム'),
@@ -31,6 +38,51 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     (icon: Icons.bar_chart_rounded, label: '支払い履歴'),
     (icon: Icons.logout_rounded, label: '解約方法'),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // 編集途中の下書きが残っていれば、フォームを同じ内容で開き直す。
+    WidgetsBinding.instance.addPostFrameCallback((_) => _restoreDraft());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 背面に回った時刻を記録しておく。ここから30分以内に（kill されて）
+    // 再起動した場合だけ、タブ・下書きを復元する。
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      ref.read(sessionRestoreProvider).stampNow();
+    }
+  }
+
+  Future<void> _restoreDraft() async {
+    final restore = ref.read(sessionRestoreProvider);
+    final draft = restore.readDraft();
+    if (draft == null) return;
+    // 編集中だった既存アイテムを解決（削除済みなら復元しない）。
+    Subscription? existing;
+    final id = draft['existingId'] as String?;
+    if (id != null) {
+      final subs = await ref.read(subscriptionsProvider.future);
+      existing = subs.where((s) => s.id == id).firstOrNull;
+      if (existing == null) {
+        await restore.clearDraft();
+        return;
+      }
+    }
+    if (!mounted) return;
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => SubscriptionFormScreen(existing: existing, draft: draft),
+    ));
+  }
 
   @override
   Widget build(BuildContext context) {
