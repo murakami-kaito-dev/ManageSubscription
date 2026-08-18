@@ -8,17 +8,19 @@
 
 ---
 
-## 2.1.0 (build 15) — 2026-08-16 · App Store Connect（審査中・再提出）
+## 2.1.0 (build 15) — 2026-08-16 · App Store（★現行の公開版）
 
 build 14 の審査提出後に「正方形(small)ウィジェットは1件しか出ない」改善要望が出たため、
-**build 14 の審査は取り下げ**、修正を込めて同じ 2.1.0 の build 15 として再提出する。
+**build 14 の審査は取り下げ**、修正を込めて同じ 2.1.0 の build 15 として再提出した。
 
 - **fix**: small ウィジェットでも支払い予定を最大4件表示（合計22pt化・見出し省略で4行確保）
 
 **配信**: App Store Connect にアップロード（Delivery UUID `acd63e58-aab5-4f80-b2a7-e14f05001ab1`）。
 ビルド処理 VALID → 既存バージョン 2.1.0（文面は build 14 提出時のまま）に build 15 を紐付け →
 再提出（reviewSubmission `affea3c9…`）。タグ `v2.1.0` = `8a875e0`（付け直し）
-**状態**: **WAITING_FOR_REVIEW（審査中）**。`releaseType=AFTER_APPROVAL`（承認後に自動配信）
+**状態**: **公開済み（`READY_FOR_SALE`）＝いま App Store にある最新版はこれ**。
+2026-08-16 再提出 → 審査通過（reviewSubmission `affea3c9…` = COMPLETE）→
+`releaseType=AFTER_APPROVAL` により自動配信（ASC API で 2026-08-18 に確認）
 
 ## 2.1.0 (build 14) — 2026-08-16 · App Store Connect（審査取り下げ）
 
@@ -39,7 +41,7 @@ build 14 紐付け → 審査提出（reviewSubmission `4dc2a473…`）
 **⚠️ 禁忌チェック**: 購入経路コードは 2.0.0 から無変更（公開中の版と同一）。デバッグ導線
 `kDebugMode` ガード済・共有リンク `6799400490` 確認済
 
-## 2.0.1 (build 13) — 2026-08-16 · App Store（★現行の公開版）
+## 2.0.1 (build 13) — 2026-08-16 · App Store（公開済み・旧版）
 
 2.0.0 公開の直後に出した小改修。2点。
 
@@ -54,7 +56,7 @@ build 14 紐付け → 審査提出（reviewSubmission `4dc2a473…`）
 **配信**: App Store Connect にアップロード（Delivery UUID `33cfa679-5e3e-45f1-9e88-b7aade911e6e`）。
 ビルド処理 VALID → バージョン 2.0.1 作成 → What's New 設定＋プロモーションは 2.0.0 から引き継ぎ →
 build 13 紐付け → **審査提出**（reviewSubmission `9471b3ae…`）。
-**状態**: **公開済み（`READY_FOR_SALE`、公開日 2026-08-16 JST）＝いま App Store にある最新版はこれ**。
+**状態**: 公開済み（`READY_FOR_SALE`、公開日 2026-08-16 JST。その後 2.1.0 に置き換え。現行は 2.1.0）。
 審査は 2026-08-16 提出 → 即日承認・自動配信（`AFTER_APPROVAL`）。
 提出前チェック: analyze 0 / test 緑、デバッグ導線 `kDebugMode` ガード済、共有リンク `6799400490` 確認済。
 サブスク購入は 2.0.1 で経路コード無変更（＝公開中の 2.0.0 と同一）。タグ `v2.0.1` = `076dbea`。
