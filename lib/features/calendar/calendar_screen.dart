@@ -115,6 +115,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       locale: 'ja',
                       selectedDayPredicate: (d) => isSameDay(d, _selected),
                       startingDayOfWeek: StartingDayOfWeek.sunday,
+                      // 横スワイプ（前後月）だけを受け取る。既定の `all` だと縦スワイプを
+                      // 「表示形式の切り替え」として横取りするが、このアプリは月表示のみ
+                      // なので何も起きず、カレンダーの上から画面をスクロールできなくなる。
+                      // 縦は親の ListView に渡し、どこを触っても画面全体が動くようにする。
+                      availableGestures: AvailableGestures.horizontalSwipe,
                       headerVisible: false,
                       daysOfWeekHeight: 26,
                       rowHeight: DayPaymentChips.rowHeight,
