@@ -59,9 +59,6 @@ class _QuickAddSheet extends ConsumerWidget {
             ),
             const Gap(AppSpacing.lg),
             Text('かんたん追加', style: AppType.display(18)),
-            const Gap(AppSpacing.xs),
-            Text('タップするだけで、名前・料金・通知までまとめて設定します',
-                style: AppType.body(12, color: AppColors.textSecondary)),
             const Gap(AppSpacing.md),
             Expanded(
               child: ListView(
