@@ -20,6 +20,7 @@ import '../../providers/subscription_providers.dart';
 import '../subscription/subscription_form_screen.dart';
 import '../premium/premium_screen.dart';
 import '../settings/settings_screen.dart';
+import 'widgets/day_payment_chips.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
@@ -116,7 +117,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       startingDayOfWeek: StartingDayOfWeek.sunday,
                       headerVisible: false,
                       daysOfWeekHeight: 26,
-                      rowHeight: 46,
+                      rowHeight: DayPaymentChips.rowHeight,
                       eventLoader: (day) => _paymentsOn(day, subs),
                       onDaySelected: (selected, focused) {
                         setState(() {
@@ -152,37 +153,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         ),
                         selectedTextStyle: AppType.body(14,
                             weight: FontWeight.w700, color: AppColors.onPrimary),
-                        markersMaxCount: 4,
-                        markerDecoration: BoxDecoration(
-                          color: AppAccent.of(context).primary,
-                          shape: BoxShape.circle,
-                        ),
-                        markerSize: 5,
-                        markerMargin:
-                            const EdgeInsets.symmetric(horizontal: 1),
+                        // マーカーは DayPaymentChips が全面的に描くので、
+                        // パッケージ既定のドットは無効化する。
+                        markersMaxCount: 0,
                       ),
                       calendarBuilders: CalendarBuilders<Subscription>(
                         markerBuilder: (context, day, events) {
                           if (events.isEmpty) return null;
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 30),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                for (final e in events.take(4))
-                                  Container(
-                                    width: 5,
-                                    height: 5,
-                                    margin: const EdgeInsets.symmetric(
-                                        horizontal: 1),
-                                    decoration: BoxDecoration(
-                                      color: e.color,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          );
+                          return DayPaymentChips(events: events);
                         },
                       ),
                       daysOfWeekStyle: DaysOfWeekStyle(
