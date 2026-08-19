@@ -110,7 +110,9 @@ class _QuickAddSheet extends ConsumerWidget {
               child: SoftButton(
                 label: '手入力する（一覧にないサブスクなど）',
                 icon: Icons.edit_rounded,
-                kind: SoftButtonKind.neutral,
+                // テーマカラー（アクセント色）で塗る。primary 種別は背景=アクセント色・
+                // 文字=白・アクセントの glow になり、設定のテーマ色に自動追従する。
+                kind: SoftButtonKind.primary,
                 onPressed: () {
                   Navigator.of(context).pop();
                   Navigator.of(context).push(MaterialPageRoute(
