@@ -6,6 +6,7 @@ import '../data/repositories/category_repository.dart';
 import '../data/repositories/payment_method_repository.dart';
 import '../data/repositories/subscription_repository.dart';
 // import '../services/ads/ad_service.dart';
+import '../services/catalog/catalog_service.dart';
 import '../services/csv/csv_export_service.dart';
 import '../services/csv/csv_import_service.dart';
 import '../services/image/image_picker_service.dart';
@@ -26,6 +27,11 @@ final prefsProvider = Provider<SharedPreferences>(
 /// Overridden in main() with the initialized PurchaseService.
 final purchaseServiceProvider = Provider<PurchaseService>(
   (ref) => throw UnimplementedError('purchaseServiceProvider must be overridden'),
+);
+
+/// Overridden in main() with the loaded CatalogService（クイック追加メニュー）.
+final catalogServiceProvider = Provider<CatalogService>(
+  (ref) => throw UnimplementedError('catalogServiceProvider must be overridden'),
 );
 
 // 広告は無効化中（ad_service.dart のヘッダー参照）。
