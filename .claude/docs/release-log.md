@@ -8,7 +8,7 @@
 
 ---
 
-## 2.3.0 (build 22) — 2026-08-20 · App Store Connect（審査中・再提出）
+## 2.3.0 (build 22) — 2026-08-20 · App Store Connect（審査中・再提出／TestFlightにも同ビルド）
 
 **このビルドが v2.3.0 の審査対象**（build 21 は下記の手入力ボタン調整を含まないため取りやめ、
 build 22 に載せ替えて再提出）。かんたん追加＋カレンダー改修に加え、以下の手入力ボタン調整を含む。
@@ -17,8 +17,12 @@ build 22 に載せ替えて再提出）。かんたん追加＋カレンダー�
 - ボタンは全幅の SoftButton 形状（位置は `bottom = 画面高×0.16 − 40` に微調整）
 - ボタン色を**テーマカラー（アクセント色）に追従**（従来は白固定だった）
 
-**配信**: （TestFlight アップロード＋審査提出の結果に合わせて更新）
-**状態**: 準備中（build 21 は審査取りやめ）
+**配信**: App Store Connect にアップロード（Delivery UUID `d2b9341b-4dd1-4524-9b5f-8b1d343600ea`）。
+build 22 処理 VALID → 既存 2.3.0 バージョンに build 22 を紐付け（build 21 から差し替え）→
+再提出（reviewSubmission `5102eff1…`。最終 submit が 500 で一度失敗 → 冪等に再試行し成功）。
+タグ `v2.3.0`（build 22 コミットへ付け直し）
+**状態**: **WAITING_FOR_REVIEW（審査中）**。`releaseType=AFTER_APPROVAL`（承認後に自動配信）。
+analyze 0 / test 102件グリーン。build 21 は審査取りやめ（公式リリースには存在しない）
 
 ## 2.3.0 (build 21) — 2026-08-19 · App Store Connect（審査中・TestFlightにも同ビルド）
 
