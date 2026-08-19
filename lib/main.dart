@@ -9,6 +9,7 @@ import 'data/database/app_database.dart';
 import 'data/repositories/subscription_repository.dart';
 import 'providers/core_providers.dart';
 // import 'services/ads/ad_service.dart'; // 広告は無効化中
+import 'services/catalog/catalog_service.dart';
 import 'services/currency/rates_service.dart';
 import 'services/notifications/notification_service.dart';
 import 'services/purchases/purchase_service.dart';
@@ -39,6 +40,11 @@ Future<void> main() async {
   final purchases = PurchaseService(prefs);
   await purchases.init();
 
+  // クイック追加メニューのカタログ。ここでは前回取得分 or 同梱アセット
+  // （どちらもローカルの数KB）を読むだけ。ネットワーク更新は runApp 後。
+  final catalog = CatalogService(prefs);
+  await catalog.loadLocal();
+
   // Notifications init is best-effort and must never block startup.
   // 広告は全面的に無効化してあり、AdMob SDK は依存ごと外してある
   // （復活手順は ad_service.dart のヘッダー参照）。
@@ -51,6 +57,7 @@ Future<void> main() async {
         databaseProvider.overrideWithValue(db),
         prefsProvider.overrideWithValue(prefs),
         purchaseServiceProvider.overrideWithValue(purchases),
+        catalogServiceProvider.overrideWithValue(catalog),
       ],
       child: const ManageSubscriptionApp(),
     ),
@@ -70,4 +77,7 @@ Future<void> main() async {
       await NotificationService.instance.rescheduleAll(subs);
     } catch (_) {/* best-effort */}
   });
+
+  // カタログのネットワーク更新（1日1回・失敗しても同梱/前回値で動く）。
+  catalog.refresh();
 }

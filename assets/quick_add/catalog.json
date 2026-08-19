@@ -1,0 +1,218 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-08-19",
+  "services": [
+    {
+      "id": "netflix",
+      "name": "Netflix",
+      "icon": "netflix",
+      "color": "FFE50914",
+      "plans": [
+        { "label": "広告つきスタンダード", "amount": 890 },
+        { "label": "スタンダード", "amount": 1590 },
+        { "label": "プレミアム", "amount": 2290 }
+      ]
+    },
+    {
+      "id": "amazon_prime",
+      "name": "Amazon プライム",
+      "icon": "amazon_prime",
+      "color": "FF00A8E1",
+      "plans": [
+        { "label": "月額", "amount": 600 },
+        { "label": "年額", "amount": 5900, "cycle": "yearly" }
+      ]
+    },
+    {
+      "id": "disney_plus",
+      "name": "Disney+",
+      "icon": "disney_plus",
+      "color": "FF113CCF",
+      "plans": [
+        { "label": "スタンダード", "amount": 1250 },
+        { "label": "プレミアム", "amount": 1670 }
+      ]
+    },
+    {
+      "id": "unext",
+      "name": "U-NEXT",
+      "icon": "unext",
+      "color": "FF1D1D1D",
+      "plans": [
+        { "label": "月額プラン", "amount": 2189 }
+      ]
+    },
+    {
+      "id": "dazn",
+      "name": "DAZN",
+      "icon": "dazn",
+      "color": "FF232323",
+      "plans": [
+        { "label": "DAZN Standard", "amount": 4200 }
+      ]
+    },
+    {
+      "id": "hulu",
+      "name": "Hulu",
+      "icon": "hulu",
+      "color": "FF1CE783",
+      "plans": [
+        { "label": "月額", "amount": 1026 }
+      ]
+    },
+    {
+      "id": "abema",
+      "name": "ABEMA",
+      "icon": "abema",
+      "color": "FF00D452",
+      "plans": [
+        { "label": "プレミアム", "amount": 1180 },
+        { "label": "広告つきプレミアム", "amount": 680 }
+      ]
+    },
+    {
+      "id": "danime",
+      "name": "d アニメストア",
+      "icon": "danime",
+      "color": "FFEE7700",
+      "plans": [
+        { "label": "月額", "amount": 660 }
+      ]
+    },
+    {
+      "id": "spotify",
+      "name": "Spotify",
+      "icon": "spotify",
+      "color": "FF1DB954",
+      "plans": [
+        { "label": "Standard", "amount": 1080 },
+        { "label": "Duo", "amount": 1480 },
+        { "label": "Family", "amount": 1880 }
+      ]
+    },
+    {
+      "id": "apple_music",
+      "name": "Apple Music",
+      "icon": "apple_music",
+      "color": "FFFA243C",
+      "plans": [
+        { "label": "個人", "amount": 1180 },
+        { "label": "ファミリー", "amount": 1980 },
+        { "label": "学生", "amount": 680 }
+      ]
+    },
+    {
+      "id": "amazon_music",
+      "name": "Amazon Music",
+      "icon": "amazon_music",
+      "color": "FF46C3D0",
+      "plans": [
+        { "label": "個人", "amount": 1180 },
+        { "label": "個人（プライム会員）", "amount": 1080 },
+        { "label": "ファミリー", "amount": 1980 }
+      ]
+    },
+    {
+      "id": "youtube_premium",
+      "name": "YouTube Premium",
+      "icon": "youtube_premium",
+      "color": "FFFF0000",
+      "plans": [
+        { "label": "Lite", "amount": 780 },
+        { "label": "個人", "amount": 1280 },
+        { "label": "ファミリー", "amount": 2280 }
+      ]
+    },
+    {
+      "id": "line_music",
+      "name": "LINE MUSIC",
+      "icon": "line_music",
+      "color": "FF06C755",
+      "plans": [
+        { "label": "一般", "amount": 980 },
+        { "label": "学生", "amount": 480 },
+        { "label": "ファミリー", "amount": 1680 }
+      ]
+    },
+    {
+      "id": "kindle_unlimited",
+      "name": "Kindle Unlimited",
+      "icon": "kindle_unlimited",
+      "color": "FF144E7A",
+      "plans": [
+        { "label": "月額", "amount": 980 }
+      ]
+    },
+    {
+      "id": "audible",
+      "name": "Audible",
+      "icon": "audible",
+      "color": "FFF8991C",
+      "plans": [
+        { "label": "プレミアム", "amount": 1500 },
+        { "label": "スタンダード", "amount": 880 }
+      ]
+    },
+    {
+      "id": "icloud",
+      "name": "iCloud+",
+      "icon": "icloud",
+      "color": "FF3693F3",
+      "plans": [
+        { "label": "50GB", "amount": 180 },
+        { "label": "200GB", "amount": 540 },
+        { "label": "2TB", "amount": 1800 }
+      ]
+    },
+    {
+      "id": "google_one",
+      "name": "Google One",
+      "icon": "google_one",
+      "color": "FF4285F4",
+      "plans": [
+        { "label": "ベーシック（100GB）", "amount": 290 },
+        { "label": "スタンダード（200GB）", "amount": 440 },
+        { "label": "AI Plus（2TB）", "amount": 1450 }
+      ]
+    },
+    {
+      "id": "chatgpt",
+      "name": "ChatGPT",
+      "icon": "chatgpt",
+      "color": "FF10A37F",
+      "plans": [
+        { "label": "Go", "amount": 1400 },
+        { "label": "Plus", "amount": 3000 }
+      ]
+    },
+    {
+      "id": "microsoft_365",
+      "name": "Microsoft 365",
+      "icon": "microsoft_365",
+      "color": "FFD83B01",
+      "plans": [
+        { "label": "Personal 月額", "amount": 2130 },
+        { "label": "Personal 年額", "amount": 21300, "cycle": "yearly" }
+      ]
+    },
+    {
+      "id": "chocozap",
+      "name": "chocoZAP",
+      "icon": "chocozap",
+      "color": "FFFFD800",
+      "plans": [
+        { "label": "月額", "amount": 3278 }
+      ]
+    }
+  ],
+  "fixedCosts": [
+    { "id": "rent", "name": "家賃", "icon": "rent", "color": "FF8D6E63" },
+    { "id": "electricity", "name": "電気", "icon": "electricity", "color": "FFF9A825" },
+    { "id": "gas", "name": "ガス", "icon": "gas", "color": "FFEF6C00" },
+    { "id": "water", "name": "水道", "icon": "water", "color": "FF039BE5" },
+    { "id": "mobile_plan", "name": "スマホ・通信費", "icon": "mobile_plan", "color": "FF5E35B1" },
+    { "id": "parking", "name": "駐車場", "icon": "parking", "color": "FF546E7A" },
+    { "id": "insurance", "name": "保険", "icon": "insurance", "color": "FF00897B" },
+    { "id": "nhk", "name": "NHK受信料", "icon": "nhk", "color": "FF3949AB" }
+  ]
+}

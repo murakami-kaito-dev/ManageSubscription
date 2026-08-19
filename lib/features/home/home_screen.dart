@@ -20,6 +20,7 @@ import '../notifications/notification_permission_banner.dart';
 import '../premium/premium_screen.dart';
 import '../settings/settings_screen.dart';
 import '../subscription/subscription_form_screen.dart';
+import '../subscription/widgets/quick_add_sheet.dart';
 import 'home_selection_provider.dart';
 import 'subscription_settings_sheet.dart';
 import 'widgets/subscription_tile.dart';
@@ -57,6 +58,10 @@ class HomeScreen extends ConsumerWidget {
         );
         return;
       }
+      // 新規はまずクイック追加（人気サブスク・固定費のタイル）。
+      // 一覧に無いものはシート内の「手入力する」から従来フォームへ。
+      showQuickAddSheet(context);
+      return;
     }
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => SubscriptionFormScreen(existing: existing),
