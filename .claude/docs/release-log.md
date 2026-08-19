@@ -8,7 +8,7 @@
 
 ---
 
-## 2.3.0 (build 21) — 2026-08-19 · App Store Connect（審査中）
+## 2.3.0 (build 21) — 2026-08-19 · App Store Connect（審査中・TestFlightにも同ビルド）
 
 **このビルドが v2.3.0 の審査対象**（TestFlight にも同ビルドが載る）。build 19/20 の
 カレンダー改修に、**「かんたん追加」機能**を加えたもの。
@@ -23,8 +23,12 @@
   [architecture.md](architecture.md) の「クイック追加カタログ」
 - 固定費8種のスケッチ風アイコンを追加
 
-**配信**: （TestFlight アップロード＋審査提出の結果に合わせて更新）
-**状態**: 準備中
+**配信**: App Store Connect にアップロード（Delivery UUID `2bde503a-cb01-44dd-a374-ed82cbf42585`）。
+build 21 処理 VALID → **旧 2.2.1 の版枠を 2.3.0 に転用**（取りやめ後の DEVELOPER_REJECTED 枠を
+再利用。ASC は保留中バージョンを1つしか持てないため）→ What's New 設定＋プロモは 2.2.0 引き継ぎ →
+build 21 紐付け → 審査提出（reviewSubmission `a8ab6562…`）。タグ `v2.3.0`
+**状態**: **WAITING_FOR_REVIEW（審査中）**。`releaseType=AFTER_APPROVAL`（承認後に自動配信）。
+analyze 0 / test 102件グリーン。TestFlight にも build 21 が載る
 
 ### ⚠️ v2.2.1 (build 18) は申請取りやめ（公式リリースには存在しない）
 
