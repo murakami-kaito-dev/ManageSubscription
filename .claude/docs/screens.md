@@ -26,7 +26,11 @@
 - 非有限値はガードして必ず描画。中心合計は `FittedBox`
 
 ## カレンダー（`features/calendar/calendar_screen.dart`）
-- `table_calendar`（locale ja）。各日に支払いドット（アイテム色）。上部に当月合計（`FittedBox`）
+- `table_calendar`（locale ja）。上部に当月合計（`FittedBox`）
+- **各日に「その日に支払うサービス名」をチップ表示**（`widgets/day_payment_chips.dart`）。
+  アイテム色の淡い地＋濃い文字。長い名前は末尾を `…` で省略、**1日3件以上は2件＋「+N」**に集約。
+  行の高さは `DayPaymentChips.rowHeight`（=78）を参照し、パッケージ既定のドットは無効化（`markersMaxCount: 0`）
+  ※旧：色ドットのみ（何が支払われるか分からなかったため 2026-08 に変更）
 - 選択日の支払い一覧。行は長押しで編集画面へ
 - 無料枠: 当月のみ閲覧、過去/未来はプレミアム誘導
 
