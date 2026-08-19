@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/amount_input.dart';
@@ -46,63 +47,66 @@ class _QuickAddSheet extends ConsumerWidget {
     return SafeArea(
       child: SizedBox(
         height: MediaQuery.sizeOf(context).height * 0.78,
-        child: Column(
+        // 「手入力する」はホームの「＋」のように**浮かせて**上寄りに置く。
+        // Stack で本文の上に重ね、右下からやや持ち上げた位置に固定する。
+        child: Stack(
           children: [
-            const Gap(AppSpacing.md),
-            Container(
-              width: 44,
-              height: 5,
-              decoration: BoxDecoration(
-                color: AppColors.textMuted.withOpacity(0.4),
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-            const Gap(AppSpacing.lg),
-            Text('かんたん追加', style: AppType.display(18)),
-            const Gap(AppSpacing.md),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.md),
-                children: [
-                  _tileGrid([
-                    for (final s in catalog.services)
-                      _TileData(
-                        name: s.name,
-                        icon: s.icon,
-                        colorValue: s.colorValue,
-                        onTap: () => _openConfirm(context, service: s),
-                      ),
-                  ]),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        top: AppSpacing.lg, bottom: AppSpacing.sm),
-                    child: Text('固定費',
-                        style: AppType.body(12,
-                            weight: FontWeight.w700,
-                            color: AppColors.textSecondary)),
+            Column(
+              children: [
+                const Gap(AppSpacing.md),
+                Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: AppColors.textMuted.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(999),
                   ),
-                  _tileGrid([
-                    for (final f in catalog.fixedCosts)
-                      _TileData(
-                        name: f.name,
-                        icon: f.icon,
-                        colorValue: f.colorValue,
-                        onTap: () => _openConfirm(context, fixedCost: f),
+                ),
+                const Gap(AppSpacing.lg),
+                Text('かんたん追加', style: AppType.display(18)),
+                const Gap(AppSpacing.md),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.md),
+                    children: [
+                      _tileGrid([
+                        for (final s in catalog.services)
+                          _TileData(
+                            name: s.name,
+                            icon: s.icon,
+                            colorValue: s.colorValue,
+                            onTap: () => _openConfirm(context, service: s),
+                          ),
+                      ]),
+                      Padding(
+                        padding: const EdgeInsets.only(
+                            top: AppSpacing.lg, bottom: AppSpacing.sm),
+                        child: Text('固定費',
+                            style: AppType.body(12,
+                                weight: FontWeight.w700,
+                                color: AppColors.textSecondary)),
                       ),
-                  ]),
-                ],
-              ),
+                      _tileGrid([
+                        for (final f in catalog.fixedCosts)
+                          _TileData(
+                            name: f.name,
+                            icon: f.icon,
+                            colorValue: f.colorValue,
+                            onTap: () => _openConfirm(context, fixedCost: f),
+                          ),
+                      ]),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            // 一覧に無いものは従来の手入力へ（タイルと形を変えた全幅ボタン）。
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.md),
-              child: SoftButton(
-                label: '手入力する（一覧にないサブスクなど）',
-                icon: Icons.edit_rounded,
-                kind: SoftButtonKind.neutral,
-                onPressed: () {
+            // 浮かせた手入力ボタン（ホームの「＋」相当の位置＝右下やや上）。
+            Positioned(
+              right: AppSpacing.lg,
+              bottom: MediaQuery.sizeOf(context).height * 0.16,
+              child: _ManualEntryFab(
+                onTap: () {
                   Navigator.of(context).pop();
                   Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => const SubscriptionFormScreen(),
@@ -134,6 +138,45 @@ class _QuickAddSheet extends ConsumerWidget {
       backgroundColor: AppColors.canvas,
       builder: (_) =>
           _QuickAddConfirmSheet(service: service, fixedCost: fixedCost),
+    );
+  }
+}
+
+/// 「手入力する」の浮きボタン（ピル型）。ホームの「＋」と同じ
+/// アクセントグラデ＋glow で、シート右下やや上に固定表示する。
+class _ManualEntryFab extends StatelessWidget {
+  const _ManualEntryFab({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = AppAccent.of(context);
+    return Pressable(
+      onTap: onTap,
+      scale: 0.92,
+      child: Container(
+        height: 52,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [accent.primary, accent.deep],
+          ),
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: AppShadows.accentGlow(accent.primary, intensity: 1.3),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.edit_rounded, color: AppColors.onPrimary, size: 20),
+            const Gap(AppSpacing.sm),
+            Text('手入力する',
+                style: AppType.body(14,
+                    weight: FontWeight.w800, color: AppColors.onPrimary)),
+          ],
+        ),
+      ),
     );
   }
 }
