@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/amount_input.dart';
@@ -101,12 +100,18 @@ class _QuickAddSheet extends ConsumerWidget {
                 ),
               ],
             ),
-            // 浮かせた手入力ボタン（ホームの「＋」相当の位置＝右下やや上）。
+            // 浮かせた手入力ボタン（ホバー様）。大きさ・形は従来どおりの全幅
+            // SoftButton のまま、位置だけ上方に浮かせる。基準からアイコン半個分
+            // （約26px）下げた高さに固定する。
             Positioned(
+              left: AppSpacing.lg,
               right: AppSpacing.lg,
-              bottom: MediaQuery.sizeOf(context).height * 0.16,
-              child: _ManualEntryFab(
-                onTap: () {
+              bottom: MediaQuery.sizeOf(context).height * 0.16 - 26,
+              child: SoftButton(
+                label: '手入力する（一覧にないサブスクなど）',
+                icon: Icons.edit_rounded,
+                kind: SoftButtonKind.neutral,
+                onPressed: () {
                   Navigator.of(context).pop();
                   Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => const SubscriptionFormScreen(),
@@ -138,45 +143,6 @@ class _QuickAddSheet extends ConsumerWidget {
       backgroundColor: AppColors.canvas,
       builder: (_) =>
           _QuickAddConfirmSheet(service: service, fixedCost: fixedCost),
-    );
-  }
-}
-
-/// 「手入力する」の浮きボタン（ピル型）。ホームの「＋」と同じ
-/// アクセントグラデ＋glow で、シート右下やや上に固定表示する。
-class _ManualEntryFab extends StatelessWidget {
-  const _ManualEntryFab({required this.onTap});
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final accent = AppAccent.of(context);
-    return Pressable(
-      onTap: onTap,
-      scale: 0.92,
-      child: Container(
-        height: 52,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [accent.primary, accent.deep],
-          ),
-          borderRadius: BorderRadius.circular(999),
-          boxShadow: AppShadows.accentGlow(accent.primary, intensity: 1.3),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.edit_rounded, color: AppColors.onPrimary, size: 20),
-            const Gap(AppSpacing.sm),
-            Text('手入力する',
-                style: AppType.body(14,
-                    weight: FontWeight.w800, color: AppColors.onPrimary)),
-          ],
-        ),
-      ),
     );
   }
 }
