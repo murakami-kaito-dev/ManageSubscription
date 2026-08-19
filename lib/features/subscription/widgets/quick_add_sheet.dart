@@ -106,7 +106,7 @@ class _QuickAddSheet extends ConsumerWidget {
             Positioned(
               left: AppSpacing.lg,
               right: AppSpacing.lg,
-              bottom: MediaQuery.sizeOf(context).height * 0.16 - 26,
+              bottom: MediaQuery.sizeOf(context).height * 0.16 - 40,
               child: SoftButton(
                 label: '手入力する（一覧にないサブスクなど）',
                 icon: Icons.edit_rounded,
@@ -259,8 +259,9 @@ class _QuickAddConfirmSheetState extends ConsumerState<_QuickAddConfirmSheet> {
   Future<void> _add() async {
     if (!_canAdd || _saving) return;
     setState(() => _saving = true);
-    final cycle =
-        _isFixed ? BillingCycle.monthly : widget.service!.plans[_planIndex].cycle;
+    final cycle = _isFixed
+        ? BillingCycle.monthly
+        : widget.service!.plans[_planIndex].cycle;
     final sub = Subscription(
       id: const Uuid().v4(),
       name: _name,
@@ -297,8 +298,7 @@ class _QuickAddConfirmSheetState extends ConsumerState<_QuickAddConfirmSheet> {
 
     return Padding(
       // キーボード（固定費の金額入力）で隠れないように持ち上げる。
-      padding:
-          EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(
@@ -382,8 +382,7 @@ class _QuickAddConfirmSheetState extends ConsumerState<_QuickAddConfirmSheet> {
                       Text('初回支払日', style: AppType.body(13.5)),
                       const Spacer(),
                       Text(DateFormat('yyyy年M月d日').format(_firstPayment),
-                          style:
-                              AppType.body(13.5, weight: FontWeight.w700)),
+                          style: AppType.body(13.5, weight: FontWeight.w700)),
                       const Gap(4),
                       const Icon(Icons.chevron_right_rounded,
                           size: 18, color: AppColors.textMuted),
@@ -440,8 +439,7 @@ class _QuickAddConfirmSheetState extends ConsumerState<_QuickAddConfirmSheet> {
             Expanded(
                 child: Text(plan.label,
                     style: AppType.body(13.5,
-                        weight:
-                            selected ? FontWeight.w700 : FontWeight.w500))),
+                        weight: selected ? FontWeight.w700 : FontWeight.w500))),
             Text(
               '${fmt.format(plan.amount)} /${plan.cycle == BillingCycle.yearly ? '年' : '月'}',
               style: AppType.body(13.5, weight: FontWeight.w700),
