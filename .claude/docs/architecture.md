@@ -14,7 +14,28 @@
 - `data/` — `database/app_database.dart`（スキーマ+シード）、`models/`、`repositories/`
 - `providers/` — `core_providers`（DB/prefs/サービス）、`subscription_providers`、`analytics_providers`、`settings_provider`、`premium_provider`
 - `features/` — 画面ごと（home / subscription（編集/追加）/ analytics / calendar / history / csv（取込UI）/ settings / premium / rating / notifications / shell）
-- `services/` — ads / csv / currency / image / notifications / purchases / rating / widget
+- `services/` — ads / catalog / csv / currency / image / notifications / purchases / rating / widget
+
+## クイック追加カタログ（サーバー配信・CatalogService）
+- **目的**: 「＋」のかんたん追加メニュー（人気サブスク20件の公式価格＋固定費8件）を、
+  **アプリ更新なしで**開発者が改定できるようにする。
+- **配信元**: GitHub 公開リポジトリ
+  [`submana-catalog`](https://github.com/murakami-kaito-dev/submana-catalog) の `catalog.json`
+  （raw URL を `CatalogService.remoteUrl` が参照）。
+- **価格改定の手順（運用）**: `~/Dev/Products/submana-catalog/catalog.json` を編集 →
+  commit → push。**それだけで翌起動時に全ユーザーへ反映**される（1日1回取得）。
+  例: Hulu は 2026-10-01 に ¥1,026→¥1,320 改定予定 → 当日に JSON を更新すること。
+- **フォールバック（RatesService と同じ作法）**: 起動時に
+  ①前回取得値（prefs）→ ②同梱アセット `assets/quick_add/catalog.json` の順で即時ロードし、
+  runApp 後に fire-and-forget でネットワーク更新。取得失敗しても必ずメニューは出る。
+  同梱アセットは配信側と同内容を保つ（更新したら次のリリースでコピーする）。
+- **スキーマ**: `schemaVersion: 1`。`services[].plans[]` は `{label, amount, cycle?}`
+  （cycle 省略=monthly / "yearly"）。価格は日本の公式価格（JPY 固定で保存し、
+  表示は既存の仕組みでメイン通貨に換算）。icon はプリセットアイコンIDを参照
+  （**新アイコンだけはアプリ更新が必要**。無いIDは頭文字＋色で表示される）。
+- モデル: `data/models/quick_add_catalog.dart`（`tryParse` は不正入力で null →
+  呼び出し側がフォールバック）。テスト: `test/quick_add_catalog_test.dart`
+  （同梱アセットとアイコンの整合も機械検証）。
 
 ## ホーム画面ウィジェット（iOS WidgetKit）
 - **データの流れ**: `widgetSyncProvider`（`app.dart` で watch）が `subscriptionsProvider` と
